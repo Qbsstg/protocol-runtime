@@ -13,6 +13,38 @@ This repository is in bootstrap. The first target is a small runtime-core
 contract surface and an IEC104 binding that consumes the published
 `protocol-sdk` `0.7.0` artifacts from Maven Central.
 
+## Maven Coordinates
+
+The first runtime release target is `0.1.0`. Runtime modules are JDK 21
+artifacts. Applications should depend on the modules they use directly:
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-core</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-protocol-iec104</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-ingress-tcp-netty</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+
+`runtime-smoke-tests` is a repository test module and is not intended as a
+published application dependency.
+
 ## Module Plan
 
 | Module | Status | Responsibility |
@@ -82,6 +114,32 @@ The module is still a baseline. It does not yet manage reconnects, expose
 protocol-specific server builders, provide TLS, implement protocol heartbeats,
 or provide durable retry queues.
 
+## Minimal IEC104 TCP Runtime
+
+The low-level APIs are intentionally explicit in `0.1.0`. Applications own
+their sink, lifecycle, and deployment assembly:
+
+```java
+List<ParsedRecord<Iec104Frame>> records = new CopyOnWriteArrayList<>();
+List<ParseFailure> failures = new CopyOnWriteArrayList<>();
+
+TcpNettyServer<Iec104Frame> server = new TcpNettyServer<>(
+        TcpNettyServerConfig.loopback(2404),
+        channel -> new RuntimePipelineRunner<>(
+                new Iec104RuntimeBinding(),
+                records::add,
+                failures::add,
+                BackpressureStrategy.acceptAll()));
+
+server.bind();
+```
+
+This starts a Netty TCP listener, creates one `RuntimePipelineRunner` per
+connection, decodes IEC104 bytes through `protocol-iec104:0.7.0`, and routes
+successful frames and failures to the configured sinks. Production applications
+should add their own lifecycle owner, logging, persistence, reconnect policy,
+TLS, and command/session policy around this baseline.
+
 ## Smoke Tests
 
 `runtime-smoke-tests` holds cross-module verification only. The first smoke test
@@ -137,3 +195,11 @@ The bootstrap runtime consumes published SDK `0.7.0` artifacts:
 
 The runtime can move to newer SDK versions after they are published and
 verified.
+
+## Release Docs
+
+- [`docs/module-plan.md`](docs/module-plan.md)
+- [`docs/module-boundaries.md`](docs/module-boundaries.md)
+- [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
+- [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)

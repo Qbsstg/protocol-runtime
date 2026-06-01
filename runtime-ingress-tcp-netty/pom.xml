@@ -11,6 +11,7 @@
 
     <artifactId>runtime-ingress-tcp-netty</artifactId>
     <name>Protocol Runtime TCP Netty Ingress</name>
+    <description>Netty TCP ingress adapter for protocol-runtime pipelines.</description>
 
     <properties>
         <netty.version>4.2.14.Final</netty.version>

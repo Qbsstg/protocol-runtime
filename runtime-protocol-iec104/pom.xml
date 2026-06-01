@@ -11,6 +11,7 @@
 
     <artifactId>runtime-protocol-iec104</artifactId>
     <name>Protocol Runtime IEC104 Binding</name>
+    <description>Runtime parser binding for protocol-iec104 stream decoding.</description>
 
     <dependencies>
         <dependency>
