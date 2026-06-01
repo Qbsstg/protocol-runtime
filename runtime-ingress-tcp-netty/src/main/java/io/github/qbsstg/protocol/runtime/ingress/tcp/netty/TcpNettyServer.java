@@ -67,7 +67,7 @@ public final class TcpNettyServer<T> implements RuntimeLifecycle {
             serverChannel = new ServerBootstrap()
                     .group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
-                    .option(ChannelOption.SO_REUSEADDR, true)
+                    .option(ChannelOption.SO_REUSEADDR, false)
                     .childHandler(new TcpNettyChannelInitializer<>(
                             runnerFactory,
                             sourceIdResolver,

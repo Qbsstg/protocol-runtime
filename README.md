@@ -16,6 +16,10 @@ runtime-core contract surface, an IEC104 binding that consumes the published
 `protocol-sdk` `0.7.0` artifacts from Maven Central, and the first TCP/Netty
 ingress baseline.
 
+The active development line is `0.2.0-SNAPSHOT`. Its first goal is a minimal
+standalone IEC104 TCP collector app that assembles the published runtime
+contracts into a JDK 21 process.
+
 ## Maven Coordinates
 
 The first runtime release version is `0.1.0`. Runtime modules are JDK 21
@@ -56,11 +60,12 @@ published application dependency.
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
+| `runtime-app` | 0.2.0 baseline | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
-Future modules may include MQTT, Kafka, HTTP ingress, pipelines, sinks, and a
-deployable runtime application. Those dependencies belong here, not in
-`protocol-sdk`.
+Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
+sinks, and richer deployable runtime applications. Those dependencies belong
+here, not in `protocol-sdk`.
 
 ## Runtime Core Contract
 
@@ -144,6 +149,46 @@ successful frames and failures to the configured sinks. Production applications
 should add their own lifecycle owner, logging, persistence, reconnect policy,
 TLS, and command/session policy around this baseline.
 
+## Standalone Collector App
+
+`runtime-app` assembles the first runnable collector boundary for `0.2.0`:
+
+```text
+TcpNettyServer
+  -> RuntimePipelineRunner
+  -> Iec104RuntimeBinding
+  -> configured RecordSink / FailureSink
+```
+
+Build the executable jar:
+
+```bash
+mvn -q -pl runtime-app -am package
+```
+
+Run with a property file:
+
+```bash
+java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+  --config collector.properties
+```
+
+Minimal configuration:
+
+```properties
+collector.tcp.host=0.0.0.0
+collector.tcp.port=2404
+collector.source.id=iec104:station-1
+collector.backpressure=ACCEPT
+collector.sink.type=file
+collector.sink.file=target/runtime-records.ndjson
+collector.iec104.strictAsduParsing=false
+```
+
+Supported sink types are `logging`, `file`, and `in-memory`. The app remains a
+thin assembly layer; Spring, Kafka, MQTT, HTTP, database, and Redis dependencies
+are still excluded from `runtime-core` and `protocol-sdk`.
+
 ## Smoke Tests
 
 `runtime-smoke-tests` holds cross-module verification only. The first smoke test
@@ -204,6 +249,8 @@ verified.
 
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
+- [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
+- [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
