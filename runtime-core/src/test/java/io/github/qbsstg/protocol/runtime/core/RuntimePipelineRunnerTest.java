@@ -95,6 +95,24 @@ class RuntimePipelineRunnerTest {
     }
 
     @Test
+    void externalFailuresCanBeReportedToFailureSink() {
+        ParseFailure failure = parseFailure("connection failed");
+        List<ParseFailure> failures = new ArrayList<>();
+        RuntimePipelineRunner<String> runner = new RuntimePipelineRunner<>(
+                new FixedBinding(List.of()),
+                RecordSink.noop(),
+                failures::add,
+                BackpressureStrategy.acceptAll());
+
+        assertThrows(IllegalStateException.class, () -> runner.reportFailure(failure));
+
+        runner.start();
+        runner.reportFailure(failure);
+
+        assertEquals(List.of(failure), failures);
+    }
+
+    @Test
     void startAndStopLifecycleComponentsInPipelineOrder() {
         List<String> events = new ArrayList<>();
         LifecycleBinding binding = new LifecycleBinding(events);

@@ -90,6 +90,11 @@ public final class RuntimePipelineRunner<T> implements RuntimeLifecycle {
         return BackpressureDecision.ACCEPT;
     }
 
+    public void reportFailure(ParseFailure failure) {
+        ensureRunning();
+        failureSink.accept(Objects.requireNonNull(failure, "failure must not be null"));
+    }
+
     private void route(RuntimeParseResult<T> result) {
         Objects.requireNonNull(result, "parse result must not be null");
         if (result instanceof ParsedRuntimeRecord<?> parsed) {

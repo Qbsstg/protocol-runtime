@@ -12,6 +12,7 @@ public final class TcpNettyChannelInitializer<T> extends ChannelInitializer<Sock
     private final TcpNettyPipelineRunnerFactory<T> runnerFactory;
     private final TcpSourceIdResolver sourceIdResolver;
     private final Clock clock;
+    private final TcpConnectionRegistry connectionRegistry;
 
     public TcpNettyChannelInitializer(TcpNettyPipelineRunnerFactory<T> runnerFactory) {
         this(runnerFactory, TcpNettyIngressModule.defaultSourceIdResolver(), Clock.systemUTC());
@@ -21,9 +22,18 @@ public final class TcpNettyChannelInitializer<T> extends ChannelInitializer<Sock
             TcpNettyPipelineRunnerFactory<T> runnerFactory,
             TcpSourceIdResolver sourceIdResolver,
             Clock clock) {
+        this(runnerFactory, sourceIdResolver, clock, new TcpConnectionRegistry());
+    }
+
+    public TcpNettyChannelInitializer(
+            TcpNettyPipelineRunnerFactory<T> runnerFactory,
+            TcpSourceIdResolver sourceIdResolver,
+            Clock clock,
+            TcpConnectionRegistry connectionRegistry) {
         this.runnerFactory = Objects.requireNonNull(runnerFactory, "runnerFactory must not be null");
         this.sourceIdResolver = Objects.requireNonNull(sourceIdResolver, "sourceIdResolver must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.connectionRegistry = Objects.requireNonNull(connectionRegistry, "connectionRegistry must not be null");
     }
 
     @Override
@@ -31,6 +41,10 @@ public final class TcpNettyChannelInitializer<T> extends ChannelInitializer<Sock
         RuntimePipelineRunner<T> runner = Objects.requireNonNull(
                 runnerFactory.create(channel),
                 "runnerFactory must not return null");
-        channel.pipeline().addLast(new TcpNettyIngressHandler<>(runner, sourceIdResolver, clock));
+        channel.pipeline().addLast(new TcpNettyIngressHandler<>(
+                runner,
+                sourceIdResolver,
+                clock,
+                connectionRegistry));
     }
 }
