@@ -20,6 +20,7 @@ This note records the first open-source module shape for `protocol-runtime`.
 | `runtime-core` | Protocol-neutral contracts for source identity, ingress payloads, parser bindings, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. | Batching, metrics tags, queue decisions, and richer delivery policies. |
 | `runtime-protocol-iec104` | Bind IEC104 SDK stream decoding to runtime envelopes and records. | Session-aware command routing, strict/permissive policy configuration, and richer record mapping. |
 | `runtime-ingress-tcp-netty` | Provide the first Netty TCP ingress baseline: `ByteBuf` to `IngressEnvelope`, source id resolution, session attributes, backpressure handling, and dispatch to `RuntimePipelineRunner`. | Server bootstrap, IEC104 sessions, Modbus TCP sessions, reconnects, heartbeat policy, and durable retry queues. |
+| `runtime-smoke-tests` | Prove the first IEC104 over TCP runtime path with EmbeddedChannel, `TcpNettyIngressHandler`, `RuntimePipelineRunner`, `Iec104RuntimeBinding`, and sinks. | More cross-module runtime paths after new ingress and protocol bindings land. |
 
 ## Deferred Modules
 
@@ -37,3 +38,7 @@ This note records the first open-source module shape for `protocol-runtime`.
 `runtime-ingress-tcp-netty` is the only module that may depend on Netty for the
 TCP baseline. `runtime-core` remains adapter-free, and `protocol-sdk` remains a
 parser-only dependency consumed by `runtime-protocol-*` modules.
+
+`runtime-smoke-tests` may combine runtime ingress modules and protocol binding
+modules, but it is test-only. Cross-module combinations proven there should not
+be moved into `runtime-core`.

@@ -20,6 +20,7 @@ contract surface and an IEC104 binding that consumes the published
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler that converts `ByteBuf` payloads to `IngressEnvelope`, resolves source identity, attaches connection/session attributes, applies backpressure decisions, and dispatches to `RuntimePipelineRunner`. |
+| `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, sinks, and a
 deployable runtime application. Those dependencies belong here, not in
@@ -65,6 +66,22 @@ The module is still a baseline. It does not yet start a real server bootstrap,
 manage reconnects, expose protocol-specific channel initializers, or provide
 durable retry queues.
 
+## Smoke Tests
+
+`runtime-smoke-tests` holds cross-module verification only. The first smoke test
+feeds IEC104 TCP bytes through:
+
+```text
+EmbeddedChannel
+  -> TcpNettyIngressHandler
+  -> RuntimePipelineRunner
+  -> Iec104RuntimeBinding
+  -> RecordSink / FailureSink
+```
+
+It covers complete IEC104 frames, split TCP reads, backpressure that prevents
+parsing, and malformed IEC104 frames routed to the failure sink.
+
 ## Dependency Direction
 
 Allowed:
@@ -81,6 +98,8 @@ protocol-sdk -> Spring or Netty
 protocol-sdk -> MQTT or Kafka clients
 protocol-sdk -> HTTP server/client frameworks
 protocol-sdk -> database or Redis clients
+runtime-core -> Netty
+runtime-core -> protocol-specific runtime bindings
 ```
 
 ## Build
