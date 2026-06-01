@@ -42,3 +42,20 @@ parser-only dependency consumed by `runtime-protocol-*` modules.
 `runtime-smoke-tests` may combine runtime ingress modules and protocol binding
 modules, but it is test-only. Cross-module combinations proven there should not
 be moved into `runtime-core`.
+
+## `0.1.0` Release Posture
+
+The `0.1.0` runtime line should publish the bootstrap runtime library modules:
+
+| Module | Maven Central posture |
+| --- | --- |
+| `protocol-runtime` | Parent POM for repository builds and release metadata. |
+| `runtime-core` | Published baseline runtime contracts. |
+| `runtime-protocol-iec104` | Published IEC104 runtime binding against `protocol-iec104:0.7.0`. |
+| `runtime-ingress-tcp-netty` | Published first TCP/Netty ingress adapter. |
+| `runtime-smoke-tests` | Not published; repository-only integration verification. |
+
+The release should not claim a deployable collector application, reconnect
+policy, TLS, durable queues, storage sinks, Kafka/MQTT/HTTP ingestion, or formal
+IEC104 session-state coverage. Those belong in later runtime milestones after
+the baseline contracts are externally consumable.

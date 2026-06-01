@@ -11,6 +11,7 @@
 
     <artifactId>runtime-core</artifactId>
     <name>Protocol Runtime Core</name>
+    <description>Dependency-light runtime contracts for protocol ingestion pipelines.</description>
 
     <dependencies>
         <dependency>

@@ -11,6 +11,11 @@
 
     <artifactId>runtime-smoke-tests</artifactId>
     <name>Protocol Runtime Smoke Tests</name>
+    <description>Test-only cross-module smoke tests for protocol-runtime.</description>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+    </properties>
 
     <dependencies>
         <dependency>
