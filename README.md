@@ -19,7 +19,7 @@ contract surface and an IEC104 binding that consumes the published
 | --- | --- | --- |
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
-| `runtime-ingress-tcp-netty` | Placeholder | Future Netty TCP ingress module for IEC104 and Modbus TCP sessions. No Netty dependency is added until the adapter design is implemented. |
+| `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler that converts `ByteBuf` payloads to `IngressEnvelope`, resolves source identity, attaches connection/session attributes, applies backpressure decisions, and dispatches to `RuntimePipelineRunner`. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, sinks, and a
 deployable runtime application. Those dependencies belong here, not in
@@ -43,7 +43,27 @@ transport adapters and protocol bindings share:
 
 `runtime-core` must not depend on Spring, Netty, Kafka, MQTT, HTTP clients or
 servers, database drivers, Redis clients, or any deployable runtime adapter.
-Those dependencies belong in adapter modules outside the core contract.
+Those dependencies belong in adapter modules outside the core contract. The
+current Netty dependency is isolated to `runtime-ingress-tcp-netty`.
+
+## TCP Netty Ingress
+
+`runtime-ingress-tcp-netty` currently provides the first TCP ingress baseline:
+
+- `TcpNettyIngressHandler` copies inbound `ByteBuf` data into an immutable
+  `IngressEnvelope` payload.
+- `TcpSourceIdResolver` resolves a runtime `SourceId` from the remote address or
+  channel id.
+- `TcpConnectionAttributes` attaches `tcp.channel.id`, `tcp.session.id`, local
+  address, and remote address attributes when available.
+- `RuntimePipelineRunner` receives each envelope and owns parser binding,
+  backpressure, record sink, failure sink, and lifecycle routing.
+- `RETRY_LATER` backpressure pauses Netty `autoRead`; `DROP` emits a
+  `TcpNettyBackpressureEvent` without pausing the channel.
+
+The module is still a baseline. It does not yet start a real server bootstrap,
+manage reconnects, expose protocol-specific channel initializers, or provide
+durable retry queues.
 
 ## Dependency Direction
 

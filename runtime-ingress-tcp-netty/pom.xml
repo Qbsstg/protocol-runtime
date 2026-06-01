@@ -12,11 +12,20 @@
     <artifactId>runtime-ingress-tcp-netty</artifactId>
     <name>Protocol Runtime TCP Netty Ingress</name>
 
+    <properties>
+        <netty.version>4.2.14.Final</netty.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>io.github.qbsstg</groupId>
             <artifactId>runtime-core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>${netty.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
