@@ -85,15 +85,16 @@ Out of scope:
 
 ## Verification
 
-The `0.1.0` release should be tagged only after these checks pass on the final
-release commit:
+The `0.1.0` release branch passed these checks before the release PR:
 
 - `git diff --check`
 - `mvn -q verify`
-- GitHub Actions on JDK 21
 - Central release profile smoke check with publishing disabled
-- signed dry run with `central.skipPublishing=true`
 - dependency boundary checks confirming Netty is absent from `runtime-core` and
   present only in TCP ingress or test paths
 
-No Maven Central deployment has been performed by this release-note draft.
+The final release should still be tagged only after the release PR passes
+GitHub Actions and merges. A signed dry run with `central.skipPublishing=true`
+must pass before the real Maven Central upload.
+
+No Maven Central deployment has been performed by this release branch.

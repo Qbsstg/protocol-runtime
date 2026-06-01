@@ -3,7 +3,7 @@
 This note records the release-readiness decision for the first
 `protocol-runtime` release target.
 
-The final release commit should set the Maven reactor version to `0.1.0`.
+The release branch sets the Maven reactor version to `0.1.0`.
 
 ## Release Scope
 
@@ -54,7 +54,7 @@ tests that protect dependency direction and cross-module behavior.
 | TCP session lifecycle | TCP connection sessions, active session registry, lifecycle events, server stop client closure, and exception-to-failure routing are covered. | Complete. |
 | IEC104 runtime smoke | `runtime-smoke-tests` verifies IEC104 over EmbeddedChannel and real localhost socket paths, including split reads, backpressure, failures, and disconnect lifecycle. | Complete. |
 | Dependency boundaries | `runtime-core` remains free of Netty and protocol-specific parser modules; Netty is isolated to TCP ingress and test paths. | Complete. |
-| Release metadata | Maven Central metadata, source/javadoc jars, GPG signing, and Central publishing profile are configured. | Complete after this readiness PR merges. |
+| Release metadata | Maven Central metadata, source/javadoc jars, GPG signing, and Central publishing profile are configured. | Complete. |
 
 ## Required Checks Before Tagging
 
@@ -112,14 +112,31 @@ These checks do not replace the final release PR GitHub Actions checks, signed
 dry run, post-tag Maven Central upload, or external dependency resolution
 verification.
 
+## Release Branch Checks On 2026-06-01
+
+These checks passed on the `0.1.0` release branch before opening the release PR:
+
+| Check | Result | Note |
+| --- | --- | --- |
+| `git diff --check` | Passed | No whitespace errors in the release diff. |
+| `mvn -q verify` | Passed | Full JDK 21 reactor verification passed at version `0.1.0`. |
+| `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy` | Passed | Central profile smoke check passed with publishing disabled and signing skipped. |
+| `mvn -pl runtime-core dependency:tree -Dincludes=io.netty` | Passed | No Netty dependency in `runtime-core`. |
+| `mvn -pl runtime-core dependency:tree -Dincludes=io.github.qbsstg:protocol-iec104` | Passed | No IEC104 SDK dependency in `runtime-core`. |
+| `mvn -pl runtime-ingress-tcp-netty dependency:tree -Dincludes=io.netty` | Passed | Netty remains isolated to the TCP ingress production module. |
+| `mvn -pl runtime-smoke-tests -am dependency:tree -Dincludes=io.netty -Dscope=test` | Passed | Smoke tests see Netty only through `runtime-ingress-tcp-netty`. |
+| `mvn -pl runtime-smoke-tests -am dependency:tree -Dincludes=io.github.qbsstg -Dscope=test` | Passed | SDK artifacts appear through `runtime-protocol-iec104`; runtime modules resolve at `0.1.0`. |
+
+No tag was created and no real Maven Central upload was performed by the
+release branch PR.
+
 ## Final Release Decision
 
-`0.1.0` is ready to move to a release PR after:
+`0.1.0` is ready to tag and upload after:
 
-- this readiness PR merges,
-- local and GitHub Actions verification pass,
-- the release commit sets the reactor version to `0.1.0`,
-- the Central profile smoke check passes with publishing disabled, and
-- a signed dry run passes before real upload.
+- the release PR merges into `main`,
+- GitHub Actions passes on the merged release commit,
+- the signed dry run passes with `central.skipPublishing=true`, and
+- the operator confirms the real Maven Central upload.
 
-No real Maven Central upload is part of this readiness PR.
+No real Maven Central upload is part of this release branch PR.

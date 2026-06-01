@@ -9,14 +9,16 @@ must not depend on this repository.
 
 ## Status
 
-This repository is in bootstrap. The first target is a small runtime-core
-contract surface and an IEC104 binding that consumes the published
-`protocol-sdk` `0.7.0` artifacts from Maven Central.
+This repository is in bootstrap. The first release line is `0.1.0`: a small
+runtime-core contract surface, an IEC104 binding that consumes the published
+`protocol-sdk` `0.7.0` artifacts from Maven Central, and the first TCP/Netty
+ingress baseline.
 
 ## Maven Coordinates
 
-The first runtime release target is `0.1.0`. Runtime modules are JDK 21
-artifacts. Applications should depend on the modules they use directly:
+The first runtime release version is `0.1.0`. Runtime modules are JDK 21
+artifacts. Applications should depend on the modules they use directly after
+the release is published:
 
 ```xml
 <dependency>
