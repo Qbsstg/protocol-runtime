@@ -3,7 +3,6 @@ package io.github.qbsstg.protocol.runtime.smoke;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.qbsstg.protocol.iec104.Iec104Frame;
@@ -12,6 +11,7 @@ import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 import io.github.qbsstg.protocol.runtime.core.BackpressureStrategy;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
 import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
+import io.github.qbsstg.protocol.runtime.core.RecordSink;
 import io.github.qbsstg.protocol.runtime.core.RuntimePipelineRunner;
 import io.github.qbsstg.protocol.runtime.core.SourceId;
 import io.github.qbsstg.protocol.runtime.iec104.Iec104RuntimeBinding;
@@ -111,8 +111,9 @@ class Iec104TcpRuntimeSmokeTest {
         assertTrue(records.isEmpty());
         assertTrue(failures.isEmpty());
         assertFalse(channel.config().isAutoRead());
-        assertEquals(1, events.size());
-        TcpNettyBackpressureEvent event = assertInstanceOf(TcpNettyBackpressureEvent.class, events.get(0));
+        List<TcpNettyBackpressureEvent> backpressureEvents = eventsOfType(events, TcpNettyBackpressureEvent.class);
+        assertEquals(1, backpressureEvents.size());
+        TcpNettyBackpressureEvent event = backpressureEvents.get(0);
         assertEquals(SOURCE_ID, event.sourceId());
         assertEquals(BackpressureDecision.RETRY_LATER, event.decision());
         assertEquals(SINGLE_POINT_FRAME.length, event.payloadSize());
@@ -142,19 +143,18 @@ class Iec104TcpRuntimeSmokeTest {
     }
 
     @Test
-    void parsesIec104BytesFromRealTcpSocket() throws Exception {
+    void parsesIec104BytesFromRealTcpSocketAndStopsRunnerOnDisconnect() throws Exception {
         CountDownLatch received = new CountDownLatch(1);
+        CountDownLatch stopped = new CountDownLatch(1);
         List<ParsedRecord<Iec104Frame>> records = new CopyOnWriteArrayList<>();
         List<ParseFailure> failures = new CopyOnWriteArrayList<>();
+        TrackingRecordSink recordSink = new TrackingRecordSink(records, received, stopped);
 
         try (TcpNettyServer<Iec104Frame> server = new TcpNettyServer<>(
                 TcpNettyServerConfig.loopback(0),
                 channel -> new RuntimePipelineRunner<>(
                         new Iec104RuntimeBinding(),
-                        record -> {
-                            records.add(record);
-                            received.countDown();
-                        },
+                        recordSink,
                         failures::add,
                         BackpressureStrategy.acceptAll()),
                 context -> SOURCE_ID,
@@ -163,9 +163,13 @@ class Iec104TcpRuntimeSmokeTest {
                 socket.connect(server.localAddress());
                 socket.getOutputStream().write(SINGLE_POINT_FRAME);
                 socket.getOutputStream().flush();
+
+                assertTrue(received.await(3, TimeUnit.SECONDS));
+                awaitActiveConnections(server, 1);
             }
 
-            assertTrue(received.await(3, TimeUnit.SECONDS));
+            assertTrue(stopped.await(3, TimeUnit.SECONDS));
+            awaitActiveConnections(server, 0);
             assertTrue(failures.isEmpty());
             assertEquals(1, records.size());
             assertEquals("iec104", records.get(0).protocol());
@@ -190,8 +194,25 @@ class Iec104TcpRuntimeSmokeTest {
                         context -> SOURCE_ID,
                         Clock.fixed(RECEIVED_AT, ZoneOffset.UTC)),
                 new UserEventCapture(events));
-        channel.pipeline().fireChannelActive();
         return channel;
+    }
+
+    private static void awaitActiveConnections(TcpNettyServer<?> server, int expected) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+        while (System.nanoTime() < deadline) {
+            if (server.activeConnectionCount() == expected) {
+                return;
+            }
+            Thread.sleep(10);
+        }
+        assertEquals(expected, server.activeConnectionCount());
+    }
+
+    private static <E> List<E> eventsOfType(List<Object> events, Class<E> type) {
+        return events.stream()
+                .filter(type::isInstance)
+                .map(type::cast)
+                .toList();
     }
 
     private static byte[] bytes(int... values) {
@@ -200,6 +221,33 @@ class Iec104TcpRuntimeSmokeTest {
             bytes[i] = (byte) (values[i] & 0xFF);
         }
         return bytes;
+    }
+
+    private static final class TrackingRecordSink implements RecordSink<Iec104Frame> {
+
+        private final List<ParsedRecord<Iec104Frame>> records;
+        private final CountDownLatch received;
+        private final CountDownLatch stopped;
+
+        private TrackingRecordSink(
+                List<ParsedRecord<Iec104Frame>> records,
+                CountDownLatch received,
+                CountDownLatch stopped) {
+            this.records = records;
+            this.received = received;
+            this.stopped = stopped;
+        }
+
+        @Override
+        public void accept(ParsedRecord<Iec104Frame> record) {
+            records.add(record);
+            received.countDown();
+        }
+
+        @Override
+        public void stop() {
+            stopped.countDown();
+        }
     }
 
     private static final class UserEventCapture extends ChannelInboundHandlerAdapter {

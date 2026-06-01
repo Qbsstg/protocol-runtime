@@ -57,19 +57,30 @@ current Netty dependency is isolated to `runtime-ingress-tcp-netty`.
   port `0` for tests.
 - `TcpNettyChannelInitializer` creates one `RuntimePipelineRunner` per accepted
   connection through `TcpNettyPipelineRunnerFactory`.
+- `TcpConnectionSession` records the resolved `SourceId`, channel id, session
+  id, local/remote socket addresses, connection timestamp, and stable envelope
+  attributes for each accepted connection.
+- `TcpConnectionRegistry` tracks active sessions and lets `TcpNettyServer`
+  close active clients during graceful shutdown.
 - `TcpNettyIngressHandler` copies inbound `ByteBuf` data into an immutable
-  `IngressEnvelope` payload.
+  `IngressEnvelope` payload using the connection session attributes.
 - `TcpSourceIdResolver` resolves a runtime `SourceId` from the remote address or
   channel id.
-- `TcpConnectionAttributes` attaches `tcp.channel.id`, `tcp.session.id`, local
-  address, and remote address attributes when available.
+- `TcpConnectionAttributes` attaches `tcp.channel.id`, `tcp.session.id`,
+  `tcp.source.namespace`, `tcp.source.value`, local address, remote address, and
+  connection timestamp attributes when available.
+- `TcpConnectionLifecycleEvent` publishes active, inactive, and exception events
+  through the Netty pipeline for adapter-level observability.
 - `RuntimePipelineRunner` receives each envelope and owns parser binding,
   backpressure, record sink, failure sink, and lifecycle routing.
+- TCP channel exceptions are reported to the runtime failure sink and then close
+  the channel.
 - `RETRY_LATER` backpressure pauses Netty `autoRead`; `DROP` emits a
   `TcpNettyBackpressureEvent` without pausing the channel.
 
 The module is still a baseline. It does not yet manage reconnects, expose
-protocol-specific server builders, provide TLS, or provide durable retry queues.
+protocol-specific server builders, provide TLS, implement protocol heartbeats,
+or provide durable retry queues.
 
 ## Smoke Tests
 
@@ -85,8 +96,9 @@ EmbeddedChannel or real localhost Socket
 ```
 
 It covers complete IEC104 frames, split TCP reads, backpressure that prevents
-parsing, malformed IEC104 frames routed to the failure sink, and a real TCP
-socket path through the server bootstrap.
+parsing, malformed IEC104 frames routed to the failure sink, a real TCP socket
+path through the server bootstrap, and connection disconnect behavior that stops
+the per-connection runner.
 
 ## Dependency Direction
 

@@ -10,6 +10,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.net.InetSocketAddress;
 import java.time.Clock;
+import java.util.List;
 import java.util.Objects;
 
 public final class TcpNettyServer<T> implements RuntimeLifecycle {
@@ -18,6 +19,7 @@ public final class TcpNettyServer<T> implements RuntimeLifecycle {
     private final TcpNettyPipelineRunnerFactory<T> runnerFactory;
     private final TcpSourceIdResolver sourceIdResolver;
     private final Clock clock;
+    private final TcpConnectionRegistry connectionRegistry;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
@@ -33,10 +35,20 @@ public final class TcpNettyServer<T> implements RuntimeLifecycle {
             TcpNettyPipelineRunnerFactory<T> runnerFactory,
             TcpSourceIdResolver sourceIdResolver,
             Clock clock) {
+        this(config, runnerFactory, sourceIdResolver, clock, new TcpConnectionRegistry());
+    }
+
+    public TcpNettyServer(
+            TcpNettyServerConfig config,
+            TcpNettyPipelineRunnerFactory<T> runnerFactory,
+            TcpSourceIdResolver sourceIdResolver,
+            Clock clock,
+            TcpConnectionRegistry connectionRegistry) {
         this.config = Objects.requireNonNull(config, "config must not be null");
         this.runnerFactory = Objects.requireNonNull(runnerFactory, "runnerFactory must not be null");
         this.sourceIdResolver = Objects.requireNonNull(sourceIdResolver, "sourceIdResolver must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.connectionRegistry = Objects.requireNonNull(connectionRegistry, "connectionRegistry must not be null");
     }
 
     public TcpNettyServer<T> bind() {
@@ -56,7 +68,11 @@ public final class TcpNettyServer<T> implements RuntimeLifecycle {
                     .group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_REUSEADDR, true)
-                    .childHandler(new TcpNettyChannelInitializer<>(runnerFactory, sourceIdResolver, clock))
+                    .childHandler(new TcpNettyChannelInitializer<>(
+                            runnerFactory,
+                            sourceIdResolver,
+                            clock,
+                            connectionRegistry))
                     .bind(config.host(), config.port())
                     .syncUninterruptibly()
                     .channel();
@@ -81,6 +97,14 @@ public final class TcpNettyServer<T> implements RuntimeLifecycle {
         return localAddress().getPort();
     }
 
+    public int activeConnectionCount() {
+        return connectionRegistry.activeCount();
+    }
+
+    public List<TcpConnectionSession> activeSessions() {
+        return connectionRegistry.activeSessions();
+    }
+
     @Override
     public synchronized void stop() {
         Channel channel = serverChannel;
@@ -89,6 +113,7 @@ public final class TcpNettyServer<T> implements RuntimeLifecycle {
             if (channel != null) {
                 channel.close().syncUninterruptibly();
             }
+            connectionRegistry.closeAll();
         } finally {
             shutdownGroups();
         }
