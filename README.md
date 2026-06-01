@@ -19,7 +19,7 @@ contract surface and an IEC104 binding that consumes the published
 | --- | --- | --- |
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
-| `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler that converts `ByteBuf` payloads to `IngressEnvelope`, resolves source identity, attaches connection/session attributes, applies backpressure decisions, and dispatches to `RuntimePipelineRunner`. |
+| `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, sinks, and a
@@ -51,6 +51,12 @@ current Netty dependency is isolated to `runtime-ingress-tcp-netty`.
 
 `runtime-ingress-tcp-netty` currently provides the first TCP ingress baseline:
 
+- `TcpNettyServer` binds a configured host/port and shuts down Netty event loop
+  groups gracefully.
+- `TcpNettyServerConfig` supports loopback or any-address binding, including
+  port `0` for tests.
+- `TcpNettyChannelInitializer` creates one `RuntimePipelineRunner` per accepted
+  connection through `TcpNettyPipelineRunnerFactory`.
 - `TcpNettyIngressHandler` copies inbound `ByteBuf` data into an immutable
   `IngressEnvelope` payload.
 - `TcpSourceIdResolver` resolves a runtime `SourceId` from the remote address or
@@ -62,9 +68,8 @@ current Netty dependency is isolated to `runtime-ingress-tcp-netty`.
 - `RETRY_LATER` backpressure pauses Netty `autoRead`; `DROP` emits a
   `TcpNettyBackpressureEvent` without pausing the channel.
 
-The module is still a baseline. It does not yet start a real server bootstrap,
-manage reconnects, expose protocol-specific channel initializers, or provide
-durable retry queues.
+The module is still a baseline. It does not yet manage reconnects, expose
+protocol-specific server builders, provide TLS, or provide durable retry queues.
 
 ## Smoke Tests
 
@@ -72,15 +77,16 @@ durable retry queues.
 feeds IEC104 TCP bytes through:
 
 ```text
-EmbeddedChannel
-  -> TcpNettyIngressHandler
+EmbeddedChannel or real localhost Socket
+  -> TcpNettyServer / TcpNettyIngressHandler
   -> RuntimePipelineRunner
   -> Iec104RuntimeBinding
   -> RecordSink / FailureSink
 ```
 
 It covers complete IEC104 frames, split TCP reads, backpressure that prevents
-parsing, and malformed IEC104 frames routed to the failure sink.
+parsing, malformed IEC104 frames routed to the failure sink, and a real TCP
+socket path through the server bootstrap.
 
 ## Dependency Direction
 

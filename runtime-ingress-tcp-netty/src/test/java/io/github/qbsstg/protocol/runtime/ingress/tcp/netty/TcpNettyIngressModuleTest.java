@@ -14,5 +14,8 @@ class TcpNettyIngressModuleTest {
         assertEquals("tcp", TcpNettyIngressModule.TRANSPORT);
         assertEquals(BackpressureDecision.ACCEPT, TcpNettyIngressModule.defaultBackpressureDecision());
         assertNotNull(TcpNettyIngressModule.defaultSourceIdResolver());
+        assertNotNull(TcpNettyIngressModule.server(
+                TcpNettyServerConfig.loopback(0),
+                channel -> null));
     }
 }
