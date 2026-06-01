@@ -1,5 +1,7 @@
 # Protocol Runtime
 
+[简体中文](README.zh-CN.md)
+
 Protocol Runtime is the JDK 21 collector runtime for the Java 8 compatible
 [`protocol-sdk`](https://github.com/Qbsstg/protocol-sdk) parser modules.
 
