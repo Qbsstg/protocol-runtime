@@ -19,4 +19,44 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>ban-runtime-adapter-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>org.springframework:*</exclude>
+                                        <exclude>org.springframework.boot:*</exclude>
+                                        <exclude>io.netty:*</exclude>
+                                        <exclude>org.apache.kafka:*</exclude>
+                                        <exclude>org.eclipse.paho:*</exclude>
+                                        <exclude>org.apache.httpcomponents:*</exclude>
+                                        <exclude>org.apache.httpcomponents.client5:*</exclude>
+                                        <exclude>com.squareup.okhttp3:*</exclude>
+                                        <exclude>redis.clients:*</exclude>
+                                        <exclude>io.lettuce:*</exclude>
+                                        <exclude>org.redisson:*</exclude>
+                                        <exclude>org.postgresql:*</exclude>
+                                        <exclude>mysql:*</exclude>
+                                        <exclude>com.mysql:*</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

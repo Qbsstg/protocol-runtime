@@ -2,7 +2,7 @@ package io.github.qbsstg.protocol.runtime.core;
 
 import java.util.List;
 
-public interface RuntimeParserBinding<T> {
+public interface RuntimeParserBinding<T> extends RuntimeLifecycle {
 
     String protocol();
 

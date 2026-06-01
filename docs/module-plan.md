@@ -10,12 +10,14 @@ This note records the first open-source module shape for `protocol-runtime`.
 - Transport, queue, database, HTTP, MQTT, Kafka, Netty, scheduling, retry, and
   deployment concerns stay out of `protocol-sdk`.
 - Runtime contracts should be small and typed before adding heavy adapters.
+- `runtime-core` must stay free of Spring, Netty, Kafka, MQTT, HTTP, database,
+  Redis, and deployment dependencies.
 
 ## Bootstrap Modules
 
 | Module | First responsibility | Later expansion |
 | --- | --- | --- |
-| `runtime-core` | Protocol-neutral contracts for source identity, ingress payloads, parsed records, parse failures, parser bindings, and backpressure decisions. | Batching, sink contracts, metrics tags, and queue decisions. |
+| `runtime-core` | Protocol-neutral contracts for source identity, ingress payloads, parser bindings, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. | Batching, metrics tags, queue decisions, and richer delivery policies. |
 | `runtime-protocol-iec104` | Bind IEC104 SDK stream decoding to runtime envelopes and records. | Session-aware command routing, strict/permissive policy configuration, and richer record mapping. |
 | `runtime-ingress-tcp-netty` | Reserve the TCP/Netty adapter boundary without adding Netty yet. | IEC104 sessions, Modbus TCP sessions, reconnects, heartbeat policy, and backpressure propagation. |
 
