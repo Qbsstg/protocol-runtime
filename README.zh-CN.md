@@ -17,6 +17,10 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 - 一个基于已发布 `protocol-iec104:0.7.0` 的 IEC104 运行时绑定。
 - 第一个 TCP/Netty 接入基线。
 
+当前开发线是 `0.2.0-SNAPSHOT`。这一阶段的第一个目标是提供一个最小
+standalone IEC104 TCP collector，把已经发布的 runtime 合同组装成一个可启动的
+JDK 21 进程。
+
 ## Maven 坐标
 
 第一个运行时发布版本是 `0.1.0`。Runtime 模块是 JDK 21 artifact。应用侧应
@@ -55,10 +59,11 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 | `runtime-core` | Bootstrap | 运行时无关合同：数据源标识、接入 envelope、解析绑定、解析结果、记录/失败 sink、背压、pipeline runner、生命周期边界。 |
 | `runtime-protocol-iec104` | Bootstrap | 基于 `io.github.qbsstg:protocol-iec104:0.7.0` 的第一个运行时协议绑定。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
+| `runtime-app` | 0.2.0 baseline | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
-未来可能补充 MQTT、Kafka、HTTP ingress、pipeline、sink 和可部署运行时应用。
-这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+未来可能补充 MQTT、Kafka、HTTP ingress、pipeline、更多 sink 和更完整的可部署
+运行时应用。这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
 
 ## Runtime Core 合同
 
@@ -123,6 +128,46 @@ server.bind();
 把成功帧和失败结果路由到配置的 sink。生产应用还需要在这个 baseline 之外补充
 生命周期 owner、日志、持久化、重连策略、TLS 和命令/session 策略。
 
+## Standalone Collector App
+
+`runtime-app` 提供 `0.2.0` 的第一个可运行采集器边界：
+
+```text
+TcpNettyServer
+  -> RuntimePipelineRunner
+  -> Iec104RuntimeBinding
+  -> configured RecordSink / FailureSink
+```
+
+构建可执行 jar：
+
+```bash
+mvn -q -pl runtime-app -am package
+```
+
+使用 properties 文件启动：
+
+```bash
+java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+  --config collector.properties
+```
+
+最小配置：
+
+```properties
+collector.tcp.host=0.0.0.0
+collector.tcp.port=2404
+collector.source.id=iec104:station-1
+collector.backpressure=ACCEPT
+collector.sink.type=file
+collector.sink.file=target/runtime-records.ndjson
+collector.iec104.strictAsduParsing=false
+```
+
+当前支持的 sink 类型是 `logging`、`file` 和 `in-memory`。`runtime-app` 只是
+很薄的应用装配层；Spring、Kafka、MQTT、HTTP、数据库、Redis 仍然不能进入
+`runtime-core` 或 `protocol-sdk`。
+
 ## Smoke Tests
 
 `runtime-smoke-tests` 只做跨模块验证。当前 IEC104 TCP smoke test 路径如下：
@@ -179,6 +224,8 @@ bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts：
 
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
+- [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
+- [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)

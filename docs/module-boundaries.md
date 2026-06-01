@@ -32,6 +32,7 @@ deployment concerns.
 | `runtime-core` | JDK and test dependencies only. | Spring, Netty, Kafka, MQTT, HTTP, database, Redis, SDK protocol modules, deployable adapter dependencies. |
 | `runtime-protocol-iec104` | `runtime-core`, released `protocol-iec104`, tests. | Netty, transport adapters, storage, deployment frameworks. |
 | `runtime-ingress-tcp-netty` | `runtime-core`, Netty transport, tests. | Protocol SDK modules, Spring, Kafka, MQTT, HTTP, database, Redis. |
+| `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Production publication or application dependency use. |
 
 ## `0.1.0` Published Surface
@@ -62,3 +63,21 @@ separate design decision changes the release scope:
 
 These features can be added as separate runtime modules after the published
 baseline has stable contracts.
+
+## `0.2.0` App Boundary
+
+`runtime-app` is allowed to assemble `runtime-ingress-tcp-netty`,
+`runtime-protocol-iec104`, and app-level sinks into a runnable JDK 21 process.
+That assembly boundary is intentionally outside `runtime-core`.
+
+The first app baseline may provide:
+
+- IEC104 TCP listening configuration.
+- Fixed configured `SourceId` selection.
+- `ACCEPT`, `RETRY_LATER`, or `DROP` backpressure configuration.
+- Logging, file, and in-memory sinks.
+- A shaded executable jar for local operation and integration tests.
+
+The app boundary must not make `protocol-sdk` depend on runtime code, and must
+not move Spring, Kafka, MQTT, HTTP, database, or Redis dependencies into
+`runtime-core`.
