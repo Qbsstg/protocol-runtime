@@ -22,4 +22,10 @@ public final class TcpNettyIngressModule {
     public static <T> TcpNettyIngressHandler<T> ingressHandler(RuntimePipelineRunner<T> runner) {
         return new TcpNettyIngressHandler<>(runner, defaultSourceIdResolver());
     }
+
+    public static <T> TcpNettyServer<T> server(
+            TcpNettyServerConfig config,
+            TcpNettyPipelineRunnerFactory<T> runnerFactory) {
+        return new TcpNettyServer<>(config, runnerFactory);
+    }
 }

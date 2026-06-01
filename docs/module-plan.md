@@ -19,8 +19,8 @@ This note records the first open-source module shape for `protocol-runtime`.
 | --- | --- | --- |
 | `runtime-core` | Protocol-neutral contracts for source identity, ingress payloads, parser bindings, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. | Batching, metrics tags, queue decisions, and richer delivery policies. |
 | `runtime-protocol-iec104` | Bind IEC104 SDK stream decoding to runtime envelopes and records. | Session-aware command routing, strict/permissive policy configuration, and richer record mapping. |
-| `runtime-ingress-tcp-netty` | Provide the first Netty TCP ingress baseline: `ByteBuf` to `IngressEnvelope`, source id resolution, session attributes, backpressure handling, and dispatch to `RuntimePipelineRunner`. | Server bootstrap, IEC104 sessions, Modbus TCP sessions, reconnects, heartbeat policy, and durable retry queues. |
-| `runtime-smoke-tests` | Prove the first IEC104 over TCP runtime path with EmbeddedChannel, `TcpNettyIngressHandler`, `RuntimePipelineRunner`, `Iec104RuntimeBinding`, and sinks. | More cross-module runtime paths after new ingress and protocol bindings land. |
+| `runtime-ingress-tcp-netty` | Provide the first Netty TCP ingress baseline: server bootstrap, port binding, per-connection `RuntimePipelineRunner` creation, `ByteBuf` to `IngressEnvelope`, source id resolution, session attributes, backpressure handling, and dispatch to sinks. | IEC104 sessions, Modbus TCP sessions, reconnects, heartbeat policy, TLS, and durable retry queues. |
+| `runtime-smoke-tests` | Prove the first IEC104 over TCP runtime path with EmbeddedChannel and real localhost socket tests through `TcpNettyServer`, `TcpNettyIngressHandler`, `RuntimePipelineRunner`, `Iec104RuntimeBinding`, and sinks. | More cross-module runtime paths after new ingress and protocol bindings land. |
 
 ## Deferred Modules
 

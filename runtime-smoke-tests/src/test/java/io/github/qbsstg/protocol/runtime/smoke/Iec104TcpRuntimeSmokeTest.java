@@ -18,17 +18,23 @@ import io.github.qbsstg.protocol.runtime.iec104.Iec104RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpConnectionAttributes;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyBackpressureEvent;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyIngressHandler;
+import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServer;
+import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
 
+import java.net.Socket;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 class Iec104TcpRuntimeSmokeTest {
@@ -133,6 +139,39 @@ class Iec104TcpRuntimeSmokeTest {
         assertEquals(RECEIVED_AT, failure.observedAt());
 
         channel.finishAndReleaseAll();
+    }
+
+    @Test
+    void parsesIec104BytesFromRealTcpSocket() throws Exception {
+        CountDownLatch received = new CountDownLatch(1);
+        List<ParsedRecord<Iec104Frame>> records = new CopyOnWriteArrayList<>();
+        List<ParseFailure> failures = new CopyOnWriteArrayList<>();
+
+        try (TcpNettyServer<Iec104Frame> server = new TcpNettyServer<>(
+                TcpNettyServerConfig.loopback(0),
+                channel -> new RuntimePipelineRunner<>(
+                        new Iec104RuntimeBinding(),
+                        record -> {
+                            records.add(record);
+                            received.countDown();
+                        },
+                        failures::add,
+                        BackpressureStrategy.acceptAll()),
+                context -> SOURCE_ID,
+                Clock.fixed(RECEIVED_AT, ZoneOffset.UTC)).bind()) {
+            try (Socket socket = new Socket()) {
+                socket.connect(server.localAddress());
+                socket.getOutputStream().write(SINGLE_POINT_FRAME);
+                socket.getOutputStream().flush();
+            }
+
+            assertTrue(received.await(3, TimeUnit.SECONDS));
+            assertTrue(failures.isEmpty());
+            assertEquals(1, records.size());
+            assertEquals("iec104", records.get(0).protocol());
+            assertEquals(Iec104FrameType.I_FORMAT, records.get(0).value().getType());
+            assertArrayEquals(SINGLE_POINT_FRAME, records.get(0).rawPayload());
+        }
     }
 
     private static EmbeddedChannel channel(
