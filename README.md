@@ -166,14 +166,39 @@ Build the executable jar:
 mvn -q -pl runtime-app -am package
 ```
 
-Run with a property file:
+Run with the example property file:
 
 ```bash
 java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
-  --config collector.properties
+  --config examples/collector.properties
 ```
 
-Minimal configuration:
+Then send one IEC104 single-point test frame from another terminal:
+
+```bash
+java examples/Iec104SendSinglePoint.java 127.0.0.1 2404
+```
+
+Inspect the newline-delimited file sink output:
+
+```bash
+tail -f target/runtime-records.ndjson
+```
+
+You can also run the full local smoke flow:
+
+```bash
+sh examples/smoke-standalone.sh
+```
+
+If your default `java` is older than JDK 21, set `JAVA_BIN` before running the
+smoke script:
+
+```bash
+JAVA_BIN=/path/to/jdk-21-or-newer/bin/java sh examples/smoke-standalone.sh
+```
+
+Minimal configuration keys:
 
 ```properties
 collector.tcp.host=0.0.0.0
@@ -188,6 +213,62 @@ collector.iec104.strictAsduParsing=false
 Supported sink types are `logging`, `file`, and `in-memory`. The app remains a
 thin assembly layer; Spring, Kafka, MQTT, HTTP, database, and Redis dependencies
 are still excluded from `runtime-core` and `protocol-sdk`.
+
+### CLI And Configuration
+
+`StandaloneCollectorMain` accepts either a property file or inline overrides:
+
+```bash
+java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+  --config examples/collector.properties \
+  --collector.tcp.port=2405 \
+  --collector.sink.type=logging
+```
+
+Inline `--key=value` arguments are applied after earlier `--config` files, so
+they can override checked-in defaults for local runs.
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `collector.tcp.host` | `0.0.0.0` | TCP listen host. Use `127.0.0.1` for local-only testing. |
+| `collector.tcp.port` | `2404` | TCP listen port. Port `0` requests an ephemeral port for smoke tests. |
+| `collector.tcp.bossThreads` | `1` | Netty boss event loop threads. |
+| `collector.tcp.workerThreads` | `1` | Netty worker event loop threads. |
+| `collector.source.id` | `iec104:station-1` | Runtime source id in `namespace:value` form. |
+| `collector.backpressure` | `ACCEPT` | One of `ACCEPT`, `RETRY_LATER`, or `DROP`. |
+| `collector.sink.type` | `logging` | One of `logging`, `file`, or `in-memory`. |
+| `collector.sink.file` | unset | Required when `collector.sink.type=file`. |
+| `collector.iec104.strictAsduParsing` | `false` | Enables strict IEC104 ASDU parsing in the SDK binding. |
+
+### File Sink Format
+
+The file sink writes one JSON-like line per parsed record or parse failure. A
+successful record includes:
+
+- `kind`: `record`
+- `sourceId`
+- `protocol`
+- `recordType`
+- `observedAt`
+- `rawPayloadHex`
+- `value`
+- `attributes`
+
+Parse failures use `kind=failure` and include `message`, `rawPayloadHex`, and
+optional `cause`.
+
+### Troubleshooting
+
+- `UnsupportedClassVersionError`: run the standalone jar with JDK 21 or newer.
+  The runtime artifacts are compiled with Java release 21.
+- `Address already in use`: change `collector.tcp.port` or stop the process
+  currently using that port.
+- No file output: confirm `collector.sink.type=file`, `collector.sink.file` is
+  set, and the client actually sent bytes to the collector port.
+- No parsed record for the example frame: confirm `collector.backpressure` is
+  `ACCEPT`; `RETRY_LATER` intentionally prevents parsing.
+- `collector.source.id must use namespace:value format`: use a value such as
+  `iec104:station-1`.
 
 ## Smoke Tests
 

@@ -11,6 +11,8 @@ Draft notes for the next runtime release line.
 - Supports property-based configuration for TCP host/port, source id,
   backpressure mode, sink type, file sink path, and IEC104 strict ASDU parsing.
 - Adds logging, file, and in-memory app-level sinks.
+- Adds `examples/collector.properties`, a single-file IEC104 test-frame sender,
+  and a standalone jar smoke script.
 - Adds integration tests for startup, graceful shutdown, port conflicts,
   malformed frame routing, client disconnects, and backpressure.
 - Keeps runtime app dependencies out of `runtime-core` and keeps
@@ -22,12 +24,17 @@ Draft notes for the next runtime release line.
 mvn -q -pl runtime-app -am package
 
 java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
-  --collector.tcp.host=0.0.0.0 \
-  --collector.tcp.port=2404 \
-  --collector.source.id=iec104:station-1 \
-  --collector.backpressure=ACCEPT \
-  --collector.sink.type=file \
-  --collector.sink.file=target/runtime-records.ndjson
+  --config examples/collector.properties
+
+java examples/Iec104SendSinglePoint.java 127.0.0.1 2404
+
+tail -f target/runtime-records.ndjson
+```
+
+Run the local standalone smoke:
+
+```bash
+sh examples/smoke-standalone.sh
 ```
 
 ## Scope
@@ -50,3 +57,4 @@ Before release, the branch should pass:
 - `mvn -q verify`
 - dependency boundary checks proving `runtime-core` remains adapter-free
 - executable jar smoke verification for `runtime-app`
+- `sh examples/smoke-standalone.sh`
