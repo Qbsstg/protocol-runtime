@@ -13,27 +13,24 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 
 当前仓库仍处于 bootstrap 阶段。`0.1.0` 已发布第一组运行时合同、IEC104
 绑定和 TCP/Netty 接入基线。`0.2.0` 已发布第一个可运行的 standalone IEC104
-TCP collector app。
-
-当前 release 分支是 `0.3.0`。这一阶段的范围是对 `runtime-app` 做生产化加固：
-配置校验、多 source/多监听端口规划、collector lifecycle 状态、本地
-health/status 输出、基础 metrics/logging、file sink 轮转、解析失败隔离、
-backpressure 策略增强，以及后续 Kafka/MQTT/HTTP adapter 边界。
+TCP collector app。`0.3.0` 已发布 runtime-app 生产化加固：配置校验、多
+source/listener app 配置、lifecycle/status 快照、状态输出、计数器、file sink
+轮转、解析失败隔离和 payload 大小背压策略。
 
 `0.3.0` 发布范围记录在 [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)，
-草案 release notes 记录在
+release notes 记录在
 [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)。
 
 ## Maven 坐标
 
-最新运行时发布版本是 `0.2.0`。Runtime 模块是 JDK 21 artifact。应用侧应
+最新运行时发布版本是 `0.3.0`。Runtime 模块是 JDK 21 artifact。应用侧应
 按需直接依赖具体模块：
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -41,7 +38,7 @@ backpressure 策略增强，以及后续 Kafka/MQTT/HTTP adapter 边界。
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -49,7 +46,7 @@ backpressure 策略增强，以及后续 Kafka/MQTT/HTTP adapter 边界。
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -57,11 +54,12 @@ backpressure 策略增强，以及后续 Kafka/MQTT/HTTP adapter 边界。
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
-`runtime-smoke-tests` 是仓库内部的测试模块，不建议作为应用依赖使用。
+`runtime-smoke-tests` 是仓库内部的测试模块。即使历史版本在 Maven Central
+可见，也不建议作为应用依赖使用。
 
 ## 模块规划
 
@@ -70,7 +68,7 @@ backpressure 策略增强，以及后续 Kafka/MQTT/HTTP adapter 边界。
 | `runtime-core` | Bootstrap | 运行时无关合同：数据源标识、接入 envelope、解析绑定、解析结果、记录/失败 sink、背压、pipeline runner、生命周期边界。 |
 | `runtime-protocol-iec104` | Bootstrap | 基于 `io.github.qbsstg:protocol-iec104:0.7.0` 的第一个运行时协议绑定。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
-| `runtime-app` | 0.2.0 published / 0.3.0 release branch | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。`0.3.0` 生产化加固覆盖配置校验、多 source 配置、生命周期/status、file 轮转、失败隔离和更强 backpressure 策略。 |
+| `runtime-app` | 0.3.0 published | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。`0.3.0` 生产化加固覆盖配置校验、多 source 配置、生命周期/status、file 轮转、失败隔离和更强 backpressure 策略。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 MQTT、Kafka、HTTP ingress、pipeline、更多 sink 和更完整的可部署
@@ -158,7 +156,7 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 release 分支会构建为
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 release build 构建为
 `0.3.0`：
 
 ```text

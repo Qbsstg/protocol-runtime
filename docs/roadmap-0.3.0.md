@@ -4,8 +4,9 @@
 focus is production hardening of `runtime-app` and its operating model, not
 adding heavy downstream adapters to `runtime-core` or `protocol-sdk`.
 
-The release branch fixes the Maven reactor version at `0.3.0` after the
-readiness audit passed on the `0.3.0-SNAPSHOT` development line.
+`0.3.0` has been published after the readiness audit passed on the
+`0.3.0-SNAPSHOT` development line and the release branch fixed the Maven
+reactor version at `0.3.0`.
 
 ## Primary Goal
 
@@ -113,14 +114,17 @@ Before `0.3.0` release readiness, an operator should be able to:
 - Release-readiness audit: tracked in
   [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
 
-## Release Readiness Gate
+## Release Readiness Result
 
-Before tagging the `0.3.0` release, the release branch should confirm:
+Before tagging the `0.3.0` release, the release branch confirmed:
 
 - README and Chinese README describe the `0.3.0` production-hardening scope.
 - `docs/release-notes-0.3.0.md` reflects the selected release scope.
 - the Maven reactor is fixed at `0.3.0` on the release branch.
 - Module boundary docs still prove adapter dependencies stayed out of
   `runtime-core` and `protocol-sdk`.
-- Local verification passes `git diff --check`, `mvn -q verify`, standalone
+- Local verification passed `git diff --check`, `mvn -q verify`, standalone
   smoke checks, and dependency boundary checks.
+
+`0.3.0` has since been tagged as `v0.3.0`, published to Maven Central, and
+verified from an isolated local Maven repository.

@@ -1,7 +1,6 @@
 # Protocol Runtime 0.3.0 Release Notes
 
-Draft release notes for the next `0.3.0` runtime release line. The release
-branch fixes the Maven reactor version at `0.3.0`.
+`0.3.0` has been tagged as `v0.3.0` and published to Maven Central.
 
 ## Highlights
 
@@ -72,5 +71,28 @@ Before release readiness, the branch should pass:
 ## Release Readiness Status
 
 The release-readiness audit is tracked in
-[`release-readiness-0.3.0.md`](release-readiness-0.3.0.md). The `0.3.0`
-release branch exists; no tag or Maven Central deployment exists yet.
+[`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+## Published Artifacts
+
+- `io.github.qbsstg:protocol-runtime:0.3.0`
+- `io.github.qbsstg:runtime-core:0.3.0`
+- `io.github.qbsstg:runtime-protocol-iec104:0.3.0`
+- `io.github.qbsstg:runtime-ingress-tcp-netty:0.3.0`
+- `io.github.qbsstg:runtime-app:0.3.0`
+- `io.github.qbsstg:runtime-app:0.3.0:standalone`
+
+`runtime-smoke-tests:0.3.0` is also visible on Maven Central because the
+Central publishing plugin did not honor `maven.deploy.skip=true`. It remains a
+test-only repository module and is not supported as an application dependency;
+future releases add `central.skipPublishing=true` for that module.
+
+## Release Verification
+
+- Tag: `v0.3.0`
+- Release commit: `54cfd9ba6fa7f46728226017ffe115712d9b3a52`
+- Central deployment: `eaa2bf69-69d3-416f-9529-550924a33b28`
+- Deployment state: `PUBLISHED`
+- Maven Central resolution was verified with an isolated local Maven repository
+  for `runtime-core`, `runtime-protocol-iec104`, `runtime-ingress-tcp-netty`,
+  `runtime-app`, and the `runtime-app` `standalone` classifier.

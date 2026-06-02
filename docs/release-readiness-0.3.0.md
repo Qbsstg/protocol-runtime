@@ -1,14 +1,11 @@
 # Runtime 0.3.0 Release Readiness Audit
 
-This note records the release-readiness audit for the `0.3.0`
-`protocol-runtime` release target.
+This note records the release-readiness audit and final publication result for
+the `0.3.0` `protocol-runtime` release.
 
-The readiness branch keeps the Maven reactor version at `0.3.0-SNAPSHOT`.
-The release branch will set the Maven reactor version to `0.3.0`. This audit
-does not create a tag or perform a real Maven Central upload.
-
-The release branch now fixes the Maven reactor version at `0.3.0`. It does not
-create a tag or perform a real Maven Central upload.
+The readiness branch kept the Maven reactor version at `0.3.0-SNAPSHOT`. The
+release branch fixed the Maven reactor version at `0.3.0`. The final release
+was tagged as `v0.3.0`, uploaded to Maven Central, published, and verified.
 
 ## Release Scope
 
@@ -29,7 +26,7 @@ It should present:
   over embedded and real TCP socket paths.
 - `examples/collector.properties`, `examples/Iec104SendSinglePoint.java`, and
   `examples/smoke-standalone.sh` as the operator-facing local run path for the
-  current `0.3.0-SNAPSHOT` development line.
+  `0.3.0` release line.
 
 Out of scope:
 
@@ -53,7 +50,7 @@ assembly modules as one versioned Maven reactor release:
 | `runtime-protocol-iec104` | Yes | IEC104 runtime binding against `protocol-iec104:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Yes | TCP/Netty ingress adapter baseline retained for app assembly. |
 | `runtime-app` | Yes | Standalone collector assembly with `0.3.0` production-hardening features. |
-| `runtime-smoke-tests` | No | Test-only integration module; Maven deploy is skipped. |
+| `runtime-smoke-tests` | Not intended | Test-only integration module; `0.3.0` became visible on Maven Central because the Central publishing plugin did not honor `maven.deploy.skip=true`. Future releases add `central.skipPublishing=true`. |
 
 `runtime-app` remains the assembly boundary. It may combine ingress, protocol
 binding, app-level configuration, and app-level sinks, but it must not move
@@ -98,9 +95,9 @@ those adapter dependencies into `runtime-core` or `protocol-sdk`.
 - parse failure routing, and
 - real localhost TCP socket parsing with runner stop on disconnect.
 
-## Required Checks Before Release Branch
+## Release Verification Checklist
 
-Run these checks on the final `0.3.0-SNAPSHOT` readiness commit:
+The readiness and release branches used these local verification commands:
 
 ```bash
 git diff --check
@@ -128,14 +125,14 @@ mvn -q -pl runtime-app -am dependency:tree \
 ```
 
 The Central profile command above is intentionally a smoke check with
-publishing disabled and signing skipped. A real release still requires a signed
+publishing disabled and signing skipped. The real release also required a signed
 dry run:
 
 ```bash
 mvn -Pcentral-release -Dcentral.skipPublishing=true clean deploy
 ```
 
-That signed dry run must pass before any real Central upload.
+That signed dry run passed before the real Central upload.
 
 ## Readiness Branch Checks On 2026-06-02
 
@@ -153,20 +150,20 @@ PR:
 
 ## Release Branch Entry Criteria
 
-`0.3.0` can move to a release branch after:
+`0.3.0` moved to a release branch after:
 
-- this readiness PR merges into `main`,
-- GitHub Actions passes on the merged readiness commit,
-- all readiness branch checks above pass locally, and
-- the release branch changes Maven reactor versions from `0.3.0-SNAPSHOT` to
+- the readiness PR merged into `main`,
+- GitHub Actions passed on the merged readiness commit,
+- all readiness branch checks above passed locally, and
+- the release branch changed Maven reactor versions from `0.3.0-SNAPSHOT` to
   `0.3.0`.
 
-No tag is created and no real Maven Central upload is part of this readiness
+No tag was created and no real Maven Central upload was part of the readiness
 work.
 
 ## Release Branch Checks On 2026-06-02
 
-These checks must pass on the `0.3.0` release branch before opening the release
+These checks passed on the `0.3.0` release branch before opening the release
 PR:
 
 | Check | Result | Note |
@@ -178,14 +175,27 @@ PR:
 | `JAVA_BIN=/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/bin/java sh examples/smoke-standalone.sh` | Passed | Standalone collector built `runtime-app-0.3.0-standalone.jar`, started on an ephemeral localhost TCP port, accepted the IEC104 example frame, and wrote a parsed record to the file sink. |
 | Dependency boundary checks | Passed | `runtime-core` and `runtime-protocol-iec104` stayed adapter-free; Netty appeared only in `runtime-ingress-tcp-netty` and app assembly; SDK artifacts appeared through `runtime-protocol-iec104`. |
 
-No tag is created and no real Maven Central upload is part of this release
+No tag was created and no real Maven Central upload was part of the release
 branch PR.
 
 ## Final Release Decision
 
-`0.3.0` is ready to tag and upload after:
+`0.3.0` was tagged and uploaded after:
 
-- the release PR merges into `main`,
-- GitHub Actions passes on the merged release commit,
-- a final signed dry run passes with `central.skipPublishing=true`, and
-- the operator confirms the real Maven Central upload.
+- the release PR merged into `main`,
+- GitHub Actions passed on the merged release commit,
+- a final signed dry run passed with `central.skipPublishing=true`, and
+- the operator confirmed the real Maven Central upload.
+
+## Final Release Result
+
+`0.3.0` has been tagged, uploaded, manually published, and verified.
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Tag | Passed | `v0.3.0` points at `54cfd9ba6fa7f46728226017ffe115712d9b3a52`. |
+| Signed dry run | Passed | `mvn -Pcentral-release -Dcentral.skipPublishing=true clean deploy` signed artifacts and completed without upload. |
+| Central upload | Passed | Deployment `eaa2bf69-69d3-416f-9529-550924a33b28` was uploaded and validated. |
+| Central publish | Passed | Deployment `eaa2bf69-69d3-416f-9529-550924a33b28` reached `PUBLISHED`. |
+| Maven Central resolution | Passed | `runtime-core`, `runtime-protocol-iec104`, `runtime-ingress-tcp-netty`, `runtime-app`, and the `runtime-app` `standalone` classifier resolved from Maven Central with an isolated local repository. |
+| Test module publishing boundary | Mitigated | `runtime-smoke-tests:0.3.0` is visible on Maven Central. It remains unsupported as an application dependency, and future releases set `central.skipPublishing=true` in `runtime-smoke-tests`. |
