@@ -20,6 +20,10 @@ The active development line is `0.2.0-SNAPSHOT`. Its first goal is a minimal
 standalone IEC104 TCP collector app that assembles the published runtime
 contracts into a JDK 21 process.
 
+The `0.2.0` release-readiness audit is tracked in
+[`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md). The
+readiness line does not create a tag or perform a real Maven Central upload.
+
 ## Maven Coordinates
 
 The first runtime release version is `0.1.0`. Runtime modules are JDK 21
@@ -333,5 +337,6 @@ verified.
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
+- [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)

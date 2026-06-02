@@ -67,3 +67,15 @@ Before `0.2.0` release readiness, a new user should be able to:
 3. Send a known IEC104 test frame with `examples/Iec104SendSinglePoint.java`.
 4. Inspect the file sink output in `target/runtime-records.ndjson`.
 5. Run `sh examples/smoke-standalone.sh` as a local smoke check.
+
+## Release Readiness Gate
+
+Before cutting the `0.2.0` release branch, the readiness audit should confirm:
+
+- README and Chinese README document the standalone collector run path.
+- `docs/release-notes-0.2.0.md` reflects the selected release scope.
+- `docs/release-readiness-0.2.0.md` records module gates, publishing policy,
+  required checks, and dependency boundary evidence.
+- GitHub Actions uses Node 24 compatible action versions.
+- Local verification passes `git diff --check`, `mvn -q verify`, Central
+  profile smoke, standalone jar smoke, and dependency boundary checks.
