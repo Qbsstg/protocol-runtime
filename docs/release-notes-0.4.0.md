@@ -66,8 +66,12 @@ Before release readiness, the branch should pass:
 
 ## Release Readiness Status
 
-Release-readiness audit work has not started yet. The `0.4.0-SNAPSHOT` Maven
-line, roadmap, IEC101 runtime binding baseline, IEC103 runtime binding
-baseline, Modbus runtime binding baseline, and app-level protocol selection
-are in place. Cross-module smoke coverage for additional protocols is also in
-place. The next planned step is release-readiness audit work.
+Release-readiness audit work is complete on the readiness branch. The
+`0.4.0-SNAPSHOT` Maven line, roadmap, IEC101 runtime binding baseline, IEC103
+runtime binding baseline, Modbus runtime binding baseline, app-level protocol
+selection, and cross-module smoke coverage for additional protocols are in
+place.
+
+The next planned step is a `0.4.0` release branch that fixes Maven reactor
+versions from `0.4.0-SNAPSHOT` to `0.4.0`, reruns the release checks, and opens
+the release PR. No tag or real Maven Central upload is part of readiness work.

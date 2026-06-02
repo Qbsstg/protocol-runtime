@@ -4,7 +4,6 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 JAVA_BIN=${JAVA_BIN:-java}
 MVN_BIN=${MVN_BIN:-mvn}
-JAR="$ROOT_DIR/runtime-app/target/runtime-app-0.3.0-standalone.jar"
 OUT_DIR="$ROOT_DIR/target/runtime-app-smoke"
 CONFIG="$OUT_DIR/collector.properties"
 LOG="$OUT_DIR/collector.log"
@@ -12,8 +11,21 @@ SINK="$OUT_DIR/records.ndjson"
 
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
+rm -f "$ROOT_DIR"/runtime-app/target/runtime-app-*-standalone.jar
 
 "$MVN_BIN" -q -pl runtime-app -am package
+
+JAR=$(find "$ROOT_DIR/runtime-app/target" \
+  -name 'runtime-app-*-standalone.jar' \
+  -type f \
+  -print \
+  | sort \
+  | tail -n 1)
+
+if [ -z "$JAR" ]; then
+  echo "standalone runtime-app jar was not built" >&2
+  exit 1
+fi
 
 cat > "$CONFIG" <<EOF
 collector.tcp.host=127.0.0.1
