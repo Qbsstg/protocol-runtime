@@ -326,6 +326,11 @@ collector.stop();
 CollectorStatusSnapshot stopped = collector.statusSnapshot();
 ```
 
+`StandaloneCollectorMain` also writes a single-line status snapshot after a
+successful start and again during shutdown. The line starts with
+`Protocol Runtime collector status` and includes listener, sink, backpressure,
+and counter summaries for local log inspection.
+
 The snapshot includes:
 
 - lifecycle state

@@ -12,7 +12,10 @@ public final class StandaloneCollectorMain {
         StandaloneCollectorConfig.validateProperties(properties).throwIfInvalid();
         StandaloneCollectorAppConfig config = StandaloneCollectorConfig.appConfigFromProperties(properties);
         StandaloneCollector collector = StandaloneCollector.create(config);
-        Runtime.getRuntime().addShutdownHook(new Thread(collector::stop, "protocol-runtime-shutdown"));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            collector.stop();
+            System.out.println(CollectorStatusFormatter.format(collector.statusSnapshot()));
+        }, "protocol-runtime-shutdown"));
         collector.start();
         if (config.tcpListeners().size() == 1) {
             TcpListenerConfig listener = config.tcpListeners().get(0);
@@ -30,6 +33,7 @@ public final class StandaloneCollectorMain {
                     collector.ports(),
                     config.sinkType().configValue());
         }
+        System.out.println(CollectorStatusFormatter.format(collector.statusSnapshot()));
         collector.awaitShutdown();
     }
 }

@@ -84,6 +84,14 @@ class StandaloneCollectorTest {
             assertEquals(1, running.metrics().parsedRecordCount());
             assertEquals(0, running.metrics().parseFailureCount());
             assertNull(running.metrics().lastParseFailureMessage());
+
+            String status = CollectorStatusFormatter.format(running);
+            assertTrue(status.contains("state=RUNNING"));
+            assertTrue(status.contains("listeners=1"));
+            assertTrue(status.contains("parsedRecords=1"));
+            assertTrue(status.contains("parseFailures=0"));
+            assertTrue(status.contains("sink=in-memory"));
+            assertTrue(status.contains("tcpListeners=[default@127.0.0.1:0->"));
         }
     }
 

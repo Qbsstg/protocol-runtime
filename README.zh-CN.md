@@ -297,6 +297,10 @@ collector.stop();
 CollectorStatusSnapshot stopped = collector.statusSnapshot();
 ```
 
+`StandaloneCollectorMain` 会在启动成功后输出一行状态快照，并在 shutdown 时再
+输出一次。该行以 `Protocol Runtime collector status` 开头，包含 listener、
+sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行状态。
+
 状态快照包含：
 
 - lifecycle 状态

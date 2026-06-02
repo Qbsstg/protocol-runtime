@@ -59,7 +59,9 @@ fi
 
 i=0
 while [ "$i" -lt 50 ]; do
-  if [ -s "$SINK" ] && grep -q '"kind":"record"' "$SINK"; then
+  if [ -s "$SINK" ] \
+    && grep -q '"kind":"record"' "$SINK" \
+    && grep -q "Protocol Runtime collector status state=RUNNING" "$LOG"; then
     echo "standalone collector smoke passed"
     echo "collector log: $LOG"
     echo "sink output: $SINK"
