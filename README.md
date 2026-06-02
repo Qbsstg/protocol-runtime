@@ -11,32 +11,30 @@ must not depend on this repository.
 
 ## Status
 
-This repository is in bootstrap. The first release line is `0.1.0`: a small
-runtime-core contract surface, an IEC104 binding that consumes the published
-`protocol-sdk` `0.7.0` artifacts from Maven Central, and the first TCP/Netty
-ingress baseline.
+This repository is in bootstrap. `0.1.0` published the first runtime-core
+contract surface, IEC104 binding, and TCP/Netty ingress baseline. `0.2.0`
+published the first runnable standalone IEC104 TCP collector app.
 
-The current release branch fixes the Maven reactor version at `0.2.0`. Its
-scope is a minimal standalone IEC104 TCP collector app that assembles the
-published runtime contracts into a JDK 21 process.
+The current planning target is `0.3.0`. Its scope is production hardening for
+`runtime-app`: stronger configuration validation, multi-source and
+multi-listener planning, collector lifecycle state, local health/status output,
+basic metrics/logging, file sink rotation, parse failure isolation,
+backpressure policy enhancement, and future adapter boundaries.
 
-The `0.2.0` release-readiness audit is tracked in
-[`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md). The
-release branch does not create a tag or perform a real Maven Central upload;
-those steps happen only after the release PR merges and final verification
-passes on `main`.
+The `0.3.0` planning scope is tracked in
+[`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md). Draft release notes are
+tracked in [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md).
 
 ## Maven Coordinates
 
-The first runtime release version is `0.1.0`. Runtime modules are JDK 21
-artifacts. Applications should depend on the modules they use directly after
-the release is published:
+The latest published runtime release version is `0.2.0`. Runtime modules are
+JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -44,7 +42,7 @@ the release is published:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -52,7 +50,15 @@ the release is published:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-app</artifactId>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -66,12 +72,31 @@ published application dependency.
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-app` | 0.2.0 baseline | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. |
+| `runtime-app` | 0.2.0 published / 0.3.0 planning | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.3.0` plans production hardening around validation, multi-source config, lifecycle/status, file rotation, failure isolation, and stronger backpressure policy. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
 sinks, and richer deployable runtime applications. Those dependencies belong
 here, not in `protocol-sdk`.
+
+## `0.3.0` Production Hardening Plan
+
+`0.3.0` should make the standalone collector easier to run and diagnose without
+changing the dependency direction:
+
+- validate configuration before binding network ports
+- model multiple configured sources and TCP listeners at the app boundary
+- expose collector lifecycle state and a minimal runtime status snapshot
+- define basic app-level counters and logging before choosing exporters
+- add file sink rotation so local output is bounded
+- isolate parse failures from healthy traffic
+- improve backpressure policy while keeping transport behavior in transport
+  modules
+- keep Kafka, MQTT, HTTP, database, Redis, and observability dependencies out of
+  `runtime-core` and `protocol-sdk`
+
+The detailed plan is maintained in
+[`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md).
 
 ## Runtime Core Contract
 
@@ -337,8 +362,10 @@ verified.
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
+- [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
+- [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)

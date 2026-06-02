@@ -47,6 +47,24 @@ be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
+## `0.3.0` Development Posture
+
+The `0.3.0` runtime line starts from the published `0.2.0` standalone
+collector and focuses on production hardening:
+
+| Module | 0.3.0 goal |
+| --- | --- |
+| `runtime-app` | Add stronger configuration validation, multi-source and multi-listener config shape, collector lifecycle state, health/status output, file sink rotation, parse failure isolation, and richer backpressure policy. |
+| `runtime-ingress-tcp-netty` | Preserve TCP session lifecycle and backpressure boundaries while supporting multiple app-owned listeners. |
+| `runtime-core` | Stay dependency-light; expose only small contracts if production hardening proves a reusable need. |
+| `runtime-protocol-iec104` | Continue to consume released `protocol-iec104` SDK artifacts and keep protocol parsing separate from app policy. |
+| `runtime-smoke-tests` | Add cross-module checks for multi-listener startup, status visibility, failure isolation, and backpressure behavior. |
+
+`0.3.0` should not introduce Kafka, MQTT, HTTP, database, Redis, metrics
+exporter, or application framework dependencies into `runtime-core`. If those
+integrations are needed, they should land in dedicated adapter modules or
+app-owned assembly code.
+
 ## `0.2.0` Development Posture
 
 The `0.2.0` runtime line starts from the published `0.1.0` contracts and adds a

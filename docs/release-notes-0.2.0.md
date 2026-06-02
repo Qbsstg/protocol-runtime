@@ -60,11 +60,20 @@ Before release, the branch should pass:
 - executable jar smoke verification for `runtime-app`
 - `sh examples/smoke-standalone.sh`
 
-## Release Readiness Status
+## Final Release Status
 
 The `0.2.0` readiness audit is maintained in
 [`release-readiness-0.2.0.md`](release-readiness-0.2.0.md).
 
-The release is not tagged yet. This release branch sets the Maven reactor
-version to `0.2.0`, reruns the verification target above, and requires GitHub
-Actions to pass before tag creation or Maven Central upload.
+`0.2.0` has been tagged as `v0.2.0` and published to Maven Central.
+
+Published artifacts:
+
+- `io.github.qbsstg:protocol-runtime:0.2.0`
+- `io.github.qbsstg:runtime-core:0.2.0`
+- `io.github.qbsstg:runtime-protocol-iec104:0.2.0`
+- `io.github.qbsstg:runtime-ingress-tcp-netty:0.2.0`
+- `io.github.qbsstg:runtime-app:0.2.0`
+
+`runtime-smoke-tests` remains repository-only and is intentionally not
+published.
