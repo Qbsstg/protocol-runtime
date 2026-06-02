@@ -105,7 +105,7 @@ protocol-neutral contract is proven necessary. In particular:
 
 ## `0.4.0` Multi-Protocol Boundary
 
-The `0.4.0` line may add runtime protocol binding modules for the published
+The `0.4.0` line adds runtime protocol binding modules for the published
 IEC101, IEC103, and Modbus SDK parser artifacts. Those modules adapt parser
 results into runtime records and failures; they do not own transport,
 deployment, or downstream delivery.
