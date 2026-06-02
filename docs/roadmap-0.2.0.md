@@ -28,6 +28,10 @@ dependencies to `runtime-core`.
   - JDK logging
   - newline-delimited file output
   - in-memory sink for integration tests
+- Operator-facing examples:
+  - `examples/collector.properties`
+  - single-file IEC104 test-frame sender
+  - standalone jar smoke script
 - Integration coverage for:
   - startup and record routing
   - graceful shutdown
@@ -53,3 +57,13 @@ dependencies to `runtime-core`.
 - `protocol-sdk` remains parser-only and does not depend on `protocol-runtime`.
 - Netty remains isolated to `runtime-ingress-tcp-netty` and modules that
   intentionally assemble it, such as `runtime-app` and tests.
+
+## Usage Experience Gate
+
+Before `0.2.0` release readiness, a new user should be able to:
+
+1. Build `runtime-app`.
+2. Start the standalone collector with `examples/collector.properties`.
+3. Send a known IEC104 test frame with `examples/Iec104SendSinglePoint.java`.
+4. Inspect the file sink output in `target/runtime-records.ndjson`.
+5. Run `sh examples/smoke-standalone.sh` as a local smoke check.

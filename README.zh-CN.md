@@ -145,14 +145,38 @@ TcpNettyServer
 mvn -q -pl runtime-app -am package
 ```
 
-使用 properties 文件启动：
+使用示例 properties 文件启动：
 
 ```bash
 java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
-  --config collector.properties
+  --config examples/collector.properties
 ```
 
-最小配置：
+然后在另一个终端发送一帧 IEC104 单点遥信测试帧：
+
+```bash
+java examples/Iec104SendSinglePoint.java 127.0.0.1 2404
+```
+
+查看 file sink 输出：
+
+```bash
+tail -f target/runtime-records.ndjson
+```
+
+也可以直接运行完整本地 smoke：
+
+```bash
+sh examples/smoke-standalone.sh
+```
+
+如果默认 `java` 低于 JDK 21，运行 smoke 前设置 `JAVA_BIN`：
+
+```bash
+JAVA_BIN=/path/to/jdk-21-or-newer/bin/java sh examples/smoke-standalone.sh
+```
+
+最小配置项：
 
 ```properties
 collector.tcp.host=0.0.0.0
@@ -167,6 +191,58 @@ collector.iec104.strictAsduParsing=false
 当前支持的 sink 类型是 `logging`、`file` 和 `in-memory`。`runtime-app` 只是
 很薄的应用装配层；Spring、Kafka、MQTT、HTTP、数据库、Redis 仍然不能进入
 `runtime-core` 或 `protocol-sdk`。
+
+### CLI 和配置
+
+`StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
+
+```bash
+java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+  --config examples/collector.properties \
+  --collector.tcp.port=2405 \
+  --collector.sink.type=logging
+```
+
+内联 `--key=value` 参数会覆盖前面 `--config` 读取到的默认值，便于本地临时运行。
+
+| 配置项 | 默认值 | 说明 |
+| --- | --- | --- |
+| `collector.tcp.host` | `0.0.0.0` | TCP 监听地址。本地测试建议使用 `127.0.0.1`。 |
+| `collector.tcp.port` | `2404` | TCP 监听端口。端口 `0` 会让系统分配临时端口，适合 smoke test。 |
+| `collector.tcp.bossThreads` | `1` | Netty boss event loop 线程数。 |
+| `collector.tcp.workerThreads` | `1` | Netty worker event loop 线程数。 |
+| `collector.source.id` | `iec104:station-1` | 运行时数据源标识，格式必须是 `namespace:value`。 |
+| `collector.backpressure` | `ACCEPT` | 可选 `ACCEPT`、`RETRY_LATER` 或 `DROP`。 |
+| `collector.sink.type` | `logging` | 可选 `logging`、`file` 或 `in-memory`。 |
+| `collector.sink.file` | 未设置 | 当 `collector.sink.type=file` 时必须配置。 |
+| `collector.iec104.strictAsduParsing` | `false` | 是否启用 IEC104 SDK binding 的严格 ASDU 解析。 |
+
+### File Sink 输出格式
+
+file sink 每行输出一条类似 JSON 的记录。成功解析记录包含：
+
+- `kind`: `record`
+- `sourceId`
+- `protocol`
+- `recordType`
+- `observedAt`
+- `rawPayloadHex`
+- `value`
+- `attributes`
+
+解析失败使用 `kind=failure`，并包含 `message`、`rawPayloadHex` 和可选 `cause`。
+
+### 常见问题
+
+- `UnsupportedClassVersionError`：请使用 JDK 21 或更高版本运行 standalone
+  jar。runtime artifact 使用 Java release 21 编译。
+- `Address already in use`：修改 `collector.tcp.port`，或者停止占用该端口的进程。
+- 没有文件输出：确认 `collector.sink.type=file`、`collector.sink.file` 已设置，
+  并且客户端确实向 collector 端口发送了字节。
+- 示例帧没有解析记录：确认 `collector.backpressure=ACCEPT`；`RETRY_LATER` 会按
+  设计阻止解析。
+- `collector.source.id must use namespace:value format`：使用类似
+  `iec104:station-1` 的值。
 
 ## Smoke Tests
 
