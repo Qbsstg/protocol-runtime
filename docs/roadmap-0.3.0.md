@@ -51,6 +51,7 @@ lifecycle, health, observability, sink, failure, and backpressure behavior.
     quarantine behavior
 - Backpressure policy enhancement:
   - move beyond the static `ACCEPT`, `RETRY_LATER`, and `DROP` smoke modes
+  - add an app-level payload-size threshold before parsing
   - add app-level thresholds for queue depth or sink pressure when the runtime
     has an internal buffer
   - keep transport-specific behavior inside the transport module
@@ -101,7 +102,8 @@ Before `0.3.0` release readiness, an operator should be able to:
 - Collector lifecycle/status snapshot: started.
 - Runtime status counters for parsed records and parse failures: started.
 - File sink rotation policy: started.
-- Richer backpressure policy: still planned.
+- Payload-size backpressure policy and counters: started.
+- Queue-depth and sink-pressure backpressure policy: still planned.
 
 ## Release Readiness Gate
 

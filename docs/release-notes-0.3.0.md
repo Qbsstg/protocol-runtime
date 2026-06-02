@@ -16,16 +16,17 @@ Draft release notes for the next `0.3.0` runtime release line.
 - Expose collector lifecycle state and a minimal runtime status snapshot with
   configured/running/stopped/failed state, timestamps, startup failure reason,
   listener bind information, active connection counts, parsed record and parse
-  failure counters, last parse failure details, sink type, backpressure mode,
-  and strict ASDU setting.
+  failure counters, last parse failure details, backpressure retry/drop
+  counters, sink type, backpressure mode, payload threshold policy, and strict
+  ASDU setting.
 - Improve JDK logging and define app-level metrics counters/gauges before
   selecting any metrics exporter.
 - Add configurable file sink rotation with default byte and history limits so
   local file output does not grow without bounds.
 - Isolate parse failures so malformed frames route to failure handling without
   stopping healthy traffic.
-- Expand backpressure policy beyond fixed smoke modes while keeping transport
-  behavior in transport modules.
+- Expand backpressure policy beyond fixed smoke modes with an app-level payload
+  threshold while keeping transport behavior in transport modules.
 - Document the adapter boundary for future Kafka, MQTT, HTTP, database, Redis,
   and observability modules.
 

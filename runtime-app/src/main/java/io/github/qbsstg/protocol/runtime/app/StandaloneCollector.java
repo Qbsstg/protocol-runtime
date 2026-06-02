@@ -1,7 +1,6 @@
 package io.github.qbsstg.protocol.runtime.app;
 
 import io.github.qbsstg.protocol.iec104.Iec104Frame;
-import io.github.qbsstg.protocol.runtime.core.BackpressureStrategy;
 import io.github.qbsstg.protocol.runtime.core.RuntimeLifecycle;
 import io.github.qbsstg.protocol.runtime.core.RuntimePipelineRunner;
 import io.github.qbsstg.protocol.runtime.iec104.Iec104RuntimeBinding;
@@ -45,7 +44,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                                         new Iec104RuntimeBinding(appConfig.strictAsduParsing()),
                                         sinks.runnerRecordSink(),
                                         sinks.runnerFailureSink(),
-                                        BackpressureStrategy.fixed(appConfig.backpressureDecision())),
+                                        sinks.backpressureStrategy(appConfig)),
                                 context -> listener.sourceId(),
                                 clock)))
                 .toList();
@@ -96,6 +95,8 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 appConfig.sinkType(),
                 appConfig.fileSinkRotation(),
                 appConfig.backpressureDecision(),
+                appConfig.backpressureMaxPayloadBytes(),
+                appConfig.oversizedPayloadDecision(),
                 appConfig.strictAsduParsing());
     }
 

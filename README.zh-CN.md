@@ -211,6 +211,8 @@ collector.tcp.host=0.0.0.0
 collector.tcp.port=2404
 collector.source.id=iec104:station-1
 collector.backpressure=ACCEPT
+collector.backpressure.maxPayloadBytes=0
+collector.backpressure.oversizedPayloadDecision=DROP
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
@@ -243,6 +245,8 @@ java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
 | `collector.tcp.workerThreads` | `1` | Netty worker event loop 线程数。 |
 | `collector.source.id` | `iec104:station-1` | 运行时数据源标识，格式必须是 `namespace:value`。 |
 | `collector.backpressure` | `ACCEPT` | 可选 `ACCEPT`、`RETRY_LATER` 或 `DROP`。 |
+| `collector.backpressure.maxPayloadBytes` | `0` | 解析前 payload 大小阈值。`0` 表示关闭该阈值策略。 |
+| `collector.backpressure.oversizedPayloadDecision` | `DROP` | payload 超过阈值后的决策，可选 `DROP` 或 `RETRY_LATER`。 |
 | `collector.sink.type` | `logging` | 可选 `logging`、`file` 或 `in-memory`。 |
 | `collector.sink.file` | 未设置 | 当 `collector.sink.type=file` 时必须配置。 |
 | `collector.sink.file.maxBytes` | `10485760` | 当前 file sink 输出文件超过该字节数前触发轮转。 |
@@ -268,6 +272,8 @@ collector.tcp.listener.south.host=127.0.0.1
 collector.tcp.listener.south.port=2405
 collector.tcp.listener.south.source=station-b
 
+collector.backpressure.maxPayloadBytes=65536
+collector.backpressure.oversizedPayloadDecision=DROP
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
@@ -301,7 +307,8 @@ CollectorStatusSnapshot stopped = collector.statusSnapshot();
 - 每个 listener 以及整体 active connection count
 - parsed record 和 parse failure 计数
 - 最后一次 parse failure 的 source id、消息和发生时间
-- sink 类型、file 轮转策略、backpressure 模式和 strict ASDU 配置
+- backpressure retry/drop 计数和最后一次 backpressure 决策详情
+- sink 类型、file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
 
 ### File Sink 输出格式
 

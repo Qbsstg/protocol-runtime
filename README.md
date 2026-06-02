@@ -236,6 +236,8 @@ collector.tcp.host=0.0.0.0
 collector.tcp.port=2404
 collector.source.id=iec104:station-1
 collector.backpressure=ACCEPT
+collector.backpressure.maxPayloadBytes=0
+collector.backpressure.oversizedPayloadDecision=DROP
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
@@ -269,6 +271,8 @@ they can override checked-in defaults for local runs.
 | `collector.tcp.workerThreads` | `1` | Netty worker event loop threads. |
 | `collector.source.id` | `iec104:station-1` | Runtime source id in `namespace:value` form. |
 | `collector.backpressure` | `ACCEPT` | One of `ACCEPT`, `RETRY_LATER`, or `DROP`. |
+| `collector.backpressure.maxPayloadBytes` | `0` | Optional app-level payload-size threshold before parsing. `0` disables the threshold. |
+| `collector.backpressure.oversizedPayloadDecision` | `DROP` | Decision for payloads larger than `collector.backpressure.maxPayloadBytes`; one of `DROP` or `RETRY_LATER`. |
 | `collector.sink.type` | `logging` | One of `logging`, `file`, or `in-memory`. |
 | `collector.sink.file` | unset | Required when `collector.sink.type=file`. |
 | `collector.sink.file.maxBytes` | `10485760` | Rotate the file sink before the active file grows beyond this byte limit. |
@@ -296,6 +300,8 @@ collector.tcp.listener.south.host=127.0.0.1
 collector.tcp.listener.south.port=2405
 collector.tcp.listener.south.source=station-b
 
+collector.backpressure.maxPayloadBytes=65536
+collector.backpressure.oversizedPayloadDecision=DROP
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
@@ -330,7 +336,9 @@ The snapshot includes:
 - per-listener and total active connection counts
 - parsed record and parse failure counters
 - last parse failure source id, message, and observed timestamp
-- sink type, file rotation policy, backpressure mode, and strict ASDU setting
+- backpressure retry/drop counters and last backpressure decision details
+- sink type, file rotation policy, backpressure mode, payload threshold policy,
+  and strict ASDU setting
 
 ### File Sink Format
 

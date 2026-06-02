@@ -1,6 +1,7 @@
 package io.github.qbsstg.protocol.runtime.app;
 
 import io.github.qbsstg.protocol.iec104.Iec104Frame;
+import io.github.qbsstg.protocol.runtime.core.BackpressureStrategy;
 import io.github.qbsstg.protocol.runtime.core.FailureSink;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
 import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
@@ -66,6 +67,14 @@ record RuntimeSinks(
 
     CollectorRuntimeMetrics metricsSnapshot() {
         return counters.snapshot();
+    }
+
+    BackpressureStrategy backpressureStrategy(StandaloneCollectorAppConfig config) {
+        return new RuntimeAppBackpressureStrategy(
+                config.backpressureDecision(),
+                config.backpressureMaxPayloadBytes(),
+                config.oversizedPayloadDecision(),
+                counters);
     }
 
     void stop() {
