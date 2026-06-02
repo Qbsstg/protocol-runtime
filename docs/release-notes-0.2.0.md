@@ -1,6 +1,6 @@
 # Protocol Runtime 0.2.0 Release Notes
 
-Draft notes for the `0.2.0` runtime release line.
+Release branch notes for the `0.2.0` runtime release line.
 
 ## Highlights
 
@@ -23,7 +23,7 @@ Draft notes for the `0.2.0` runtime release line.
 ```bash
 mvn -q -pl runtime-app -am package
 
-java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
   --config examples/collector.properties
 
 java examples/Iec104SendSinglePoint.java 127.0.0.1 2404
@@ -65,7 +65,6 @@ Before release, the branch should pass:
 The `0.2.0` readiness audit is maintained in
 [`release-readiness-0.2.0.md`](release-readiness-0.2.0.md).
 
-The release is not tagged yet. The next release branch should set the Maven
-reactor version from `0.2.0-SNAPSHOT` to `0.2.0`, rerun the verification target
-above, pass GitHub Actions, and only then proceed to tag and Maven Central
-upload.
+The release is not tagged yet. This release branch sets the Maven reactor
+version to `0.2.0`, reruns the verification target above, and requires GitHub
+Actions to pass before tag creation or Maven Central upload.

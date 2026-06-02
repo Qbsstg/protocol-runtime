@@ -17,13 +17,14 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 - 一个基于已发布 `protocol-iec104:0.7.0` 的 IEC104 运行时绑定。
 - 第一个 TCP/Netty 接入基线。
 
-当前开发线是 `0.2.0-SNAPSHOT`。这一阶段的第一个目标是提供一个最小
-standalone IEC104 TCP collector，把已经发布的 runtime 合同组装成一个可启动的
-JDK 21 进程。
+当前 release 分支已经把 Maven reactor 版本固定为 `0.2.0`。这一阶段的范围是
+提供一个最小 standalone IEC104 TCP collector，把已经发布的 runtime 合同组装成
+一个可启动的 JDK 21 进程。
 
 `0.2.0` 发布准备审计记录在
-[`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)。这一
-阶段只做 readiness 检查，不创建 tag，也不执行真实 Maven Central 上传。
+[`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)。release
+分支不创建 tag，也不执行真实 Maven Central 上传；这些步骤只会在 release PR
+合并并且 `main` 上最终验证通过后执行。
 
 ## Maven 坐标
 
@@ -152,7 +153,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -201,7 +202,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
