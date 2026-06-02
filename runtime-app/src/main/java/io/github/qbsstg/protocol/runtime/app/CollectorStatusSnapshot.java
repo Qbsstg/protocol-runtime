@@ -16,11 +16,15 @@ public record CollectorStatusSnapshot(
         List<TcpListenerStatus> tcpListeners,
         int activeConnectionCount,
         SinkType sinkType,
+        FileSinkRotationConfig fileSinkRotation,
         BackpressureDecision backpressureDecision,
         boolean strictAsduParsing) {
 
     public CollectorStatusSnapshot {
         sources = List.copyOf(sources);
         tcpListeners = List.copyOf(tcpListeners);
+        if (fileSinkRotation == null) {
+            throw new IllegalArgumentException("fileSinkRotation must not be null");
+        }
     }
 }

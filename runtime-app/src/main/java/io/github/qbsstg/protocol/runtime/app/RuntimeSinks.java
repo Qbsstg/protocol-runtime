@@ -27,7 +27,9 @@ record RuntimeSinks(
                 yield new RuntimeSinks(sink, sink, null);
             }
             case FILE -> {
-                FileRuntimeSink<Iec104Frame> sink = new FileRuntimeSink<>(config.sinkFile());
+                FileRuntimeSink<Iec104Frame> sink = new FileRuntimeSink<>(
+                        config.sinkFile(),
+                        config.fileSinkRotation());
                 yield new RuntimeSinks(sink, sink, null);
             }
             case IN_MEMORY -> {

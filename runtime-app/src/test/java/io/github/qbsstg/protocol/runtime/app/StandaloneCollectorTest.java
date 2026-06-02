@@ -21,8 +21,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +48,7 @@ class StandaloneCollectorTest {
             assertEquals(CollectorLifecycleState.CONFIGURED, configured.state());
             assertNull(configured.startedAt());
             assertEquals(SinkType.IN_MEMORY, configured.sinkType());
+            assertEquals(FileSinkRotationConfig.defaults(), configured.fileSinkRotation());
             assertEquals(BackpressureDecision.ACCEPT, configured.backpressureDecision());
             assertFalse(configured.strictAsduParsing());
 
@@ -93,6 +96,26 @@ class StandaloneCollectorTest {
         assertTrue(line.contains("\"kind\":\"record\""));
         assertTrue(line.contains("\"sourceId\":\"iec104:station-1\""));
         assertTrue(line.contains("\"rawPayloadHex\":\"680E0000000001010300010001000001\""));
+    }
+
+    @Test
+    void rotatesConfiguredFileSinkBeforeItGrowsWithoutBound() throws Exception {
+        Path output = tempDir.resolve("rotating-records.ndjson");
+        FileRuntimeSink<String> sink = new FileRuntimeSink<>(output, new FileSinkRotationConfig(1, 2));
+
+        sink.accept(record("record-1"));
+        sink.accept(record("record-2"));
+        sink.accept(record("record-3"));
+        sink.accept(record("record-4"));
+        sink.stop();
+
+        assertFileContains(output, "record-4");
+        assertFileContains(rotatedPath(output, 1), "record-3");
+        assertFileContains(rotatedPath(output, 2), "record-2");
+        assertFalse(Files.exists(rotatedPath(output, 3)));
+        assertFalse(Files.readString(output).contains("record-1"));
+        assertFalse(Files.readString(rotatedPath(output, 1)).contains("record-1"));
+        assertFalse(Files.readString(rotatedPath(output, 2)).contains("record-1"));
     }
 
     @Test
@@ -315,6 +338,8 @@ class StandaloneCollectorTest {
         properties.setProperty(StandaloneCollectorConfig.TCP_BOSS_THREADS, "0");
         properties.setProperty(StandaloneCollectorConfig.TCP_WORKER_THREADS, "-1");
         properties.setProperty(StandaloneCollectorConfig.SINK_FILE, tempDir.toString());
+        properties.setProperty(StandaloneCollectorConfig.SINK_FILE_MAX_BYTES, "0");
+        properties.setProperty(StandaloneCollectorConfig.SINK_FILE_MAX_HISTORY, "0");
 
         CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
 
@@ -325,6 +350,22 @@ class StandaloneCollectorTest {
         assertContainsError(validation, StandaloneCollectorConfig.TCP_WORKER_THREADS + " must be positive");
         assertContainsError(validation, StandaloneCollectorConfig.SINK_TYPE + " must be logging, file, or in-memory");
         assertContainsError(validation, StandaloneCollectorConfig.SINK_FILE + " must point to a file");
+        assertContainsError(validation, StandaloneCollectorConfig.SINK_FILE_MAX_BYTES + " must be positive");
+        assertContainsError(validation, StandaloneCollectorConfig.SINK_FILE_MAX_HISTORY + " must be positive");
+    }
+
+    @Test
+    void parsesCustomFileSinkRotationPolicy() {
+        Path output = tempDir.resolve("custom-records.ndjson");
+        Properties properties = baseProperties(0, "file");
+        properties.setProperty(StandaloneCollectorConfig.SINK_FILE, output.toString());
+        properties.setProperty(StandaloneCollectorConfig.SINK_FILE_MAX_BYTES, "4096");
+        properties.setProperty(StandaloneCollectorConfig.SINK_FILE_MAX_HISTORY, "3");
+
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertEquals(output, appConfig.sinkFile());
+        assertEquals(new FileSinkRotationConfig(4096, 3), appConfig.fileSinkRotation());
     }
 
     @Test
@@ -411,6 +452,7 @@ class StandaloneCollectorTest {
                 BackpressureDecision.ACCEPT,
                 SinkType.IN_MEMORY,
                 null,
+                FileSinkRotationConfig.defaults(),
                 false);
     }
 
@@ -491,6 +533,27 @@ class StandaloneCollectorTest {
         assertTrue(
                 validation.errors().stream().anyMatch(error -> error.contains(expected)),
                 () -> "Expected validation error containing '" + expected + "' but got " + validation.errors());
+    }
+
+    private static ParsedRecord<String> record(String value) {
+        return new ParsedRecord<>(
+                SourceId.of("test", "source"),
+                "test",
+                "record",
+                value,
+                value.getBytes(),
+                Instant.parse("2026-01-01T00:00:00Z"),
+                Map.of());
+    }
+
+    private static void assertFileContains(Path output, String expected) throws Exception {
+        assertTrue(Files.exists(output), () -> "Expected file to exist: " + output);
+        String content = Files.readString(output);
+        assertTrue(content.contains(expected), () -> "Expected " + output + " to contain " + expected);
+    }
+
+    private static Path rotatedPath(Path output, int index) {
+        return output.resolveSibling(output.getFileName() + "." + index);
     }
 
     private static int freePort() throws IOException {
