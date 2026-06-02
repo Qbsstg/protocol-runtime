@@ -7,7 +7,7 @@ Central Portal.
 
 The latest published runtime release is `0.2.0`.
 
-The current development line is `0.3.0-SNAPSHOT`. The published `0.2.0` release includes:
+The current release branch is `0.3.0`. The published `0.2.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -26,9 +26,8 @@ notes are maintained in [`release-notes-0.3.0.md`](release-notes-0.3.0.md),
 and release-readiness audit work is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
 
-`0.3.0` is not a release branch yet. Main should remain on
-`0.3.0-SNAPSHOT` until the production-hardening scope has passed local and
-GitHub Actions verification.
+The `0.3.0` release branch fixes the Maven reactor version at `0.3.0`. It does
+not create a tag or perform a real Maven Central upload.
 
 ## Prerequisites
 

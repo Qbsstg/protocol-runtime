@@ -1,8 +1,7 @@
 # Protocol Runtime 0.3.0 Release Notes
 
-Draft release notes for the next `0.3.0` runtime release line. Main currently
-builds as `0.3.0-SNAPSHOT`; the final `0.3.0` version should be set only on the
-release branch.
+Draft release notes for the next `0.3.0` runtime release line. The release
+branch fixes the Maven reactor version at `0.3.0`.
 
 ## Highlights
 
@@ -73,5 +72,5 @@ Before release readiness, the branch should pass:
 ## Release Readiness Status
 
 The release-readiness audit is tracked in
-[`release-readiness-0.3.0.md`](release-readiness-0.3.0.md). No `0.3.0`
-release branch, tag, or Maven Central deployment exists yet.
+[`release-readiness-0.3.0.md`](release-readiness-0.3.0.md). The `0.3.0`
+release branch exists; no tag or Maven Central deployment exists yet.
