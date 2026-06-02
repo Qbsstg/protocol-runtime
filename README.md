@@ -449,6 +449,7 @@ verified.
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
+- [`docs/release-readiness-0.3.0.md`](docs/release-readiness-0.3.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)

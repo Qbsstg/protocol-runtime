@@ -99,18 +99,20 @@ Before `0.3.0` release readiness, an operator should be able to:
 
 ## Development Progress
 
-- Configuration validation result model: started.
-- Startup validation before network bind: started.
-- Multi-source and multi-listener app configuration model: started.
+- Configuration validation result model: complete.
+- Startup validation before network bind: complete.
+- Multi-source and multi-listener app configuration model: complete.
 - Legacy single-source `collector.properties` compatibility: preserved.
-- Collector lifecycle/status snapshot: started.
-- Standalone startup/shutdown status output: started.
-- Runtime status counters for parsed records and parse failures: started.
+- Collector lifecycle/status snapshot: complete.
+- Standalone startup/shutdown status output: complete.
+- Runtime status counters for parsed records and parse failures: complete.
 - Parse failure diagnostics with payload preview and TCP/session attributes:
-  started.
-- File sink rotation policy: started.
-- Payload-size backpressure policy and counters: started.
-- Queue-depth and sink-pressure backpressure policy: still planned.
+  complete.
+- File sink rotation policy: complete.
+- Payload-size backpressure policy and counters: complete.
+- Queue-depth and sink-pressure backpressure policy: deferred beyond `0.3.0`.
+- Release-readiness audit: tracked in
+  [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
 
 ## Release Readiness Gate
 

@@ -4,7 +4,7 @@ Draft release notes for the next `0.3.0` runtime release line. Main currently
 builds as `0.3.0-SNAPSHOT`; the final `0.3.0` version should be set only on the
 release branch.
 
-## Planned Highlights
+## Highlights
 
 - Harden `runtime-app` after the published `0.2.0` standalone collector
   baseline.
@@ -34,7 +34,7 @@ release branch.
 - Document the adapter boundary for future Kafka, MQTT, HTTP, database, Redis,
   and observability modules.
 
-## Planned Scope
+## Scope
 
 `0.3.0` is a production-hardening release for the standalone collector
 boundary. It should make the app easier to configure, run, observe, and
@@ -72,5 +72,6 @@ Before release readiness, the branch should pass:
 
 ## Release Readiness Status
 
-The release is in development. No `0.3.0` release branch, tag, or Maven Central
-deployment exists yet.
+The release-readiness audit is tracked in
+[`release-readiness-0.3.0.md`](release-readiness-0.3.0.md). No `0.3.0`
+release branch, tag, or Maven Central deployment exists yet.

@@ -20,9 +20,11 @@ The current development line is `0.3.0-SNAPSHOT`. The published `0.2.0` release 
 than a published dependency.
 
 The readiness decision is documented in
-[`release-readiness-0.2.0.md`](release-readiness-0.2.0.md). The next roadmap is
-maintained in [`roadmap-0.3.0.md`](roadmap-0.3.0.md), and draft release notes
-are maintained in [`release-notes-0.3.0.md`](release-notes-0.3.0.md).
+[`release-readiness-0.2.0.md`](release-readiness-0.2.0.md). The `0.3.0`
+roadmap is maintained in [`roadmap-0.3.0.md`](roadmap-0.3.0.md), draft release
+notes are maintained in [`release-notes-0.3.0.md`](release-notes-0.3.0.md),
+and release-readiness audit work is tracked in
+[`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
 
 `0.3.0` is not a release branch yet. Main should remain on
 `0.3.0-SNAPSHOT` until the production-hardening scope has passed local and
