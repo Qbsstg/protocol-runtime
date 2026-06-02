@@ -77,7 +77,7 @@ keeping each protocol parser inside its SDK module.
 - `runtime-protocol-iec103` parser binding baseline: complete.
 - `runtime-protocol-modbus` parser binding baseline: complete.
 - App-level protocol selection: complete.
-- Cross-module smoke tests for additional protocols: pending.
+- Cross-module smoke tests for additional protocols: complete.
 
 ## Acceptance Criteria
 
@@ -90,6 +90,9 @@ Before `0.4.0` release readiness:
   is adapted to runtime records or failures.
 - `runtime-app` can select `iec104`, `iec101`, `iec103`, or `modbus` per
   configured source/listener while keeping the legacy IEC104 default path.
+- `runtime-smoke-tests` proves IEC101, IEC103, and Modbus parser bindings can
+  run behind TCP ingress and `RuntimePipelineRunner` without moving transport
+  dependencies into the protocol binding modules.
 - `runtime-core` still has no Netty, SDK protocol, Spring, Kafka, MQTT, HTTP,
   database, Redis, or observability exporter dependencies.
 - `runtime-protocol-*` modules do not depend on transport or app modules.

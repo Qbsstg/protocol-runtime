@@ -116,6 +116,8 @@ Allowed:
 - `runtime-protocol-iec103` depends on `runtime-core` and `protocol-iec103`
 - `runtime-protocol-modbus` depends on `runtime-core` and `protocol-modbus`
 - `runtime-app` selects a protocol binding for each configured source/listener
+- `runtime-smoke-tests` combines TCP ingress and protocol bindings for
+  repository-only cross-module verification
 
 Not allowed:
 

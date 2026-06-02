@@ -400,21 +400,22 @@ and do not stop the collector or prevent later healthy frames from parsing.
 
 ## Smoke Tests
 
-`runtime-smoke-tests` holds cross-module verification only. The first smoke test
-feeds IEC104 TCP bytes through:
+`runtime-smoke-tests` holds cross-module verification only. The smoke tests feed
+TCP bytes through:
 
 ```text
 EmbeddedChannel or real localhost Socket
   -> TcpNettyServer / TcpNettyIngressHandler
   -> RuntimePipelineRunner
-  -> Iec104RuntimeBinding
+  -> selected RuntimeParserBinding
   -> RecordSink / FailureSink
 ```
 
-It covers complete IEC104 frames, split TCP reads, backpressure that prevents
-parsing, malformed IEC104 frames routed to the failure sink, a real TCP socket
+The IEC104 smoke test covers complete frames, split TCP reads, backpressure that
+prevents parsing, malformed frames routed to the failure sink, a real TCP socket
 path through the server bootstrap, and connection disconnect behavior that stops
-the per-connection runner.
+the per-connection runner. The multi-protocol smoke test adds IEC101, IEC103,
+and Modbus TCP byte-stream paths through the same ingress and runner boundary.
 
 ## Dependency Direction
 
