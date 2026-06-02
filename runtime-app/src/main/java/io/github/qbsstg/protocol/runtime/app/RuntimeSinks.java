@@ -1,6 +1,5 @@
 package io.github.qbsstg.protocol.runtime.app;
 
-import io.github.qbsstg.protocol.iec104.Iec104Frame;
 import io.github.qbsstg.protocol.runtime.core.BackpressureStrategy;
 import io.github.qbsstg.protocol.runtime.core.FailureSink;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
@@ -12,9 +11,9 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 record RuntimeSinks(
-        RecordSink<Iec104Frame> recordSink,
+        RecordSink<Object> recordSink,
         FailureSink failureSink,
-        InMemoryRuntimeSink<Iec104Frame> inMemorySink,
+        InMemoryRuntimeSink<Object> inMemorySink,
         RuntimeSinkCounters counters) {
 
     static RuntimeSinks from(StandaloneCollectorConfig config) {
@@ -24,32 +23,32 @@ record RuntimeSinks(
     static RuntimeSinks from(StandaloneCollectorAppConfig config) {
         return switch (config.sinkType()) {
             case LOGGING -> {
-                LoggingRuntimeSink<Iec104Frame> sink = new LoggingRuntimeSink<>(
+                LoggingRuntimeSink<Object> sink = new LoggingRuntimeSink<>(
                         Logger.getLogger("io.github.qbsstg.protocol.runtime.collector"));
                 yield new RuntimeSinks(sink, sink, null, new RuntimeSinkCounters());
             }
             case FILE -> {
-                FileRuntimeSink<Iec104Frame> sink = new FileRuntimeSink<>(
+                FileRuntimeSink<Object> sink = new FileRuntimeSink<>(
                         config.sinkFile(),
                         config.fileSinkRotation());
                 yield new RuntimeSinks(sink, sink, null, new RuntimeSinkCounters());
             }
             case IN_MEMORY -> {
-                InMemoryRuntimeSink<Iec104Frame> sink = new InMemoryRuntimeSink<>();
+                InMemoryRuntimeSink<Object> sink = new InMemoryRuntimeSink<>();
                 yield new RuntimeSinks(sink, sink, sink, new RuntimeSinkCounters());
             }
         };
     }
 
-    Optional<InMemoryRuntimeSink<Iec104Frame>> inMemory() {
+    Optional<InMemoryRuntimeSink<Object>> inMemory() {
         return Optional.ofNullable(inMemorySink);
     }
 
-    RecordSink<Iec104Frame> runnerRecordSink() {
+    <T> RecordSink<T> runnerRecordSink() {
         return new RecordSink<>() {
             @Override
-            public void accept(ParsedRecord<Iec104Frame> record) {
-                recordSink.accept(record);
+            public void accept(ParsedRecord<T> record) {
+                recordSink.accept(widen(record));
                 counters.recordParsedRecord(record);
             }
         };
@@ -99,5 +98,10 @@ record RuntimeSinks(
             failure.addSuppressed(ex);
             return failure;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ParsedRecord<Object> widen(ParsedRecord<?> record) {
+        return (ParsedRecord<Object>) record;
     }
 }

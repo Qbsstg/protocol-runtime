@@ -3,12 +3,15 @@ package io.github.qbsstg.protocol.runtime.app;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.qbsstg.protocol.iec104.Iec104Frame;
+import io.github.qbsstg.protocol.iec101.Iec101Frame;
+import io.github.qbsstg.protocol.iec103.Iec103Frame;
+import io.github.qbsstg.protocol.modbus.ModbusTcpAdu;
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
 import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
@@ -60,8 +63,8 @@ class StandaloneCollectorTest {
 
             writeFrame(collector, SINGLE_POINT_FRAME);
 
-            InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
-            List<ParsedRecord<Iec104Frame>> records = awaitRecords(sink, 1);
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParsedRecord<Object>> records = awaitRecords(sink, 1);
             assertTrue(collector.isRunning());
             assertEquals("iec104:station-1", records.get(0).sourceId().qualifiedValue());
             assertEquals("iec104", records.get(0).protocol());
@@ -75,8 +78,10 @@ class StandaloneCollectorTest {
             assertNull(running.stoppedAt());
             assertEquals(1, running.sources().size());
             assertEquals("iec104:station-1", running.sources().get(0).sourceId());
+            assertEquals("iec104", running.sources().get(0).protocol());
             assertEquals(1, running.tcpListeners().size());
             assertEquals("default", running.tcpListeners().get(0).name());
+            assertEquals("iec104", running.tcpListeners().get(0).protocol());
             assertEquals("127.0.0.1", running.tcpListeners().get(0).configuredHost());
             assertEquals(0, running.tcpListeners().get(0).configuredPort());
             assertTrue(running.tcpListeners().get(0).running());
@@ -141,7 +146,7 @@ class StandaloneCollectorTest {
             byte[] malformed = bytes(0x68, 0x03, 0x00, 0x00, 0x00);
             writeFrame(collector, malformed);
 
-            InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
             List<ParseFailure> failures = awaitFailures(sink, 1);
             assertTrue(sink.records().isEmpty());
             assertEquals("iec104:station-1", failures.get(0).sourceId().qualifiedValue());
@@ -180,7 +185,7 @@ class StandaloneCollectorTest {
             writeFrame(collector, SINGLE_POINT_FRAME);
             Thread.sleep(200);
 
-            InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
             assertTrue(sink.records().isEmpty());
             assertTrue(sink.failures().isEmpty());
             CollectorRuntimeMetrics metrics = awaitRetryLaterBackpressure(collector, 1);
@@ -213,7 +218,7 @@ class StandaloneCollectorTest {
             writeFrame(collector, SINGLE_POINT_FRAME);
 
             CollectorRuntimeMetrics metrics = awaitDropBackpressure(collector, 1);
-            InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
             assertTrue(sink.records().isEmpty());
             assertTrue(sink.failures().isEmpty());
             assertEquals(0, metrics.parsedRecordCount());
@@ -236,9 +241,38 @@ class StandaloneCollectorTest {
         assertEquals(1, appConfig.tcpListeners().size());
         assertEquals("default", appConfig.sources().get(0).name());
         assertEquals("iec104:station-1", appConfig.sources().get(0).sourceId().qualifiedValue());
+        assertEquals(RuntimeProtocol.IEC104, appConfig.sources().get(0).protocol());
         assertEquals("default", appConfig.tcpListeners().get(0).name());
         assertEquals("default", appConfig.tcpListeners().get(0).sourceName());
+        assertEquals(RuntimeProtocol.IEC104, appConfig.tcpListeners().get(0).protocol());
         assertEquals(2404, appConfig.tcpListeners().get(0).tcp().port());
+    }
+
+    @Test
+    void parsesProtocolSelectionForLegacyAndNamedSources() {
+        Properties legacy = baseProperties(2404, "logging");
+        legacy.setProperty(StandaloneCollectorConfig.PROTOCOL, "modbus");
+        legacy.setProperty(StandaloneCollectorConfig.SOURCE_ID, "modbus:station-1");
+
+        StandaloneCollectorAppConfig legacyConfig = StandaloneCollectorConfig.appConfigFromProperties(legacy);
+
+        assertEquals(RuntimeProtocol.MODBUS, legacyConfig.sources().get(0).protocol());
+        assertEquals(RuntimeProtocol.MODBUS, legacyConfig.tcpListeners().get(0).protocol());
+        assertEquals(RuntimeProtocol.MODBUS, legacyConfig.singleCollectorConfig().protocol());
+
+        Properties named = multiSourceProperties();
+        named.setProperty(
+                StandaloneCollectorConfig.SOURCE_PREFIX
+                        + "station-b"
+                        + StandaloneCollectorConfig.SOURCE_PROTOCOL_SUFFIX,
+                "iec103");
+
+        StandaloneCollectorAppConfig namedConfig = StandaloneCollectorConfig.appConfigFromProperties(named);
+
+        assertEquals(RuntimeProtocol.IEC104, namedConfig.sources().get(0).protocol());
+        assertEquals(RuntimeProtocol.IEC104, namedConfig.tcpListeners().get(0).protocol());
+        assertEquals(RuntimeProtocol.IEC103, namedConfig.sources().get(1).protocol());
+        assertEquals(RuntimeProtocol.IEC103, namedConfig.tcpListeners().get(1).protocol());
     }
 
     @Test
@@ -276,10 +310,10 @@ class StandaloneCollectorTest {
             writeFrame(addresses.get(0), SINGLE_POINT_FRAME);
             writeFrame(addresses.get(1), SINGLE_POINT_FRAME);
 
-            InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
-            List<ParsedRecord<Iec104Frame>> records = awaitRecords(sink, 2);
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParsedRecord<Object>> records = awaitRecords(sink, 2);
             Set<String> sourceIds = new HashSet<>();
-            for (ParsedRecord<Iec104Frame> record : records) {
+            for (ParsedRecord<Object> record : records) {
                 sourceIds.add(record.sourceId().qualifiedValue());
             }
             assertEquals(Set.of("iec104:station-a", "iec104:station-b"), sourceIds);
@@ -438,6 +472,41 @@ class StandaloneCollectorTest {
     }
 
     @Test
+    void reportsUnsupportedProtocolConfiguration() {
+        Properties properties = baseProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.PROTOCOL, "iec102");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.PROTOCOL + " must be iec104, iec101, iec103, or modbus");
+
+        properties = multiSourceProperties();
+        properties.setProperty(
+                StandaloneCollectorConfig.SOURCE_PREFIX
+                        + "station-a"
+                        + StandaloneCollectorConfig.SOURCE_PROTOCOL_SUFFIX,
+                "mqtt");
+
+        validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(
+                validation,
+                StandaloneCollectorConfig.SOURCE_PREFIX
+                        + "station-a"
+                        + StandaloneCollectorConfig.SOURCE_PROTOCOL_SUFFIX
+                        + " must be iec104, iec101, iec103, or modbus");
+    }
+
+    @Test
+    void routesProtocolSelectedTcpFramesToInMemorySink() throws Exception {
+        assertProtocolSelectedFrame(RuntimeProtocol.IEC101, "iec101:station-1", variableIec101SinglePointFrame(), Iec101Frame.class);
+        assertProtocolSelectedFrame(RuntimeProtocol.IEC103, "iec103:station-1", variableIec103ProtectionEventFrame(), Iec103Frame.class);
+        assertProtocolSelectedFrame(RuntimeProtocol.MODBUS, "modbus:station-1", modbusReadHoldingRegistersRequest(), ModbusTcpAdu.class);
+    }
+
+    @Test
     void parsesCustomBackpressurePayloadPolicy() {
         Properties properties = baseProperties(0, "in-memory");
         properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_MAX_PAYLOAD_BYTES, "64");
@@ -514,6 +583,13 @@ class StandaloneCollectorTest {
         return properties;
     }
 
+    private static Properties protocolProperties(RuntimeProtocol protocol, String sourceId) {
+        Properties properties = baseProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.PROTOCOL, protocol.configValue());
+        properties.setProperty(StandaloneCollectorConfig.SOURCE_ID, sourceId);
+        return properties;
+    }
+
     private static Properties multiSourceProperties() {
         Properties properties = new Properties();
         properties.setProperty(StandaloneCollectorConfig.SOURCES, "station-a,station-b");
@@ -575,12 +651,12 @@ class StandaloneCollectorTest {
         }
     }
 
-    private static List<ParsedRecord<Iec104Frame>> awaitRecords(
-            InMemoryRuntimeSink<Iec104Frame> sink,
+    private static List<ParsedRecord<Object>> awaitRecords(
+            InMemoryRuntimeSink<Object> sink,
             int expected) throws InterruptedException {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
         while (System.nanoTime() < deadline) {
-            List<ParsedRecord<Iec104Frame>> records = sink.records();
+            List<ParsedRecord<Object>> records = sink.records();
             if (records.size() >= expected) {
                 return records;
             }
@@ -591,7 +667,7 @@ class StandaloneCollectorTest {
     }
 
     private static List<ParseFailure> awaitFailures(
-            InMemoryRuntimeSink<Iec104Frame> sink,
+            InMemoryRuntimeSink<Object> sink,
             int expected) throws InterruptedException {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
         while (System.nanoTime() < deadline) {
@@ -681,6 +757,29 @@ class StandaloneCollectorTest {
                 Map.of());
     }
 
+    private static void assertProtocolSelectedFrame(
+            RuntimeProtocol protocol,
+            String sourceId,
+            byte[] frame,
+            Class<?> expectedValueType) throws Exception {
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.fromProperties(protocolProperties(protocol, sourceId)))) {
+            collector.start();
+
+            writeFrame(collector, frame);
+
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            ParsedRecord<Object> record = awaitRecords(sink, 1).get(0);
+            assertEquals(sourceId, record.sourceId().qualifiedValue());
+            assertEquals(protocol.configValue(), record.protocol());
+            assertInstanceOf(expectedValueType, record.value());
+            assertTrue(sink.failures().isEmpty());
+            CollectorStatusSnapshot snapshot = collector.statusSnapshot();
+            assertEquals(protocol.configValue(), snapshot.sources().get(0).protocol());
+            assertEquals(protocol.configValue(), snapshot.tcpListeners().get(0).protocol());
+        }
+    }
+
     private static void assertFileContains(Path output, String expected) throws Exception {
         assertTrue(Files.exists(output), () -> "Expected file to exist: " + output);
         String content = Files.readString(output);
@@ -695,6 +794,50 @@ class StandaloneCollectorTest {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
         }
+    }
+
+    private static byte[] variableIec101SinglePointFrame() {
+        return variableFrame(0x08, 0x01, bytes(
+                0x01, 0x01, 0x03, 0x00,
+                0x01, 0x00, 0x01, 0x00, 0x00,
+                0x01));
+    }
+
+    private static byte[] variableIec103ProtectionEventFrame() {
+        return variableFrame(0x08, 0x01, bytes(
+                0x01, 0x01, 0x01, 0x01,
+                0x10, 0x01, 0xD2, 0xE8, 0x03, 0x15, 0x10));
+    }
+
+    private static byte[] variableFrame(int control, int linkAddress, byte[] asdu) {
+        byte[] payload = new byte[2 + asdu.length];
+        payload[0] = (byte) control;
+        payload[1] = (byte) linkAddress;
+        System.arraycopy(asdu, 0, payload, 2, asdu.length);
+        int checksum = checksum(payload);
+        byte[] frame = new byte[6 + payload.length];
+        frame[0] = 0x68;
+        frame[1] = (byte) payload.length;
+        frame[2] = (byte) payload.length;
+        frame[3] = 0x68;
+        System.arraycopy(payload, 0, frame, 4, payload.length);
+        frame[4 + payload.length] = (byte) checksum;
+        frame[5 + payload.length] = 0x16;
+        return frame;
+    }
+
+    private static int checksum(byte[] bytes) {
+        int value = 0;
+        for (byte current : bytes) {
+            value = (value + (current & 0xFF)) & 0xFF;
+        }
+        return value;
+    }
+
+    private static byte[] modbusReadHoldingRegistersRequest() {
+        return bytes(
+                0x00, 0x01, 0x00, 0x00, 0x00, 0x06,
+                0x11, 0x03, 0x00, 0x6B, 0x00, 0x03);
     }
 
     private static byte[] bytes(int... values) {

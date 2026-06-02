@@ -1,10 +1,13 @@
 package io.github.qbsstg.protocol.runtime.app;
 
-import io.github.qbsstg.protocol.iec104.Iec104Frame;
 import io.github.qbsstg.protocol.runtime.core.RuntimeLifecycle;
+import io.github.qbsstg.protocol.runtime.core.RuntimeParserBinding;
 import io.github.qbsstg.protocol.runtime.core.RuntimePipelineRunner;
+import io.github.qbsstg.protocol.runtime.iec101.Iec101RuntimeBinding;
+import io.github.qbsstg.protocol.runtime.iec103.Iec103RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.iec104.Iec104RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServer;
+import io.github.qbsstg.protocol.runtime.modbus.ModbusRuntimeBinding;
 
 import java.net.InetSocketAddress;
 import java.time.Clock;
@@ -13,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Supplier;
 
 public final class StandaloneCollector implements RuntimeLifecycle {
 
@@ -36,17 +40,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         this.sinks = Objects.requireNonNull(sinks, "sinks must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.listeners = appConfig.tcpListeners().stream()
-                .map(listener -> new ListenerRuntime(
-                        listener,
-                        new TcpNettyServer<Iec104Frame>(
-                                listener.tcp(),
-                                channel -> new RuntimePipelineRunner<>(
-                                        new Iec104RuntimeBinding(appConfig.strictAsduParsing()),
-                                        sinks.runnerRecordSink(),
-                                        sinks.runnerFailureSink(),
-                                        sinks.backpressureStrategy(appConfig)),
-                                context -> listener.sourceId(),
-                                clock)))
+                .map(listener -> new ListenerRuntime(listener, createServer(listener)))
                 .toList();
     }
 
@@ -66,7 +60,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         return appConfig;
     }
 
-    public Optional<InMemoryRuntimeSink<Iec104Frame>> inMemorySink() {
+    public Optional<InMemoryRuntimeSink<Object>> inMemorySink() {
         return sinks.inMemory();
     }
 
@@ -76,7 +70,10 @@ public final class StandaloneCollector implements RuntimeLifecycle {
 
     public synchronized CollectorStatusSnapshot statusSnapshot() {
         List<CollectorSourceStatus> sourceStatuses = appConfig.sources().stream()
-                .map(source -> new CollectorSourceStatus(source.name(), source.sourceId().qualifiedValue()))
+                .map(source -> new CollectorSourceStatus(
+                        source.name(),
+                        source.sourceId().qualifiedValue(),
+                        source.protocol().configValue()))
                 .toList();
         List<TcpListenerStatus> listenerStatuses = listeners.stream()
                 .map(this::listenerStatus)
@@ -222,7 +219,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         stopped.await();
     }
 
-    private TcpNettyServer<Iec104Frame> singleServer() {
+    private TcpNettyServer<?> singleServer() {
         if (listeners.size() != 1) {
             throw new IllegalStateException("single listener API requires exactly one TCP listener");
         }
@@ -231,7 +228,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
 
     private TcpListenerStatus listenerStatus(ListenerRuntime runtime) {
         TcpListenerConfig config = runtime.config();
-        TcpNettyServer<Iec104Frame> server = runtime.server();
+        TcpNettyServer<?> server = runtime.server();
         boolean running = server.isRunning();
         String boundHost = null;
         Integer boundPort = null;
@@ -244,6 +241,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 config.name(),
                 config.sourceName(),
                 config.sourceId().qualifiedValue(),
+                config.protocol().configValue(),
                 config.tcp().host(),
                 config.tcp().port(),
                 boundHost,
@@ -284,8 +282,33 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         return new IllegalStateException("collector start failed", failure);
     }
 
+    private TcpNettyServer<?> createServer(TcpListenerConfig listener) {
+        return switch (listener.protocol()) {
+            case IEC104 -> createTypedServer(
+                    listener,
+                    () -> new Iec104RuntimeBinding(appConfig.strictAsduParsing()));
+            case IEC101 -> createTypedServer(listener, Iec101RuntimeBinding::new);
+            case IEC103 -> createTypedServer(listener, Iec103RuntimeBinding::new);
+            case MODBUS -> createTypedServer(listener, ModbusRuntimeBinding::tcpStream);
+        };
+    }
+
+    private <T> TcpNettyServer<T> createTypedServer(
+            TcpListenerConfig listener,
+            Supplier<RuntimeParserBinding<T>> parserFactory) {
+        return new TcpNettyServer<>(
+                listener.tcp(),
+                channel -> new RuntimePipelineRunner<>(
+                        parserFactory.get(),
+                        sinks.runnerRecordSink(),
+                        sinks.runnerFailureSink(),
+                        sinks.backpressureStrategy(appConfig)),
+                context -> listener.sourceId(),
+                clock);
+    }
+
     private record ListenerRuntime(
             TcpListenerConfig config,
-            TcpNettyServer<Iec104Frame> server) {
+            TcpNettyServer<?> server) {
     }
 }

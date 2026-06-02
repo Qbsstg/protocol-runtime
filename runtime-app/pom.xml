@@ -26,6 +26,21 @@
         </dependency>
         <dependency>
             <groupId>io.github.qbsstg</groupId>
+            <artifactId>runtime-protocol-iec101</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.qbsstg</groupId>
+            <artifactId>runtime-protocol-iec103</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.qbsstg</groupId>
+            <artifactId>runtime-protocol-modbus</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.qbsstg</groupId>
             <artifactId>runtime-ingress-tcp-netty</artifactId>
             <version>${project.version}</version>
         </dependency>

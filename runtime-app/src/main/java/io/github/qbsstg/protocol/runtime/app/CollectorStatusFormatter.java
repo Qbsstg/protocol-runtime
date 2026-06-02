@@ -46,7 +46,9 @@ final class CollectorStatusFormatter {
             value.append("/running=")
                     .append(listener.running())
                     .append("/active=")
-                    .append(listener.activeConnectionCount());
+                    .append(listener.activeConnectionCount())
+                    .append("/protocol=")
+                    .append(listener.protocol());
         }
         value.append(']');
         return value.toString();
