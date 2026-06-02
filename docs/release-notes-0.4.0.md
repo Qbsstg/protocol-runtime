@@ -12,6 +12,8 @@ Draft release notes for the `0.4.0` runtime development line.
   - `runtime-protocol-iec101` -> `protocol-iec101`
   - `runtime-protocol-iec103` -> `protocol-iec103`
   - `runtime-protocol-modbus` -> `protocol-modbus`
+- Add the first IEC101 runtime binding baseline with per-source stream decoder
+  buffering, runtime record mapping, parse failure routing, and reset support.
 - Keep `runtime-core` dependency-light and free of SDK protocol modules,
   transport adapters, application frameworks, and downstream integrations.
 - Preserve the existing IEC104 standalone collector compatibility path while
@@ -22,6 +24,10 @@ Draft release notes for the `0.4.0` runtime development line.
 `0.4.0` is intended to move runtime from a single IEC104 app baseline toward a
 multi-protocol collector runtime. The release should add protocol binding
 capability without turning `runtime-core` into an adapter or application module.
+
+The first implemented step is `runtime-protocol-iec101`. It adapts
+`Iec101StreamDecoder` results into `RuntimeParseResult<Iec101Frame>` values and
+keeps serial transport policy outside the binding module.
 
 ## Dependency Policy
 
@@ -46,5 +52,6 @@ Before release readiness, the branch should pass:
 
 ## Release Readiness Status
 
-Release-readiness audit work has not started yet. The first `0.4.0` step is to
-open the `0.4.0-SNAPSHOT` Maven line and publish the roadmap.
+Release-readiness audit work has not started yet. The `0.4.0-SNAPSHOT` Maven
+line, roadmap, and IEC101 runtime binding baseline are in place. The next
+planned protocol binding baselines are IEC103 and Modbus.

@@ -74,7 +74,7 @@ application dependency even if a historical release is visible in Maven Central.
 | --- | --- | --- |
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
-| `runtime-protocol-iec101` | 0.4.0 planned | Planned runtime binding around `io.github.qbsstg:protocol-iec101:0.7.0`. |
+| `runtime-protocol-iec101` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec101:0.7.0` with per-source stream decoder buffering and failure routing. |
 | `runtime-protocol-iec103` | 0.4.0 planned | Planned runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0`. |
 | `runtime-protocol-modbus` | 0.4.0 planned | Planned runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
@@ -92,7 +92,7 @@ multi-protocol collector runtime without changing dependency direction:
 
 - keep the Maven reactor on `0.4.0-SNAPSHOT` until release readiness
 - consume published `protocol-sdk:0.7.0` parser artifacts
-- plan runtime bindings for IEC101, IEC103, and Modbus as separate
+- provide the first IEC101 runtime binding and plan IEC103/Modbus as separate
   `runtime-protocol-*` modules
 - keep protocol binding modules free of transport and app dependencies
 - add app-level protocol selection while preserving existing IEC104
@@ -437,9 +437,8 @@ mvn -q verify
 
 ## SDK Version
 
-The bootstrap runtime consumes published SDK `0.7.0` artifacts. The current
-implemented binding uses IEC104; the `0.4.0` line plans runtime bindings for
-the other published protocol modules:
+The bootstrap runtime consumes published SDK `0.7.0` artifacts. IEC104 and
+IEC101 runtime bindings are implemented; IEC103 and Modbus remain planned:
 
 - `io.github.qbsstg:protocol-core:0.7.0`
 - `io.github.qbsstg:protocol-iec104:0.7.0`
