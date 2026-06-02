@@ -81,3 +81,20 @@ The first app baseline may provide:
 The app boundary must not make `protocol-sdk` depend on runtime code, and must
 not move Spring, Kafka, MQTT, HTTP, database, or Redis dependencies into
 `runtime-core`.
+
+## `0.3.0` Production-Hardening Boundary
+
+The `0.3.0` line may harden `runtime-app` with validation, multi-source
+configuration, lifecycle/status state, app-level counters, file sink rotation,
+parse failure isolation, and stronger backpressure policy.
+
+Those changes should stay at the app or adapter boundary unless a smaller
+protocol-neutral contract is proven necessary. In particular:
+
+- configuration file shape belongs to `runtime-app`
+- Netty listener behavior belongs to `runtime-ingress-tcp-netty`
+- future HTTP health endpoints belong to an app or HTTP adapter module
+- metrics exporters belong to dedicated observability modules
+- Kafka, MQTT, HTTP, database, Redis, and object storage dependencies belong to
+  dedicated adapter or sink modules
+- `protocol-sdk` remains parser-only

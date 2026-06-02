@@ -11,31 +11,29 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 
 ## 当前状态
 
-当前仓库仍处于 bootstrap 阶段。第一个发布线是 `0.1.0`，它包含：
+当前仓库仍处于 bootstrap 阶段。`0.1.0` 已发布第一组运行时合同、IEC104
+绑定和 TCP/Netty 接入基线。`0.2.0` 已发布第一个可运行的 standalone IEC104
+TCP collector app。
 
-- 一个轻量的 `runtime-core` 合同层。
-- 一个基于已发布 `protocol-iec104:0.7.0` 的 IEC104 运行时绑定。
-- 第一个 TCP/Netty 接入基线。
+当前规划目标是 `0.3.0`。这一阶段的范围是对 `runtime-app` 做生产化加固：
+配置校验、多 source/多监听端口规划、collector lifecycle 状态、本地
+health/status 输出、基础 metrics/logging、file sink 轮转、解析失败隔离、
+backpressure 策略增强，以及后续 Kafka/MQTT/HTTP adapter 边界。
 
-当前 release 分支已经把 Maven reactor 版本固定为 `0.2.0`。这一阶段的范围是
-提供一个最小 standalone IEC104 TCP collector，把已经发布的 runtime 合同组装成
-一个可启动的 JDK 21 进程。
-
-`0.2.0` 发布准备审计记录在
-[`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)。release
-分支不创建 tag，也不执行真实 Maven Central 上传；这些步骤只会在 release PR
-合并并且 `main` 上最终验证通过后执行。
+`0.3.0` 规划记录在 [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)，
+草案 release notes 记录在
+[`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)。
 
 ## Maven 坐标
 
-第一个运行时发布版本是 `0.1.0`。Runtime 模块是 JDK 21 artifact。应用侧应
+最新运行时发布版本是 `0.2.0`。Runtime 模块是 JDK 21 artifact。应用侧应
 按需直接依赖具体模块：
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -43,7 +41,7 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -51,7 +49,15 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-app</artifactId>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -64,11 +70,28 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 | `runtime-core` | Bootstrap | 运行时无关合同：数据源标识、接入 envelope、解析绑定、解析结果、记录/失败 sink、背压、pipeline runner、生命周期边界。 |
 | `runtime-protocol-iec104` | Bootstrap | 基于 `io.github.qbsstg:protocol-iec104:0.7.0` 的第一个运行时协议绑定。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
-| `runtime-app` | 0.2.0 baseline | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。 |
+| `runtime-app` | 0.2.0 published / 0.3.0 planning | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。`0.3.0` 规划继续补配置校验、多 source 配置、生命周期/status、file 轮转、失败隔离和更强 backpressure 策略。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 MQTT、Kafka、HTTP ingress、pipeline、更多 sink 和更完整的可部署
 运行时应用。这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+
+## `0.3.0` 生产化加固规划
+
+`0.3.0` 的目标是在不改变依赖方向的前提下，让 standalone collector 更容易
+运行和诊断：
+
+- 启动监听端口前完成配置校验。
+- 在 app 边界支持多个配置 source 和多个 TCP listener。
+- 暴露 collector lifecycle 状态和最小 runtime status 快照。
+- 在选择 exporter 前先定义基础 app 级 counters 和日志。
+- 增加 file sink 轮转策略，避免本地输出无限增长。
+- 隔离解析失败，避免坏帧影响健康流量。
+- 增强 backpressure 策略，同时把 transport 行为留在 transport 模块。
+- 保持 Kafka、MQTT、HTTP、数据库、Redis 和 observability 依赖不进入
+  `runtime-core` 和 `protocol-sdk`。
+
+详细规划维护在 [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)。
 
 ## Runtime Core 合同
 
@@ -306,8 +329,10 @@ bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts：
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
+- [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
+- [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)

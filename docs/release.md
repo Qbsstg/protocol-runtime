@@ -5,9 +5,9 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.1.0`.
+The latest published runtime release is `0.2.0`.
 
-The current release target is `0.2.0`. It should publish:
+The current planning target is `0.3.0`. The published `0.2.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -20,13 +20,13 @@ The current release target is `0.2.0`. It should publish:
 than a published dependency.
 
 The readiness decision is documented in
-[`release-readiness-0.2.0.md`](release-readiness-0.2.0.md). Draft release notes
-are maintained in [`release-notes-0.2.0.md`](release-notes-0.2.0.md).
+[`release-readiness-0.2.0.md`](release-readiness-0.2.0.md). The next roadmap is
+maintained in [`roadmap-0.3.0.md`](roadmap-0.3.0.md), and draft release notes
+are maintained in [`release-notes-0.3.0.md`](release-notes-0.3.0.md).
 
-The `0.2.0` release branch fixes the Maven reactor version at `0.2.0`. It does
-not create a tag or perform a real Maven Central upload. Those steps happen only
-after the release PR merges into `main`, GitHub Actions passes on the merged
-commit, and the operator confirms the real upload.
+`0.3.0` is not a release branch yet. It should remain a planning and
+development line until the production-hardening scope has passed local and
+GitHub Actions verification.
 
 ## Prerequisites
 
