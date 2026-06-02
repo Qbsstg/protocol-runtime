@@ -16,13 +16,15 @@ runtime-core contract surface, an IEC104 binding that consumes the published
 `protocol-sdk` `0.7.0` artifacts from Maven Central, and the first TCP/Netty
 ingress baseline.
 
-The active development line is `0.2.0-SNAPSHOT`. Its first goal is a minimal
-standalone IEC104 TCP collector app that assembles the published runtime
-contracts into a JDK 21 process.
+The current release branch fixes the Maven reactor version at `0.2.0`. Its
+scope is a minimal standalone IEC104 TCP collector app that assembles the
+published runtime contracts into a JDK 21 process.
 
 The `0.2.0` release-readiness audit is tracked in
 [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md). The
-readiness line does not create a tag or perform a real Maven Central upload.
+release branch does not create a tag or perform a real Maven Central upload;
+those steps happen only after the release PR merges and final verification
+passes on `main`.
 
 ## Maven Coordinates
 
@@ -173,7 +175,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -223,7 +225,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.2.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

@@ -6,6 +6,9 @@ This note records the release-readiness decision for the `0.2.0`
 The readiness branch keeps the Maven reactor version at `0.2.0-SNAPSHOT`.
 The release branch will set the Maven reactor version to `0.2.0`.
 
+The release branch now fixes the Maven reactor version at `0.2.0`. It does not
+create a tag or perform a real Maven Central upload.
+
 ## Release Scope
 
 `0.2.0` turns the `0.1.0` library baseline into the first runnable collector
@@ -136,3 +139,29 @@ PR:
 
 No tag is created and no real Maven Central upload is part of this readiness
 work.
+
+## Release Branch Checks On 2026-06-02
+
+These checks must pass on the `0.2.0` release branch before opening the release
+PR:
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Maven reactor version | Passed | Root and module parent versions are fixed at `0.2.0`. |
+| `git diff --check` | Passed | No whitespace errors in the release diff. |
+| `mvn -q verify` | Passed | Full JDK 21+ reactor verification passed at version `0.2.0` with Maven running on JDK 23. |
+| `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy` | Passed | Central profile smoke passed with publishing disabled and signing skipped. |
+| `JAVA_BIN=/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/bin/java sh examples/smoke-standalone.sh` | Passed | Standalone collector built `runtime-app-0.2.0-standalone.jar`, started on an ephemeral localhost TCP port, accepted the IEC104 example frame, and wrote a parsed record to the file sink. |
+| Dependency boundary checks | Passed | `runtime-core` stays adapter-free; `runtime-protocol-iec104` has no adapter dependencies; Netty enters through `runtime-ingress-tcp-netty`; SDK artifacts enter through `runtime-protocol-iec104`. |
+
+No tag is created and no real Maven Central upload is part of this release
+branch PR.
+
+## Final Release Decision
+
+`0.2.0` is ready to tag and upload after:
+
+- the release PR merges into `main`,
+- GitHub Actions passes on the merged release commit,
+- a final signed dry run passes with `central.skipPublishing=true`, and
+- the operator confirms the real Maven Central upload.
