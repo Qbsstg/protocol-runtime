@@ -33,7 +33,7 @@ deployment concerns.
 | `runtime-protocol-iec104` | `runtime-core`, released `protocol-iec104`, tests. | Netty, transport adapters, storage, deployment frameworks. |
 | `runtime-ingress-tcp-netty` | `runtime-core`, Netty transport, tests. | Protocol SDK modules, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring, Kafka, MQTT, HTTP, database, Redis. |
-| `runtime-smoke-tests` | Runtime modules and tests. | Production publication or application dependency use. |
+| `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
 
 ## `0.1.0` Published Surface
 
@@ -45,8 +45,9 @@ The `0.1.0` release is a baseline library release:
 - `runtime-ingress-tcp-netty` publishes TCP byte ingress, server bootstrap,
   active session registry, lifecycle events, backpressure handling, and failure
   routing.
-- `runtime-smoke-tests` proves the cross-module IEC104 over TCP path but is
-  skipped during Maven deploy.
+- `runtime-smoke-tests` proves the cross-module IEC104 over TCP path and is not
+  a supported application dependency. It sets both `maven.deploy.skip=true` and
+  `central.skipPublishing=true` for future releases.
 
 ## Deferred Runtime Concerns
 

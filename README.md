@@ -13,28 +13,26 @@ must not depend on this repository.
 
 This repository is in bootstrap. `0.1.0` published the first runtime-core
 contract surface, IEC104 binding, and TCP/Netty ingress baseline. `0.2.0`
-published the first runnable standalone IEC104 TCP collector app.
-
-The current release branch is `0.3.0`. Its scope is production hardening for
-`runtime-app`: stronger configuration validation, multi-source and
-multi-listener planning, collector lifecycle state, local health/status output,
-basic metrics/logging, file sink rotation, parse failure isolation,
-backpressure policy enhancement, and future adapter boundaries.
+published the first runnable standalone IEC104 TCP collector app. `0.3.0`
+published runtime-app production hardening for configuration validation,
+multi-source/listener app configuration, lifecycle/status snapshots, status
+output, counters, file sink rotation, parse failure isolation, and payload-size
+backpressure policy.
 
 The `0.3.0` release scope is tracked in
-[`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md). Draft release notes are
+[`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md). Release notes are
 tracked in [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.2.0`. Runtime modules are
+The latest published runtime release version is `0.3.0`. Runtime modules are
 JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -42,7 +40,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -50,7 +48,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -58,12 +56,12 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
-`runtime-smoke-tests` is a repository test module and is not intended as a
-published application dependency.
+`runtime-smoke-tests` is a repository test module. It is not intended as an
+application dependency even if a historical release is visible in Maven Central.
 
 ## Module Plan
 
@@ -72,7 +70,7 @@ published application dependency.
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-app` | 0.2.0 published / 0.3.0 release branch | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.3.0` production hardening covers validation, multi-source config, lifecycle/status, file rotation, failure isolation, and stronger backpressure policy. |
+| `runtime-app` | 0.3.0 published | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.3.0` production hardening covers validation, multi-source config, lifecycle/status, file rotation, failure isolation, and stronger backpressure policy. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
@@ -183,7 +181,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current release branch builds it as `0.3.0`:
+The current release build uses `0.3.0`:
 
 ```text
 TcpNettyServer

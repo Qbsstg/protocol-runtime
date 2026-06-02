@@ -40,8 +40,8 @@ TCP baseline. `runtime-core` remains adapter-free, and `protocol-sdk` remains a
 parser-only dependency consumed by `runtime-protocol-*` modules.
 
 `runtime-smoke-tests` may combine runtime ingress modules and protocol binding
-modules, but it is test-only. Cross-module combinations proven there should not
-be moved into `runtime-core`.
+modules, but it is test-only and is not a supported application dependency.
+Cross-module combinations proven there should not be moved into `runtime-core`.
 
 `runtime-app` may combine TCP ingress, protocol bindings, and app-level sinks
 because it is the deployable assembly boundary. It still must not move those
@@ -91,7 +91,7 @@ The `0.1.0` runtime line should publish the bootstrap runtime library modules:
 | `runtime-core` | Published baseline runtime contracts. |
 | `runtime-protocol-iec104` | Published IEC104 runtime binding against `protocol-iec104:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Published first TCP/Netty ingress adapter. |
-| `runtime-smoke-tests` | Not published; repository-only integration verification. |
+| `runtime-smoke-tests` | Repository-only integration verification; Central publishing is skipped for future releases. |
 
 The release should not claim a deployable collector application, reconnect
 policy, TLS, durable queues, storage sinks, Kafka/MQTT/HTTP ingestion, or formal

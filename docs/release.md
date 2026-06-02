@@ -5,9 +5,9 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.2.0`.
+The latest published runtime release is `0.3.0`.
 
-The current release branch is `0.3.0`. The published `0.2.0` release includes:
+The published `0.3.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -15,19 +15,20 @@ The current release branch is `0.3.0`. The published `0.2.0` release includes:
 - `io.github.qbsstg:runtime-ingress-tcp-netty`
 - `io.github.qbsstg:runtime-app`
 
-`runtime-smoke-tests` is test-only and is configured with
-`maven.deploy.skip=true`, so it remains a repository verification module rather
-than a published dependency.
+`runtime-smoke-tests` is test-only and remains unsupported as an application
+dependency. The `0.3.0` artifact is visible on Maven Central because the
+Central publishing plugin did not honor `maven.deploy.skip=true`; future
+releases also set `central.skipPublishing=true` in that module.
 
-The readiness decision is documented in
-[`release-readiness-0.2.0.md`](release-readiness-0.2.0.md). The `0.3.0`
-roadmap is maintained in [`roadmap-0.3.0.md`](roadmap-0.3.0.md), draft release
-notes are maintained in [`release-notes-0.3.0.md`](release-notes-0.3.0.md),
-and release-readiness audit work is tracked in
+The `0.3.0` roadmap is maintained in
+[`roadmap-0.3.0.md`](roadmap-0.3.0.md), release notes are maintained in
+[`release-notes-0.3.0.md`](release-notes-0.3.0.md), and release-readiness audit
+work is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
 
-The `0.3.0` release branch fixes the Maven reactor version at `0.3.0`. It does
-not create a tag or perform a real Maven Central upload.
+`0.3.0` was tagged as `v0.3.0`, uploaded in Central deployment
+`eaa2bf69-69d3-416f-9529-550924a33b28`, published, and verified from Maven
+Central with an isolated local Maven repository.
 
 ## Prerequisites
 
