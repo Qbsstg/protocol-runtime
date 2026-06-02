@@ -24,8 +24,10 @@ releases also set `central.skipPublishing=true` in that module.
 
 The current `0.4.0` roadmap is maintained in
 [`roadmap-0.4.0.md`](roadmap-0.4.0.md), and draft release notes are maintained
-in [`release-notes-0.4.0.md`](release-notes-0.4.0.md). The previous `0.3.0`
+in [`release-notes-0.4.0.md`](release-notes-0.4.0.md). The current `0.4.0`
 release-readiness audit is tracked in
+[`release-readiness-0.4.0.md`](release-readiness-0.4.0.md). The previous
+`0.3.0` release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
 
 `0.3.0` was tagged as `v0.3.0`, uploaded in Central deployment
