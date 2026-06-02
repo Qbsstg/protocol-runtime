@@ -1,6 +1,8 @@
 # Protocol Runtime 0.3.0 Release Notes
 
-Draft release notes for the next `0.3.0` runtime release line.
+Draft release notes for the next `0.3.0` runtime release line. Main currently
+builds as `0.3.0-SNAPSHOT`; the final `0.3.0` version should be set only on the
+release branch.
 
 ## Planned Highlights
 
@@ -70,5 +72,5 @@ Before release readiness, the branch should pass:
 
 ## Release Readiness Status
 
-The release is in planning. No `0.3.0` release branch, tag, or Maven Central
+The release is in development. No `0.3.0` release branch, tag, or Maven Central
 deployment exists yet.

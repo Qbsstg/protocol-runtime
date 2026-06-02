@@ -4,6 +4,10 @@
 focus is production hardening of `runtime-app` and its operating model, not
 adding heavy downstream adapters to `runtime-core` or `protocol-sdk`.
 
+The main branch now tracks the `0.3.0-SNAPSHOT` development line. The final
+`0.3.0` version should only be set on a dedicated release branch after the
+readiness audit passes.
+
 ## Primary Goal
 
 Turn the single-source IEC104 TCP collector baseline into a clearer
@@ -114,6 +118,8 @@ Before cutting the `0.3.0` release branch, the readiness audit should confirm:
 
 - README and Chinese README describe the `0.3.0` production-hardening scope.
 - `docs/release-notes-0.3.0.md` reflects the selected release scope.
+- the Maven reactor is on `0.3.0-SNAPSHOT` on main and changes to `0.3.0` only
+  on the release branch.
 - Module boundary docs still prove adapter dependencies stayed out of
   `runtime-core` and `protocol-sdk`.
 - Local verification passes `git diff --check`, `mvn -q verify`, standalone
