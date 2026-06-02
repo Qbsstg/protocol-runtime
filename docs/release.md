@@ -5,20 +5,23 @@ Central Portal.
 
 ## Current Release Scope
 
-The first release target is `0.1.0`. It should publish:
+The latest published runtime release is `0.1.0`.
+
+The current release target is `0.2.0`. It should publish:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
 - `io.github.qbsstg:runtime-protocol-iec104`
 - `io.github.qbsstg:runtime-ingress-tcp-netty`
+- `io.github.qbsstg:runtime-app`
 
 `runtime-smoke-tests` is test-only and is configured with
 `maven.deploy.skip=true`, so it remains a repository verification module rather
 than a published dependency.
 
 The readiness decision is documented in
-[`release-readiness-0.1.0.md`](release-readiness-0.1.0.md). Draft release notes
-are maintained in [`release-notes-0.1.0.md`](release-notes-0.1.0.md).
+[`release-readiness-0.2.0.md`](release-readiness-0.2.0.md). Draft release notes
+are maintained in [`release-notes-0.2.0.md`](release-notes-0.2.0.md).
 
 ## Prerequisites
 
@@ -106,7 +109,8 @@ before artifacts become immutable on Maven Central.
 
 1. Confirm `main` is clean and CI is green.
 2. Confirm the release-readiness note for the target version is current.
-3. Update versions from `0.1.0-SNAPSHOT` to `0.1.0`.
+3. Update versions from the target `-SNAPSHOT` version to the final release
+   version.
 4. Confirm README and module boundary docs label module stability accurately.
 5. Run `mvn -q verify`.
 6. Run the Central release profile smoke check with publishing disabled.

@@ -1,6 +1,6 @@
 # Protocol Runtime 0.2.0 Release Notes
 
-Draft notes for the next runtime release line.
+Draft notes for the `0.2.0` runtime release line.
 
 ## Highlights
 
@@ -55,6 +55,17 @@ Before release, the branch should pass:
 
 - `git diff --check`
 - `mvn -q verify`
+- `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy`
 - dependency boundary checks proving `runtime-core` remains adapter-free
 - executable jar smoke verification for `runtime-app`
 - `sh examples/smoke-standalone.sh`
+
+## Release Readiness Status
+
+The `0.2.0` readiness audit is maintained in
+[`release-readiness-0.2.0.md`](release-readiness-0.2.0.md).
+
+The release is not tagged yet. The next release branch should set the Maven
+reactor version from `0.2.0-SNAPSHOT` to `0.2.0`, rerun the verification target
+above, pass GitHub Actions, and only then proceed to tag and Maven Central
+upload.

@@ -21,6 +21,10 @@ Protocol Runtime 是面向采集平台的 JDK 21 运行时项目，用来承载
 standalone IEC104 TCP collector，把已经发布的 runtime 合同组装成一个可启动的
 JDK 21 进程。
 
+`0.2.0` 发布准备审计记录在
+[`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)。这一
+阶段只做 readiness 检查，不创建 tag，也不执行真实 Maven Central 上传。
+
 ## Maven 坐标
 
 第一个运行时发布版本是 `0.1.0`。Runtime 模块是 JDK 21 artifact。应用侧应
@@ -303,5 +307,6 @@ bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts：
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
+- [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
