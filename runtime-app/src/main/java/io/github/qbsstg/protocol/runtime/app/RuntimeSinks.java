@@ -16,6 +16,10 @@ record RuntimeSinks(
         InMemoryRuntimeSink<Iec104Frame> inMemorySink) {
 
     static RuntimeSinks from(StandaloneCollectorConfig config) {
+        return from(StandaloneCollectorAppConfig.fromSingle(config));
+    }
+
+    static RuntimeSinks from(StandaloneCollectorAppConfig config) {
         return switch (config.sinkType()) {
             case LOGGING -> {
                 LoggingRuntimeSink<Iec104Frame> sink = new LoggingRuntimeSink<>(

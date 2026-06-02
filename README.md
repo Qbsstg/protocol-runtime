@@ -271,6 +271,31 @@ they can override checked-in defaults for local runs.
 | `collector.sink.file` | unset | Required when `collector.sink.type=file`. |
 | `collector.iec104.strictAsduParsing` | `false` | Enables strict IEC104 ASDU parsing in the SDK binding. |
 
+`0.3.0` introduces startup validation and an internal multi-source,
+multi-listener configuration model while preserving the single-source keys
+above. The application validates source ids, TCP ports, thread counts, sink
+type, file sink paths, duplicate sources, and duplicate listener endpoints
+before opening network ports.
+
+Named sources and listeners use explicit lists:
+
+```properties
+collector.sources=station-a,station-b
+collector.source.station-a.id=iec104:station-a
+collector.source.station-b.id=iec104:station-b
+
+collector.tcp.listeners=north,south
+collector.tcp.listener.north.host=127.0.0.1
+collector.tcp.listener.north.port=2404
+collector.tcp.listener.north.source=station-a
+collector.tcp.listener.south.host=127.0.0.1
+collector.tcp.listener.south.port=2405
+collector.tcp.listener.south.source=station-b
+
+collector.sink.type=file
+collector.sink.file=target/runtime-records.ndjson
+```
+
 ### File Sink Format
 
 The file sink writes one JSON-like line per parsed record or parse failure. A
