@@ -100,6 +100,7 @@ Before `0.3.0` release readiness, an operator should be able to:
 - Multi-source and multi-listener app configuration model: started.
 - Legacy single-source `collector.properties` compatibility: preserved.
 - Collector lifecycle/status snapshot: started.
+- Standalone startup/shutdown status output: started.
 - Runtime status counters for parsed records and parse failures: started.
 - Parse failure diagnostics with payload preview and TCP/session attributes:
   started.

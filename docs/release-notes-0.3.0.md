@@ -19,6 +19,8 @@ Draft release notes for the next `0.3.0` runtime release line.
   failure counters, last parse failure payload/session diagnostics,
   backpressure retry/drop counters, sink type, backpressure mode, payload
   threshold policy, and strict ASDU setting.
+- Print a local one-line status snapshot after standalone collector startup and
+  during shutdown for log-based inspection without adding HTTP dependencies.
 - Improve JDK logging and define app-level metrics counters/gauges before
   selecting any metrics exporter.
 - Add configurable file sink rotation with default byte and history limits so
