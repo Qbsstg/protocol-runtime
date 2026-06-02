@@ -50,6 +50,7 @@
         <module>runtime-core</module>
         <module>runtime-protocol-iec104</module>
         <module>runtime-protocol-iec101</module>
+        <module>runtime-protocol-iec103</module>
         <module>runtime-ingress-tcp-netty</module>
         <module>runtime-app</module>
         <module>runtime-smoke-tests</module>

@@ -72,7 +72,7 @@ Modbus runtime protocol binding，同时保留现有 IEC104 app 路径。
 | `runtime-core` | Bootstrap | 运行时无关合同：数据源标识、接入 envelope、解析绑定、解析结果、记录/失败 sink、背压、pipeline runner、生命周期边界。 |
 | `runtime-protocol-iec104` | Bootstrap | 基于 `io.github.qbsstg:protocol-iec104:0.7.0` 的第一个运行时协议绑定。 |
 | `runtime-protocol-iec101` | 0.4.0 baseline | 基于 `io.github.qbsstg:protocol-iec101:0.7.0` 的 runtime binding，支持按 source 缓冲 stream decoder 和失败路由。 |
-| `runtime-protocol-iec103` | 0.4.0 planned | 规划中，基于 `io.github.qbsstg:protocol-iec103:0.7.0` 的 runtime binding。 |
+| `runtime-protocol-iec103` | 0.4.0 baseline | 基于 `io.github.qbsstg:protocol-iec103:0.7.0` 的 runtime binding，支持按 source 缓冲 stream decoder 和失败路由。 |
 | `runtime-protocol-modbus` | 0.4.0 planned | 规划中，基于 `io.github.qbsstg:protocol-modbus:0.7.0` 的 runtime binding。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
 | `runtime-app` | 0.4.0-SNAPSHOT development | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。`0.4.0` 规划 app 级协议选择，同时保留 IEC104 兼容路径。 |
@@ -88,8 +88,8 @@ baseline 推进到多协议 collector runtime：
 
 - Maven reactor 在发布前保持 `0.4.0-SNAPSHOT`。
 - 消费已发布的 `protocol-sdk:0.7.0` parser artifacts。
-- 先提供 IEC101 runtime binding，再以独立 `runtime-protocol-*` 模块规划
-  IEC103 和 Modbus。
+- 先提供 IEC101 和 IEC103 runtime binding，再以独立 `runtime-protocol-*`
+  模块规划 Modbus。
 - protocol binding 模块不引入 transport 或 app 依赖。
 - 增加 app 级协议选择，同时保留现有 IEC104 `collector.properties` 兼容路径。
 - 保持串口、UDP、Kafka、MQTT、HTTP、数据库、Redis 和 observability 依赖不进入
@@ -400,8 +400,8 @@ mvn -q verify
 
 ## SDK 版本
 
-bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts。IEC104 和 IEC101
-runtime binding 已实现；IEC103 和 Modbus 仍处于规划状态：
+bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts。IEC104、IEC101 和
+IEC103 runtime binding 已实现；Modbus 仍处于规划状态：
 
 - `io.github.qbsstg:protocol-core:0.7.0`
 - `io.github.qbsstg:protocol-iec104:0.7.0`
