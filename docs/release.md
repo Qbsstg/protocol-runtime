@@ -7,7 +7,7 @@ Central Portal.
 
 The latest published runtime release is `0.2.0`.
 
-The current planning target is `0.3.0`. The published `0.2.0` release includes:
+The current development line is `0.3.0-SNAPSHOT`. The published `0.2.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -24,8 +24,8 @@ The readiness decision is documented in
 maintained in [`roadmap-0.3.0.md`](roadmap-0.3.0.md), and draft release notes
 are maintained in [`release-notes-0.3.0.md`](release-notes-0.3.0.md).
 
-`0.3.0` is not a release branch yet. It should remain a planning and
-development line until the production-hardening scope has passed local and
+`0.3.0` is not a release branch yet. Main should remain on
+`0.3.0-SNAPSHOT` until the production-hardening scope has passed local and
 GitHub Actions verification.
 
 ## Prerequisites

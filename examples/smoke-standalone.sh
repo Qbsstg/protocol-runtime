@@ -4,7 +4,7 @@ set -eu
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 JAVA_BIN=${JAVA_BIN:-java}
 MVN_BIN=${MVN_BIN:-mvn}
-JAR="$ROOT_DIR/runtime-app/target/runtime-app-0.2.0-standalone.jar"
+JAR="$ROOT_DIR/runtime-app/target/runtime-app-0.3.0-SNAPSHOT-standalone.jar"
 OUT_DIR="$ROOT_DIR/target/runtime-app-smoke"
 CONFIG="$OUT_DIR/collector.properties"
 LOG="$OUT_DIR/collector.log"
