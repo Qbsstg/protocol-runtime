@@ -76,7 +76,7 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
 | `runtime-protocol-iec101` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec101:0.7.0` with per-source stream decoder buffering and failure routing. |
 | `runtime-protocol-iec103` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0` with per-source stream decoder buffering and failure routing. |
-| `runtime-protocol-modbus` | 0.4.0 planned | Planned runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0`. |
+| `runtime-protocol-modbus` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0` with TCP stream and datagram parser modes. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
 | `runtime-app` | 0.4.0-SNAPSHOT development | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.4.0` planning adds app-level protocol selection while preserving IEC104 compatibility. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
@@ -92,8 +92,8 @@ multi-protocol collector runtime without changing dependency direction:
 
 - keep the Maven reactor on `0.4.0-SNAPSHOT` until release readiness
 - consume published `protocol-sdk:0.7.0` parser artifacts
-- provide IEC101 and IEC103 runtime bindings and plan Modbus as a separate
-  `runtime-protocol-*` module
+- provide IEC101, IEC103, and Modbus runtime bindings as separate
+  `runtime-protocol-*` modules
 - keep protocol binding modules free of transport and app dependencies
 - add app-level protocol selection while preserving existing IEC104
   `collector.properties` compatibility
@@ -437,8 +437,8 @@ mvn -q verify
 
 ## SDK Version
 
-The bootstrap runtime consumes published SDK `0.7.0` artifacts. IEC104, IEC101,
-and IEC103 runtime bindings are implemented; Modbus remains planned:
+The bootstrap runtime consumes published SDK `0.7.0` artifacts. IEC104,
+IEC101, IEC103, and Modbus runtime bindings are implemented:
 
 - `io.github.qbsstg:protocol-core:0.7.0`
 - `io.github.qbsstg:protocol-iec104:0.7.0`
