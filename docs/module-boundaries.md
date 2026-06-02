@@ -31,6 +31,9 @@ deployment concerns.
 | --- | --- | --- |
 | `runtime-core` | JDK and test dependencies only. | Spring, Netty, Kafka, MQTT, HTTP, database, Redis, SDK protocol modules, deployable adapter dependencies. |
 | `runtime-protocol-iec104` | `runtime-core`, released `protocol-iec104`, tests. | Netty, transport adapters, storage, deployment frameworks. |
+| `runtime-protocol-iec101` | `runtime-core`, released `protocol-iec101`, tests. | Netty, serial adapters, storage, deployment frameworks. |
+| `runtime-protocol-iec103` | `runtime-core`, released `protocol-iec103`, tests. | Netty, serial adapters, storage, deployment frameworks. |
+| `runtime-protocol-modbus` | `runtime-core`, released `protocol-modbus`, tests. | Netty, UDP/TCP adapters, storage, deployment frameworks. |
 | `runtime-ingress-tcp-netty` | `runtime-core`, Netty transport, tests. | Protocol SDK modules, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
@@ -99,3 +102,25 @@ protocol-neutral contract is proven necessary. In particular:
 - Kafka, MQTT, HTTP, database, Redis, and object storage dependencies belong to
   dedicated adapter or sink modules
 - `protocol-sdk` remains parser-only
+
+## `0.4.0` Multi-Protocol Boundary
+
+The `0.4.0` line may add runtime protocol binding modules for the published
+IEC101, IEC103, and Modbus SDK parser artifacts. Those modules adapt parser
+results into runtime records and failures; they do not own transport,
+deployment, or downstream delivery.
+
+Allowed:
+
+- `runtime-protocol-iec101` depends on `runtime-core` and `protocol-iec101`
+- `runtime-protocol-iec103` depends on `runtime-core` and `protocol-iec103`
+- `runtime-protocol-modbus` depends on `runtime-core` and `protocol-modbus`
+- `runtime-app` selects a protocol binding for each configured source/listener
+
+Not allowed:
+
+- adding SDK protocol modules to `runtime-core`
+- adding Netty, serial-port, UDP, Spring, Kafka, MQTT, HTTP, database, Redis, or
+  observability exporter dependencies to `runtime-core`
+- adding Netty or app dependencies to `runtime-protocol-*`
+- changing `protocol-sdk` to depend on `protocol-runtime`

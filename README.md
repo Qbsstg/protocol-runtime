@@ -19,9 +19,14 @@ multi-source/listener app configuration, lifecycle/status snapshots, status
 output, counters, file sink rotation, parse failure isolation, and payload-size
 backpressure policy.
 
-The `0.3.0` release scope is tracked in
-[`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md). Release notes are
-tracked in [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md).
+The current development line is `0.4.0-SNAPSHOT`. Its scope is multi-protocol
+runtime expansion: planning IEC101, IEC103, and Modbus runtime protocol
+bindings around the published `protocol-sdk:0.7.0` parser artifacts while
+preserving the existing IEC104 app path.
+
+The `0.4.0` release scope is tracked in
+[`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md). Draft release notes are
+tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
@@ -69,32 +74,34 @@ application dependency even if a historical release is visible in Maven Central.
 | --- | --- | --- |
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
+| `runtime-protocol-iec101` | 0.4.0 planned | Planned runtime binding around `io.github.qbsstg:protocol-iec101:0.7.0`. |
+| `runtime-protocol-iec103` | 0.4.0 planned | Planned runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0`. |
+| `runtime-protocol-modbus` | 0.4.0 planned | Planned runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-app` | 0.3.0 published | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.3.0` production hardening covers validation, multi-source config, lifecycle/status, file rotation, failure isolation, and stronger backpressure policy. |
+| `runtime-app` | 0.4.0-SNAPSHOT development | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.4.0` planning adds app-level protocol selection while preserving IEC104 compatibility. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
 sinks, and richer deployable runtime applications. Those dependencies belong
 here, not in `protocol-sdk`.
 
-## `0.3.0` Production Hardening Plan
+## `0.4.0` Multi-Protocol Runtime Plan
 
-`0.3.0` should make the standalone collector easier to run and diagnose without
-changing the dependency direction:
+`0.4.0` should move the runtime from an IEC104-only app baseline toward a
+multi-protocol collector runtime without changing dependency direction:
 
-- validate configuration before binding network ports
-- model multiple configured sources and TCP listeners at the app boundary
-- expose collector lifecycle state and a minimal runtime status snapshot
-- define basic app-level counters and logging before choosing exporters
-- add file sink rotation so local output is bounded
-- isolate parse failures from healthy traffic
-- improve backpressure policy while keeping transport behavior in transport
-  modules
-- keep Kafka, MQTT, HTTP, database, Redis, and observability dependencies out of
-  `runtime-core` and `protocol-sdk`
+- keep the Maven reactor on `0.4.0-SNAPSHOT` until release readiness
+- consume published `protocol-sdk:0.7.0` parser artifacts
+- plan runtime bindings for IEC101, IEC103, and Modbus as separate
+  `runtime-protocol-*` modules
+- keep protocol binding modules free of transport and app dependencies
+- add app-level protocol selection while preserving existing IEC104
+  `collector.properties` compatibility
+- keep serial, UDP, Kafka, MQTT, HTTP, database, Redis, and observability
+  dependencies outside `runtime-core` and `protocol-sdk`
 
 The detailed plan is maintained in
-[`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md).
+[`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md).
 
 ## Runtime Core Contract
 
@@ -181,7 +188,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current release build uses `0.3.0`:
+The current development build uses `0.4.0-SNAPSHOT`:
 
 ```text
 TcpNettyServer
@@ -199,7 +206,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.3.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -253,7 +260,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.3.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -430,10 +437,15 @@ mvn -q verify
 
 ## SDK Version
 
-The bootstrap runtime consumes published SDK `0.7.0` artifacts:
+The bootstrap runtime consumes published SDK `0.7.0` artifacts. The current
+implemented binding uses IEC104; the `0.4.0` line plans runtime bindings for
+the other published protocol modules:
 
 - `io.github.qbsstg:protocol-core:0.7.0`
 - `io.github.qbsstg:protocol-iec104:0.7.0`
+- `io.github.qbsstg:protocol-iec101:0.7.0`
+- `io.github.qbsstg:protocol-iec103:0.7.0`
+- `io.github.qbsstg:protocol-modbus:0.7.0`
 
 The runtime can move to newer SDK versions after they are published and
 verified.
@@ -444,6 +456,7 @@ verified.
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
+- [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
@@ -451,3 +464,4 @@ verified.
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
+- [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)
