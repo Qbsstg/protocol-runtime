@@ -21,7 +21,7 @@ keeping each protocol parser inside its SDK module.
   - keep `protocol-sdk.version` at the published `0.7.0` line until a newer SDK
     release is intentionally selected
 - Protocol binding modules:
-  - plan `runtime-protocol-iec101` against `protocol-iec101:0.7.0`
+  - add `runtime-protocol-iec101` against `protocol-iec101:0.7.0`
   - plan `runtime-protocol-iec103` against `protocol-iec103:0.7.0`
   - plan `runtime-protocol-modbus` against `protocol-modbus:0.7.0`
   - keep each runtime protocol module free of Netty, Spring, Kafka, MQTT, HTTP,
@@ -68,6 +68,16 @@ keeping each protocol parser inside its SDK module.
 6. Add cross-module smoke tests for each supported runtime protocol path.
 7. Run release-readiness checks and decide which protocol bindings are ready to
    publish in `0.4.0`.
+
+## Development Progress
+
+- Maven `0.4.0-SNAPSHOT` line: complete.
+- Multi-protocol roadmap and release-note draft: complete.
+- `runtime-protocol-iec101` parser binding baseline: complete.
+- `runtime-protocol-iec103` parser binding baseline: pending.
+- `runtime-protocol-modbus` parser binding baseline: pending.
+- App-level protocol selection: pending.
+- Cross-module smoke tests for additional protocols: pending.
 
 ## Acceptance Criteria
 

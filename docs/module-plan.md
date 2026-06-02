@@ -19,7 +19,7 @@ This note records the first open-source module shape for `protocol-runtime`.
 | --- | --- | --- |
 | `runtime-core` | Protocol-neutral contracts for source identity, ingress payloads, parser bindings, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. | Batching, metrics tags, queue decisions, and richer delivery policies. |
 | `runtime-protocol-iec104` | Bind IEC104 SDK stream decoding to runtime envelopes and records. | Session-aware command routing, strict/permissive policy configuration, and richer record mapping. |
-| `runtime-protocol-iec101` | Planned `0.4.0` runtime binding for `protocol-iec101` parser output. | Serial-session policy and richer IEC101 record mapping after the parser binding baseline is stable. |
+| `runtime-protocol-iec101` | `0.4.0` runtime binding for `protocol-iec101` parser output. | Serial-session policy and richer IEC101 record mapping after the parser binding baseline is stable. |
 | `runtime-protocol-iec103` | Planned `0.4.0` runtime binding for `protocol-iec103` parser output. | Protection-event mapping and serial-session policy after the parser binding baseline is stable. |
 | `runtime-protocol-modbus` | Planned `0.4.0` runtime binding for `protocol-modbus` parser output. | Modbus TCP/UDP runtime policy after the parser binding baseline is stable. |
 | `runtime-ingress-tcp-netty` | Provide the first Netty TCP ingress baseline: server bootstrap, port binding, per-connection `RuntimePipelineRunner` creation, active session registry, connection lifecycle events, `ByteBuf` to `IngressEnvelope`, source id resolution, session attributes, backpressure handling, exception routing, and dispatch to sinks. | IEC104 sessions, Modbus TCP sessions, reconnects, heartbeat policy, TLS, and durable retry queues. |
@@ -62,7 +62,7 @@ The goal is multi-protocol runtime expansion around published
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add only protocol-neutral contracts if multi-protocol binding proves a shared need. |
 | `runtime-protocol-iec104` | Preserve the existing IEC104 binding and compatibility path. |
-| `runtime-protocol-iec101` | Add or prepare a runtime binding for `protocol-iec101:0.7.0` without transport or app dependencies. |
+| `runtime-protocol-iec101` | Add a runtime binding for `protocol-iec101:0.7.0` without transport or app dependencies. |
 | `runtime-protocol-iec103` | Add or prepare a runtime binding for `protocol-iec103:0.7.0` without transport or app dependencies. |
 | `runtime-protocol-modbus` | Add or prepare a runtime binding for `protocol-modbus:0.7.0` without transport or app dependencies. |
 | `runtime-ingress-tcp-netty` | Continue to own TCP byte ingress only; do not consume protocol SDK modules. |
