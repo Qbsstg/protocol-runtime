@@ -7,6 +7,8 @@ Central Portal.
 
 The latest published runtime release is `0.3.0`.
 
+The current development line is `0.4.0-SNAPSHOT`.
+
 The published `0.3.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
@@ -20,10 +22,10 @@ dependency. The `0.3.0` artifact is visible on Maven Central because the
 Central publishing plugin did not honor `maven.deploy.skip=true`; future
 releases also set `central.skipPublishing=true` in that module.
 
-The `0.3.0` roadmap is maintained in
-[`roadmap-0.3.0.md`](roadmap-0.3.0.md), release notes are maintained in
-[`release-notes-0.3.0.md`](release-notes-0.3.0.md), and release-readiness audit
-work is tracked in
+The current `0.4.0` roadmap is maintained in
+[`roadmap-0.4.0.md`](roadmap-0.4.0.md), and draft release notes are maintained
+in [`release-notes-0.4.0.md`](release-notes-0.4.0.md). The previous `0.3.0`
+release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
 
 `0.3.0` was tagged as `v0.3.0`, uploaded in Central deployment

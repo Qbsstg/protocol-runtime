@@ -17,9 +17,13 @@ TCP collector app。`0.3.0` 已发布 runtime-app 生产化加固：配置校验
 source/listener app 配置、lifecycle/status 快照、状态输出、计数器、file sink
 轮转、解析失败隔离和 payload 大小背压策略。
 
-`0.3.0` 发布范围记录在 [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)，
-release notes 记录在
-[`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)。
+当前开发线是 `0.4.0-SNAPSHOT`。这一阶段的范围是多协议 runtime 扩展：
+围绕已发布的 `protocol-sdk:0.7.0` parser artifacts，规划 IEC101、IEC103 和
+Modbus runtime protocol binding，同时保留现有 IEC104 app 路径。
+
+`0.4.0` 发布范围记录在 [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)，
+草案 release notes 记录在
+[`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)。
 
 ## Maven 坐标
 
@@ -67,29 +71,31 @@ release notes 记录在
 | --- | --- | --- |
 | `runtime-core` | Bootstrap | 运行时无关合同：数据源标识、接入 envelope、解析绑定、解析结果、记录/失败 sink、背压、pipeline runner、生命周期边界。 |
 | `runtime-protocol-iec104` | Bootstrap | 基于 `io.github.qbsstg:protocol-iec104:0.7.0` 的第一个运行时协议绑定。 |
+| `runtime-protocol-iec101` | 0.4.0 planned | 规划中，基于 `io.github.qbsstg:protocol-iec101:0.7.0` 的 runtime binding。 |
+| `runtime-protocol-iec103` | 0.4.0 planned | 规划中，基于 `io.github.qbsstg:protocol-iec103:0.7.0` 的 runtime binding。 |
+| `runtime-protocol-modbus` | 0.4.0 planned | 规划中，基于 `io.github.qbsstg:protocol-modbus:0.7.0` 的 runtime binding。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
-| `runtime-app` | 0.3.0 published | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。`0.3.0` 生产化加固覆盖配置校验、多 source 配置、生命周期/status、file 轮转、失败隔离和更强 backpressure 策略。 |
+| `runtime-app` | 0.4.0-SNAPSHOT development | IEC104 over TCP standalone collector 装配层，支持 properties 配置、JDK logging/file/in-memory sink，以及可执行 shaded jar。`0.4.0` 规划 app 级协议选择，同时保留 IEC104 兼容路径。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 MQTT、Kafka、HTTP ingress、pipeline、更多 sink 和更完整的可部署
 运行时应用。这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
 
-## `0.3.0` 生产化加固规划
+## `0.4.0` 多协议 Runtime 规划
 
-`0.3.0` 的目标是在不改变依赖方向的前提下，让 standalone collector 更容易
-运行和诊断：
+`0.4.0` 的目标是在不改变依赖方向的前提下，把 runtime 从 IEC104-only app
+baseline 推进到多协议 collector runtime：
 
-- 启动监听端口前完成配置校验。
-- 在 app 边界支持多个配置 source 和多个 TCP listener。
-- 暴露 collector lifecycle 状态和最小 runtime status 快照。
-- 在选择 exporter 前先定义基础 app 级 counters 和日志。
-- 增加 file sink 轮转策略，避免本地输出无限增长。
-- 隔离解析失败，避免坏帧影响健康流量。
-- 增强 backpressure 策略，同时把 transport 行为留在 transport 模块。
-- 保持 Kafka、MQTT、HTTP、数据库、Redis 和 observability 依赖不进入
+- Maven reactor 在发布前保持 `0.4.0-SNAPSHOT`。
+- 消费已发布的 `protocol-sdk:0.7.0` parser artifacts。
+- 以独立 `runtime-protocol-*` 模块规划 IEC101、IEC103 和 Modbus runtime
+  binding。
+- protocol binding 模块不引入 transport 或 app 依赖。
+- 增加 app 级协议选择，同时保留现有 IEC104 `collector.properties` 兼容路径。
+- 保持串口、UDP、Kafka、MQTT、HTTP、数据库、Redis 和 observability 依赖不进入
   `runtime-core` 和 `protocol-sdk`。
 
-详细规划维护在 [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)。
+详细规划维护在 [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)。
 
 ## Runtime Core 合同
 
@@ -156,8 +162,8 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 release build 构建为
-`0.3.0`：
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 development build
+构建为 `0.4.0-SNAPSHOT`：
 
 ```text
 TcpNettyServer
@@ -175,7 +181,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.3.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -228,7 +234,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.3.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -394,10 +400,14 @@ mvn -q verify
 
 ## SDK 版本
 
-bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts：
+bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts。当前已实现的
+binding 使用 IEC104；`0.4.0` 开发线规划接入其他已发布协议模块：
 
 - `io.github.qbsstg:protocol-core:0.7.0`
 - `io.github.qbsstg:protocol-iec104:0.7.0`
+- `io.github.qbsstg:protocol-iec101:0.7.0`
+- `io.github.qbsstg:protocol-iec103:0.7.0`
+- `io.github.qbsstg:protocol-modbus:0.7.0`
 
 后续可以在新的 SDK 版本发布并验证后升级。
 
@@ -407,6 +417,7 @@ bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts：
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
+- [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
@@ -414,3 +425,4 @@ bootstrap runtime 当前消费已发布的 SDK `0.7.0` artifacts：
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
+- [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)
