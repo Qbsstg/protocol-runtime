@@ -24,6 +24,8 @@ public record StandaloneCollectorConfig(
         TcpNettyServerConfig tcp,
         SourceId sourceId,
         BackpressureDecision backpressureDecision,
+        long backpressureMaxPayloadBytes,
+        BackpressureDecision oversizedPayloadDecision,
         SinkType sinkType,
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
@@ -45,6 +47,9 @@ public record StandaloneCollectorConfig(
     public static final String SOURCE_PREFIX = "collector.source.";
     public static final String SOURCE_ID_SUFFIX = ".id";
     public static final String BACKPRESSURE = "collector.backpressure";
+    public static final String BACKPRESSURE_MAX_PAYLOAD_BYTES = "collector.backpressure.maxPayloadBytes";
+    public static final String BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION =
+            "collector.backpressure.oversizedPayloadDecision";
     public static final String SINK_TYPE = "collector.sink.type";
     public static final String SINK_FILE = "collector.sink.file";
     public static final String SINK_FILE_MAX_BYTES = "collector.sink.file.maxBytes";
@@ -58,8 +63,16 @@ public record StandaloneCollectorConfig(
         Objects.requireNonNull(tcp, "tcp must not be null");
         Objects.requireNonNull(sourceId, "sourceId must not be null");
         Objects.requireNonNull(backpressureDecision, "backpressureDecision must not be null");
+        Objects.requireNonNull(oversizedPayloadDecision, "oversizedPayloadDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
+        if (backpressureMaxPayloadBytes < 0) {
+            throw new IllegalArgumentException("collector.backpressure.maxPayloadBytes must not be negative");
+        }
+        if (oversizedPayloadDecision == BackpressureDecision.ACCEPT) {
+            throw new IllegalArgumentException(
+                    "collector.backpressure.oversizedPayloadDecision must be RETRY_LATER or DROP");
+        }
         if (sinkType == SinkType.FILE && sinkFile == null) {
             throw new IllegalArgumentException("collector.sink.file is required when collector.sink.type=file");
         }
@@ -70,6 +83,8 @@ public record StandaloneCollectorConfig(
                 TcpNettyServerConfig.anyAddress(2404),
                 SourceId.of("iec104", "station-1"),
                 BackpressureDecision.ACCEPT,
+                0,
+                BackpressureDecision.DROP,
                 SinkType.LOGGING,
                 null,
                 FileSinkRotationConfig.defaults(),
@@ -133,6 +148,19 @@ public record StandaloneCollectorConfig(
 
         BackpressureDecision backpressure = parseBackpressure(
                 property(properties, BACKPRESSURE, defaults.backpressureDecision().name()), errors);
+        long backpressureMaxPayloadBytes = longProperty(
+                properties,
+                BACKPRESSURE_MAX_PAYLOAD_BYTES,
+                defaults.backpressureMaxPayloadBytes(),
+                0L,
+                Long.MAX_VALUE,
+                errors);
+        BackpressureDecision oversizedPayloadDecision = parseOversizedPayloadDecision(
+                property(
+                        properties,
+                        BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION,
+                        defaults.oversizedPayloadDecision().name()),
+                errors);
         SinkType sinkType = parseSinkType(property(properties, SINK_TYPE, defaults.sinkType().configValue()), errors);
         Path sinkFile = parseSinkFile(properties, sinkType, errors);
         FileSinkRotationConfig fileSinkRotation = parseFileSinkRotation(properties, defaults.fileSinkRotation(), errors);
@@ -152,6 +180,8 @@ public record StandaloneCollectorConfig(
                         sourceResult.sources(),
                         listeners,
                         backpressure,
+                        backpressureMaxPayloadBytes,
+                        oversizedPayloadDecision,
                         sinkType,
                         sinkFile,
                         fileSinkRotation,
@@ -346,6 +376,21 @@ public record StandaloneCollectorConfig(
             errors.add(BACKPRESSURE + " must be ACCEPT, RETRY_LATER, or DROP");
             return BackpressureDecision.ACCEPT;
         }
+    }
+
+    private static BackpressureDecision parseOversizedPayloadDecision(String value, List<String> errors) {
+        BackpressureDecision decision;
+        try {
+            decision = BackpressureDecision.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (RuntimeException ex) {
+            errors.add(BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION + " must be RETRY_LATER or DROP");
+            return BackpressureDecision.DROP;
+        }
+        if (decision == BackpressureDecision.ACCEPT) {
+            errors.add(BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION + " must be RETRY_LATER or DROP");
+            return BackpressureDecision.DROP;
+        }
+        return decision;
     }
 
     private static SinkType parseSinkType(String value, List<String> errors) {

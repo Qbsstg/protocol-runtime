@@ -51,6 +51,8 @@ class StandaloneCollectorTest {
             assertEquals(FileSinkRotationConfig.defaults(), configured.fileSinkRotation());
             assertEquals(CollectorRuntimeMetrics.empty(), configured.metrics());
             assertEquals(BackpressureDecision.ACCEPT, configured.backpressureDecision());
+            assertEquals(0, configured.backpressureMaxPayloadBytes());
+            assertEquals(BackpressureDecision.DROP, configured.oversizedPayloadDecision());
             assertFalse(configured.strictAsduParsing());
 
             collector.start();
@@ -159,7 +161,47 @@ class StandaloneCollectorTest {
             InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
             assertTrue(sink.records().isEmpty());
             assertTrue(sink.failures().isEmpty());
-            assertEquals(CollectorRuntimeMetrics.empty(), collector.statusSnapshot().metrics());
+            CollectorRuntimeMetrics metrics = awaitRetryLaterBackpressure(collector, 1);
+            assertEquals(0, metrics.parsedRecordCount());
+            assertEquals(0, metrics.parseFailureCount());
+            assertEquals(1, metrics.backpressureRetryLaterCount());
+            assertEquals(0, metrics.backpressureDropCount());
+            assertEquals(BackpressureDecision.RETRY_LATER, metrics.lastBackpressureDecision());
+            assertEquals(SINGLE_POINT_FRAME.length, metrics.lastBackpressurePayloadSize());
+            assertEquals("iec104:station-1", metrics.lastBackpressureSourceId());
+        }
+    }
+
+    @Test
+    void oversizedPayloadBackpressureDropsBeforeParsing() throws Exception {
+        Properties properties = baseProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_MAX_PAYLOAD_BYTES, "1");
+        properties.setProperty(
+                StandaloneCollectorConfig.BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION,
+                BackpressureDecision.DROP.name());
+
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.fromProperties(properties))) {
+            CollectorStatusSnapshot configured = collector.statusSnapshot();
+            assertEquals(1, configured.backpressureMaxPayloadBytes());
+            assertEquals(BackpressureDecision.DROP, configured.oversizedPayloadDecision());
+
+            collector.start();
+
+            writeFrame(collector, SINGLE_POINT_FRAME);
+
+            CollectorRuntimeMetrics metrics = awaitDropBackpressure(collector, 1);
+            InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
+            assertTrue(sink.records().isEmpty());
+            assertTrue(sink.failures().isEmpty());
+            assertEquals(0, metrics.parsedRecordCount());
+            assertEquals(0, metrics.parseFailureCount());
+            assertEquals(0, metrics.backpressureRetryLaterCount());
+            assertEquals(1, metrics.backpressureDropCount());
+            assertEquals(BackpressureDecision.DROP, metrics.lastBackpressureDecision());
+            assertEquals(SINGLE_POINT_FRAME.length, metrics.lastBackpressurePayloadSize());
+            assertEquals("iec104:station-1", metrics.lastBackpressureSourceId());
+            assertNotNull(metrics.lastBackpressureAt());
         }
     }
 
@@ -353,6 +395,8 @@ class StandaloneCollectorTest {
         properties.setProperty(StandaloneCollectorConfig.SINK_FILE, tempDir.toString());
         properties.setProperty(StandaloneCollectorConfig.SINK_FILE_MAX_BYTES, "0");
         properties.setProperty(StandaloneCollectorConfig.SINK_FILE_MAX_HISTORY, "0");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_MAX_PAYLOAD_BYTES, "-1");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION, "ACCEPT");
 
         CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
 
@@ -365,6 +409,25 @@ class StandaloneCollectorTest {
         assertContainsError(validation, StandaloneCollectorConfig.SINK_FILE + " must point to a file");
         assertContainsError(validation, StandaloneCollectorConfig.SINK_FILE_MAX_BYTES + " must be positive");
         assertContainsError(validation, StandaloneCollectorConfig.SINK_FILE_MAX_HISTORY + " must be positive");
+        assertContainsError(validation, StandaloneCollectorConfig.BACKPRESSURE_MAX_PAYLOAD_BYTES + " must be between");
+        assertContainsError(
+                validation,
+                StandaloneCollectorConfig.BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION + " must be RETRY_LATER or DROP");
+    }
+
+    @Test
+    void parsesCustomBackpressurePayloadPolicy() {
+        Properties properties = baseProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_MAX_PAYLOAD_BYTES, "64");
+        properties.setProperty(
+                StandaloneCollectorConfig.BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION,
+                BackpressureDecision.RETRY_LATER.name());
+
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertEquals(BackpressureDecision.ACCEPT, appConfig.backpressureDecision());
+        assertEquals(64, appConfig.backpressureMaxPayloadBytes());
+        assertEquals(BackpressureDecision.RETRY_LATER, appConfig.oversizedPayloadDecision());
     }
 
     @Test
@@ -463,6 +526,8 @@ class StandaloneCollectorTest {
                                 "station-b",
                                 SourceId.of("iec104", "station-b"))),
                 BackpressureDecision.ACCEPT,
+                0,
+                BackpressureDecision.DROP,
                 SinkType.IN_MEMORY,
                 null,
                 FileSinkRotationConfig.defaults(),
@@ -516,6 +581,41 @@ class StandaloneCollectorTest {
         }
         assertEquals(expected, sink.failures().size());
         return sink.failures();
+    }
+
+    private static CollectorRuntimeMetrics awaitRetryLaterBackpressure(
+            StandaloneCollector collector,
+            int expected) throws InterruptedException {
+        return awaitBackpressure(
+                collector,
+                expected,
+                metrics -> metrics.backpressureRetryLaterCount());
+    }
+
+    private static CollectorRuntimeMetrics awaitDropBackpressure(
+            StandaloneCollector collector,
+            int expected) throws InterruptedException {
+        return awaitBackpressure(
+                collector,
+                expected,
+                metrics -> metrics.backpressureDropCount());
+    }
+
+    private static CollectorRuntimeMetrics awaitBackpressure(
+            StandaloneCollector collector,
+            int expected,
+            java.util.function.ToLongFunction<CollectorRuntimeMetrics> counter) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+        while (System.nanoTime() < deadline) {
+            CollectorRuntimeMetrics metrics = collector.statusSnapshot().metrics();
+            if (counter.applyAsLong(metrics) >= expected) {
+                return metrics;
+            }
+            Thread.sleep(10);
+        }
+        CollectorRuntimeMetrics metrics = collector.statusSnapshot().metrics();
+        assertEquals(expected, counter.applyAsLong(metrics));
+        return metrics;
     }
 
     private static void awaitFileLines(Path output, int expected) throws Exception {

@@ -19,6 +19,8 @@ public record CollectorStatusSnapshot(
         SinkType sinkType,
         FileSinkRotationConfig fileSinkRotation,
         BackpressureDecision backpressureDecision,
+        long backpressureMaxPayloadBytes,
+        BackpressureDecision oversizedPayloadDecision,
         boolean strictAsduParsing) {
 
     public CollectorStatusSnapshot {
@@ -29,6 +31,12 @@ public record CollectorStatusSnapshot(
         }
         if (fileSinkRotation == null) {
             throw new IllegalArgumentException("fileSinkRotation must not be null");
+        }
+        if (backpressureMaxPayloadBytes < 0) {
+            throw new IllegalArgumentException("backpressureMaxPayloadBytes must not be negative");
+        }
+        if (oversizedPayloadDecision == null) {
+            throw new IllegalArgumentException("oversizedPayloadDecision must not be null");
         }
     }
 }

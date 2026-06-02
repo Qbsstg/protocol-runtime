@@ -10,6 +10,8 @@ public record StandaloneCollectorAppConfig(
         List<CollectorSourceConfig> sources,
         List<TcpListenerConfig> tcpListeners,
         BackpressureDecision backpressureDecision,
+        long backpressureMaxPayloadBytes,
+        BackpressureDecision oversizedPayloadDecision,
         SinkType sinkType,
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
@@ -19,8 +21,15 @@ public record StandaloneCollectorAppConfig(
         sources = List.copyOf(Objects.requireNonNull(sources, "sources must not be null"));
         tcpListeners = List.copyOf(Objects.requireNonNull(tcpListeners, "tcpListeners must not be null"));
         Objects.requireNonNull(backpressureDecision, "backpressureDecision must not be null");
+        Objects.requireNonNull(oversizedPayloadDecision, "oversizedPayloadDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
+        if (backpressureMaxPayloadBytes < 0) {
+            throw new IllegalArgumentException("backpressureMaxPayloadBytes must not be negative");
+        }
+        if (oversizedPayloadDecision == BackpressureDecision.ACCEPT) {
+            throw new IllegalArgumentException("oversizedPayloadDecision must be RETRY_LATER or DROP");
+        }
         if (sources.isEmpty()) {
             throw new IllegalArgumentException("sources must not be empty");
         }
@@ -40,6 +49,8 @@ public record StandaloneCollectorAppConfig(
                 List.of(source),
                 List.of(listener),
                 config.backpressureDecision(),
+                config.backpressureMaxPayloadBytes(),
+                config.oversizedPayloadDecision(),
                 config.sinkType(),
                 config.sinkFile(),
                 config.fileSinkRotation(),
@@ -56,6 +67,8 @@ public record StandaloneCollectorAppConfig(
                 listener.tcp(),
                 listener.sourceId(),
                 backpressureDecision,
+                backpressureMaxPayloadBytes,
+                oversizedPayloadDecision,
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
