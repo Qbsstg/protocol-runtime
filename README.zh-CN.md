@@ -367,18 +367,20 @@ file sink 每行输出一条类似 JSON 的记录。当前输出文件超过
 
 ## Smoke Tests
 
-`runtime-smoke-tests` 只做跨模块验证。当前 IEC104 TCP smoke test 路径如下：
+`runtime-smoke-tests` 只做跨模块验证。当前 smoke test 会把 TCP 字节送入：
 
 ```text
 EmbeddedChannel or real localhost Socket
   -> TcpNettyServer / TcpNettyIngressHandler
   -> RuntimePipelineRunner
-  -> Iec104RuntimeBinding
+  -> selected RuntimeParserBinding
   -> RecordSink / FailureSink
 ```
 
-它覆盖完整 IEC104 frame、TCP 半包、背压阻止解析、异常帧进入 failure sink、
-真实 TCP socket server bootstrap，以及客户端断开后停止每连接 runner。
+IEC104 smoke test 覆盖完整 frame、TCP 半包、背压阻止解析、异常帧进入
+failure sink、真实 TCP socket server bootstrap，以及客户端断开后停止每连接
+runner。多协议 smoke test 进一步覆盖 IEC101、IEC103 和 Modbus TCP byte-stream
+通过相同 ingress 与 runner 边界进入对应 binding 的路径。
 
 ## 依赖方向
 
