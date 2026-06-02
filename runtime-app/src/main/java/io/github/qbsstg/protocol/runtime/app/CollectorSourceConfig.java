@@ -4,11 +4,16 @@ import io.github.qbsstg.protocol.runtime.core.SourceId;
 
 import java.util.Objects;
 
-public record CollectorSourceConfig(String name, SourceId sourceId) {
+public record CollectorSourceConfig(String name, SourceId sourceId, RuntimeProtocol protocol) {
+
+    public CollectorSourceConfig(String name, SourceId sourceId) {
+        this(name, sourceId, RuntimeProtocol.IEC104);
+    }
 
     public CollectorSourceConfig {
         name = requireName(name);
         Objects.requireNonNull(sourceId, "sourceId must not be null");
+        Objects.requireNonNull(protocol, "protocol must not be null");
     }
 
     private static String requireName(String value) {

@@ -43,8 +43,13 @@ public record StandaloneCollectorAppConfig(
 
     public static StandaloneCollectorAppConfig fromSingle(StandaloneCollectorConfig config) {
         Objects.requireNonNull(config, "config must not be null");
-        CollectorSourceConfig source = new CollectorSourceConfig("default", config.sourceId());
-        TcpListenerConfig listener = new TcpListenerConfig("default", config.tcp(), source.name(), source.sourceId());
+        CollectorSourceConfig source = new CollectorSourceConfig("default", config.sourceId(), config.protocol());
+        TcpListenerConfig listener = new TcpListenerConfig(
+                "default",
+                config.tcp(),
+                source.name(),
+                source.sourceId(),
+                source.protocol());
         return new StandaloneCollectorAppConfig(
                 List.of(source),
                 List.of(listener),
@@ -72,6 +77,7 @@ public record StandaloneCollectorAppConfig(
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
+                listener.protocol(),
                 strictAsduParsing);
     }
 }

@@ -20,9 +20,9 @@ output, counters, file sink rotation, parse failure isolation, and payload-size
 backpressure policy.
 
 The current development line is `0.4.0-SNAPSHOT`. Its scope is multi-protocol
-runtime expansion: planning IEC101, IEC103, and Modbus runtime protocol
-bindings around the published `protocol-sdk:0.7.0` parser artifacts while
-preserving the existing IEC104 app path.
+runtime expansion: IEC101, IEC103, and Modbus runtime protocol bindings around
+the published `protocol-sdk:0.7.0` parser artifacts, plus app-level protocol
+selection while preserving the existing IEC104 app path.
 
 The `0.4.0` release scope is tracked in
 [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md). Draft release notes are
@@ -78,7 +78,7 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-protocol-iec103` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0` with per-source stream decoder buffering and failure routing. |
 | `runtime-protocol-modbus` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0` with TCP stream and datagram parser modes. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-app` | 0.4.0-SNAPSHOT development | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.4.0` planning adds app-level protocol selection while preserving IEC104 compatibility. |
+| `runtime-app` | 0.4.0-SNAPSHOT development | Standalone collector assembly with property-based configuration, app-level protocol selection, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
@@ -193,7 +193,7 @@ The current development build uses `0.4.0-SNAPSHOT`:
 ```text
 TcpNettyServer
   -> RuntimePipelineRunner
-  -> Iec104RuntimeBinding
+  -> selected RuntimeParserBinding
   -> configured RecordSink / FailureSink
 ```
 
@@ -240,6 +240,7 @@ Minimal configuration keys:
 ```properties
 collector.tcp.host=0.0.0.0
 collector.tcp.port=2404
+collector.protocol=iec104
 collector.source.id=iec104:station-1
 collector.backpressure=ACCEPT
 collector.backpressure.maxPayloadBytes=0
@@ -275,6 +276,7 @@ they can override checked-in defaults for local runs.
 | `collector.tcp.port` | `2404` | TCP listen port. Port `0` requests an ephemeral port for smoke tests. |
 | `collector.tcp.bossThreads` | `1` | Netty boss event loop threads. |
 | `collector.tcp.workerThreads` | `1` | Netty worker event loop threads. |
+| `collector.protocol` | `iec104` | Protocol binding for the legacy single-source configuration. Supported values are `iec104`, `iec101`, `iec103`, and `modbus`. |
 | `collector.source.id` | `iec104:station-1` | Runtime source id in `namespace:value` form. |
 | `collector.backpressure` | `ACCEPT` | One of `ACCEPT`, `RETRY_LATER`, or `DROP`. |
 | `collector.backpressure.maxPayloadBytes` | `0` | Optional app-level payload-size threshold before parsing. `0` disables the threshold. |
@@ -296,7 +298,9 @@ Named sources and listeners use explicit lists:
 ```properties
 collector.sources=station-a,station-b
 collector.source.station-a.id=iec104:station-a
-collector.source.station-b.id=iec104:station-b
+collector.source.station-a.protocol=iec104
+collector.source.station-b.id=modbus:station-b
+collector.source.station-b.protocol=modbus
 
 collector.tcp.listeners=north,south
 collector.tcp.listener.north.host=127.0.0.1
@@ -313,6 +317,11 @@ collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
 collector.sink.file.maxHistory=5
 ```
+
+Named listeners inherit the protocol from their referenced source. `iec104`,
+`iec101`, and `iec103` currently use the TCP byte-stream ingress as an app-level
+baseline; serial adapters remain deferred. `modbus` selects the Modbus TCP
+stream binding; Modbus UDP remains deferred to a future UDP ingress adapter.
 
 ### Lifecycle And Status Snapshot
 

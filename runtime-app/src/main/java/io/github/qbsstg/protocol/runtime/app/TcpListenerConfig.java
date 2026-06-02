@@ -9,13 +9,19 @@ public record TcpListenerConfig(
         String name,
         TcpNettyServerConfig tcp,
         String sourceName,
-        SourceId sourceId) {
+        SourceId sourceId,
+        RuntimeProtocol protocol) {
+
+    public TcpListenerConfig(String name, TcpNettyServerConfig tcp, String sourceName, SourceId sourceId) {
+        this(name, tcp, sourceName, sourceId, RuntimeProtocol.IEC104);
+    }
 
     public TcpListenerConfig {
         name = requireName(name, "listener name");
         Objects.requireNonNull(tcp, "tcp must not be null");
         sourceName = requireName(sourceName, "listener source name");
         Objects.requireNonNull(sourceId, "sourceId must not be null");
+        Objects.requireNonNull(protocol, "protocol must not be null");
     }
 
     private static String requireName(String value, String label) {

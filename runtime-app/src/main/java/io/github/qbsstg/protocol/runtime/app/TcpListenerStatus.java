@@ -4,6 +4,7 @@ public record TcpListenerStatus(
         String name,
         String sourceName,
         String sourceId,
+        String protocol,
         String configuredHost,
         int configuredPort,
         String boundHost,

@@ -29,6 +29,7 @@ public record StandaloneCollectorConfig(
         SinkType sinkType,
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
+        RuntimeProtocol protocol,
         boolean strictAsduParsing) {
 
     public static final String TCP_HOST = "collector.tcp.host";
@@ -46,6 +47,8 @@ public record StandaloneCollectorConfig(
     public static final String SOURCE_ID = "collector.source.id";
     public static final String SOURCE_PREFIX = "collector.source.";
     public static final String SOURCE_ID_SUFFIX = ".id";
+    public static final String SOURCE_PROTOCOL_SUFFIX = ".protocol";
+    public static final String PROTOCOL = "collector.protocol";
     public static final String BACKPRESSURE = "collector.backpressure";
     public static final String BACKPRESSURE_MAX_PAYLOAD_BYTES = "collector.backpressure.maxPayloadBytes";
     public static final String BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION =
@@ -66,6 +69,7 @@ public record StandaloneCollectorConfig(
         Objects.requireNonNull(oversizedPayloadDecision, "oversizedPayloadDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
+        Objects.requireNonNull(protocol, "protocol must not be null");
         if (backpressureMaxPayloadBytes < 0) {
             throw new IllegalArgumentException("collector.backpressure.maxPayloadBytes must not be negative");
         }
@@ -88,6 +92,7 @@ public record StandaloneCollectorConfig(
                 SinkType.LOGGING,
                 null,
                 FileSinkRotationConfig.defaults(),
+                RuntimeProtocol.IEC104,
                 false);
     }
 
@@ -164,9 +169,13 @@ public record StandaloneCollectorConfig(
         SinkType sinkType = parseSinkType(property(properties, SINK_TYPE, defaults.sinkType().configValue()), errors);
         Path sinkFile = parseSinkFile(properties, sinkType, errors);
         FileSinkRotationConfig fileSinkRotation = parseFileSinkRotation(properties, defaults.fileSinkRotation(), errors);
+        RuntimeProtocol protocol = parseProtocol(
+                PROTOCOL,
+                property(properties, PROTOCOL, defaults.protocol().configValue()),
+                errors);
         boolean strictAsduParsing = parseBoolean(properties, IEC104_STRICT_ASDU, defaults.strictAsduParsing(), errors);
 
-        SourceParseResult sourceResult = parseSources(properties, defaults, errors);
+        SourceParseResult sourceResult = parseSources(properties, defaults, protocol, errors);
         List<TcpListenerConfig> listeners = parseTcpListeners(properties, defaults, sourceResult, errors);
         addDuplicateSourceIdErrors(sourceResult.sources(), errors);
         addDuplicateListenerEndpointErrors(listeners, errors);
@@ -192,18 +201,20 @@ public record StandaloneCollectorConfig(
     private static SourceParseResult parseSources(
             Properties properties,
             StandaloneCollectorConfig defaults,
+            RuntimeProtocol defaultProtocol,
             List<String> errors) {
         String rawNames = rawProperty(properties, SOURCES);
         List<CollectorSourceConfig> sources = new ArrayList<>();
-        Map<String, SourceId> sourceByName = new LinkedHashMap<>();
+        Map<String, CollectorSourceConfig> sourceByName = new LinkedHashMap<>();
         if (rawNames == null) {
             SourceId sourceId = parseSourceId(
                     SOURCE_ID,
                     property(properties, SOURCE_ID, defaults.sourceId().qualifiedValue()),
                     errors);
             if (sourceId != null) {
-                sources.add(new CollectorSourceConfig(DEFAULT_SOURCE_NAME, sourceId));
-                sourceByName.put(DEFAULT_SOURCE_NAME, sourceId);
+                CollectorSourceConfig source = new CollectorSourceConfig(DEFAULT_SOURCE_NAME, sourceId, defaultProtocol);
+                sources.add(source);
+                sourceByName.put(DEFAULT_SOURCE_NAME, source);
             }
             return new SourceParseResult(sources, sourceByName, false);
         }
@@ -221,9 +232,14 @@ public record StandaloneCollectorConfig(
             }
             String sourceIdKey = sourceIdKey(name);
             SourceId sourceId = parseSourceId(sourceIdKey, property(properties, sourceIdKey, null), errors);
+            RuntimeProtocol protocol = parseProtocol(
+                    sourceProtocolKey(name),
+                    property(properties, sourceProtocolKey(name), defaultProtocol.configValue()),
+                    errors);
             if (sourceId != null) {
-                sources.add(new CollectorSourceConfig(name, sourceId));
-                sourceByName.put(name, sourceId);
+                CollectorSourceConfig source = new CollectorSourceConfig(name, sourceId, protocol);
+                sources.add(source);
+                sourceByName.put(name, source);
             }
         }
         return new SourceParseResult(sources, sourceByName, true);
@@ -258,14 +274,14 @@ public record StandaloneCollectorConfig(
                 continue;
             }
             sourceName = normalizeName(prefix + TCP_LISTENER_SOURCE_SUFFIX, sourceName, errors);
-            SourceId sourceId = sourceResult.sourceByName().get(sourceName);
-            if (sourceName != null && sourceId == null) {
+            CollectorSourceConfig source = sourceResult.sourceByName().get(sourceName);
+            if (sourceName != null && source == null) {
                 errors.add(prefix + TCP_LISTENER_SOURCE_SUFFIX + " references unknown source: " + sourceName);
             }
 
             TcpNettyServerConfig tcp = parseNamedTcpConfig(properties, defaults, prefix, errors);
-            if (sourceName != null && sourceId != null && tcp != null) {
-                listeners.add(new TcpListenerConfig(name, tcp, sourceName, sourceId));
+            if (sourceName != null && source != null && tcp != null) {
+                listeners.add(new TcpListenerConfig(name, tcp, sourceName, source.sourceId(), source.protocol()));
             }
         }
         return listeners;
@@ -285,12 +301,17 @@ public record StandaloneCollectorConfig(
                 return List.of();
             }
         }
-        SourceId sourceId = sourceResult.sourceByName().get(sourceName);
+        CollectorSourceConfig source = sourceResult.sourceByName().get(sourceName);
         TcpNettyServerConfig tcp = parseLegacyTcpConfig(properties, defaults, errors);
-        if (sourceId == null || tcp == null) {
+        if (source == null || tcp == null) {
             return List.of();
         }
-        return List.of(new TcpListenerConfig(DEFAULT_LISTENER_NAME, tcp, sourceName, sourceId));
+        return List.of(new TcpListenerConfig(
+                DEFAULT_LISTENER_NAME,
+                tcp,
+                sourceName,
+                source.sourceId(),
+                source.protocol()));
     }
 
     private static TcpNettyServerConfig parseLegacyTcpConfig(
@@ -399,6 +420,15 @@ public record StandaloneCollectorConfig(
         } catch (RuntimeException ex) {
             errors.add(SINK_TYPE + " must be logging, file, or in-memory");
             return SinkType.LOGGING;
+        }
+    }
+
+    private static RuntimeProtocol parseProtocol(String key, String value, List<String> errors) {
+        try {
+            return RuntimeProtocol.parse(value);
+        } catch (RuntimeException ex) {
+            errors.add(key + " must be iec104, iec101, iec103, or modbus");
+            return RuntimeProtocol.IEC104;
         }
     }
 
@@ -656,12 +686,16 @@ public record StandaloneCollectorConfig(
         return SOURCE_PREFIX + sourceName + SOURCE_ID_SUFFIX;
     }
 
+    private static String sourceProtocolKey(String sourceName) {
+        return SOURCE_PREFIX + sourceName + SOURCE_PROTOCOL_SUFFIX;
+    }
+
     private record ConfigParseResult(StandaloneCollectorAppConfig config, CollectorConfigValidation validation) {
     }
 
     private record SourceParseResult(
             List<CollectorSourceConfig> sources,
-            Map<String, SourceId> sourceByName,
+            Map<String, CollectorSourceConfig> sourceByName,
             boolean usesNamedSources) {
     }
 }
