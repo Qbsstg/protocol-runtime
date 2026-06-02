@@ -101,6 +101,8 @@ Before `0.3.0` release readiness, an operator should be able to:
 - Legacy single-source `collector.properties` compatibility: preserved.
 - Collector lifecycle/status snapshot: started.
 - Runtime status counters for parsed records and parse failures: started.
+- Parse failure diagnostics with payload preview and TCP/session attributes:
+  started.
 - File sink rotation policy: started.
 - Payload-size backpressure policy and counters: started.
 - Queue-depth and sink-pressure backpressure policy: still planned.

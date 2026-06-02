@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 final class RuntimeSinkCounters {
 
+    private static final int FAILURE_PAYLOAD_PREVIEW_BYTES = 64;
+
     private final AtomicLong parsedRecordCount = new AtomicLong();
     private final AtomicLong parseFailureCount = new AtomicLong();
     private final AtomicLong backpressureRetryLaterCount = new AtomicLong();
@@ -50,6 +52,10 @@ final class RuntimeSinkCounters {
                 failure.sourceId().qualifiedValue(),
                 failure.message(),
                 failure.observedAt(),
+                failure.cause() == null ? null : failure.cause().getClass().getName(),
+                failure.rawPayload().length,
+                hexPreview(failure.rawPayload(), FAILURE_PAYLOAD_PREVIEW_BYTES),
+                failure.attributes(),
                 backpressureRetryLaterCount.get(),
                 backpressureDropCount.get(),
                 backpressure == null ? null : backpressure.sourceId(),
@@ -65,12 +71,29 @@ final class RuntimeSinkCounters {
                 null,
                 null,
                 null,
+                null,
+                0,
+                "",
+                java.util.Map.of(),
                 backpressureRetryLaterCount.get(),
                 backpressureDropCount.get(),
                 backpressure == null ? null : backpressure.sourceId(),
                 backpressure == null ? null : backpressure.decision(),
                 backpressure == null ? null : backpressure.observedAt(),
                 backpressure == null ? 0 : backpressure.payloadSize());
+    }
+
+    private static String hexPreview(byte[] payload, int maxBytes) {
+        int length = Math.min(payload.length, maxBytes);
+        StringBuilder hex = new StringBuilder(length * 2);
+        for (int i = 0; i < length; i++) {
+            int unsigned = payload[i] & 0xFF;
+            if (unsigned < 0x10) {
+                hex.append('0');
+            }
+            hex.append(Integer.toHexString(unsigned).toUpperCase());
+        }
+        return hex.toString();
     }
 
     private record BackpressureEvent(
