@@ -10,6 +10,9 @@ Draft release notes for the next `0.3.0` runtime release line.
   counts, sink settings, and file sink paths.
 - Introduce a multi-source and multi-listener app configuration model without
   adding app configuration dependencies to `runtime-core`.
+- Preserve the existing single-source `collector.properties` shape while
+  adding named `collector.sources` and `collector.tcp.listeners` lists.
+- Validate startup configuration before opening TCP listeners.
 - Expose collector lifecycle state and a minimal runtime status snapshot.
 - Improve JDK logging and define app-level metrics counters/gauges before
   selecting any metrics exporter.
@@ -54,8 +57,9 @@ Before release readiness, the branch should pass:
 - `mvn -q verify`
 - standalone jar smoke verification for `runtime-app`
 - dependency boundary checks proving `runtime-core` remains adapter-free
-- tests for configuration validation, lifecycle/status behavior, file sink
-  rotation, parse failure isolation, and backpressure policy
+- tests for configuration validation, multi-source/listener configuration,
+  lifecycle/status behavior, file sink rotation, parse failure isolation, and
+  backpressure policy
 
 ## Release Readiness Status
 

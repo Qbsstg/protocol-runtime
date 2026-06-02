@@ -12,12 +12,15 @@ import io.github.qbsstg.protocol.runtime.core.ParseFailure;
 import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -102,6 +105,59 @@ class StandaloneCollectorTest {
     }
 
     @Test
+    void preservesLegacySingleSourceConfigurationAsAppModel() {
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(
+                baseProperties(2404, "logging"));
+
+        assertEquals(1, appConfig.sources().size());
+        assertEquals(1, appConfig.tcpListeners().size());
+        assertEquals("default", appConfig.sources().get(0).name());
+        assertEquals("iec104:station-1", appConfig.sources().get(0).sourceId().qualifiedValue());
+        assertEquals("default", appConfig.tcpListeners().get(0).name());
+        assertEquals("default", appConfig.tcpListeners().get(0).sourceName());
+        assertEquals(2404, appConfig.tcpListeners().get(0).tcp().port());
+    }
+
+    @Test
+    void parsesMultiSourceAndMultiListenerAppConfiguration() {
+        Properties properties = multiSourceProperties();
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertTrue(validation.isValid());
+        assertEquals(2, appConfig.sources().size());
+        assertEquals(2, appConfig.tcpListeners().size());
+        assertEquals("station-a", appConfig.tcpListeners().get(0).sourceName());
+        assertEquals("iec104:station-a", appConfig.tcpListeners().get(0).sourceId().qualifiedValue());
+        assertEquals("station-b", appConfig.tcpListeners().get(1).sourceName());
+        assertEquals("iec104:station-b", appConfig.tcpListeners().get(1).sourceId().qualifiedValue());
+    }
+
+    @Test
+    void startsMultiListenerCollectorAndRoutesSourceSpecificRecords() throws Exception {
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(
+                multiSourceProperties());
+
+        try (StandaloneCollector collector = StandaloneCollector.create(appConfig)) {
+            collector.start();
+            List<InetSocketAddress> addresses = collector.localAddresses();
+
+            writeFrame(addresses.get(0), SINGLE_POINT_FRAME);
+            writeFrame(addresses.get(1), SINGLE_POINT_FRAME);
+
+            InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
+            List<ParsedRecord<Iec104Frame>> records = awaitRecords(sink, 2);
+            Set<String> sourceIds = new HashSet<>();
+            for (ParsedRecord<Iec104Frame> record : records) {
+                sourceIds.add(record.sourceId().qualifiedValue());
+            }
+            assertEquals(Set.of("iec104:station-a", "iec104:station-b"), sourceIds);
+            assertTrue(sink.failures().isEmpty());
+        }
+    }
+
+    @Test
     void clientDisconnectClearsActiveSession() throws Exception {
         try (StandaloneCollector collector = StandaloneCollector.create(config(0, "in-memory"))) {
             collector.start();
@@ -157,6 +213,53 @@ class StandaloneCollectorTest {
         assertThrows(IllegalArgumentException.class, () -> StandaloneCollectorConfig.fromProperties(properties));
     }
 
+    @Test
+    void reportsConfigurationValidationErrorsWithoutStarting() {
+        Properties properties = baseProperties(70000, "unknown");
+        properties.setProperty(StandaloneCollectorConfig.SOURCE_ID, "missing-separator");
+        properties.setProperty(StandaloneCollectorConfig.TCP_BOSS_THREADS, "0");
+        properties.setProperty(StandaloneCollectorConfig.TCP_WORKER_THREADS, "-1");
+        properties.setProperty(StandaloneCollectorConfig.SINK_FILE, tempDir.toString());
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.SOURCE_ID + " must use namespace:value format");
+        assertContainsError(validation, StandaloneCollectorConfig.TCP_PORT + " must be between 0 and 65535");
+        assertContainsError(validation, StandaloneCollectorConfig.TCP_BOSS_THREADS + " must be positive");
+        assertContainsError(validation, StandaloneCollectorConfig.TCP_WORKER_THREADS + " must be positive");
+        assertContainsError(validation, StandaloneCollectorConfig.SINK_TYPE + " must be logging, file, or in-memory");
+        assertContainsError(validation, StandaloneCollectorConfig.SINK_FILE + " must point to a file");
+    }
+
+    @Test
+    void reportsDuplicateSourcesAndListeners() {
+        Properties properties = multiSourceProperties();
+        properties.setProperty(StandaloneCollectorConfig.SOURCES, "station-a,station-b,station-b");
+        properties.setProperty(
+                StandaloneCollectorConfig.SOURCE_PREFIX + "station-b" + StandaloneCollectorConfig.SOURCE_ID_SUFFIX,
+                "iec104:station-a");
+        properties.setProperty(StandaloneCollectorConfig.TCP_LISTENERS, "north,south,north");
+        properties.setProperty(
+                StandaloneCollectorConfig.TCP_LISTENER_PREFIX
+                        + "south"
+                        + StandaloneCollectorConfig.TCP_LISTENER_PORT_SUFFIX,
+                "2404");
+        properties.setProperty(
+                StandaloneCollectorConfig.TCP_LISTENER_PREFIX
+                        + "north"
+                        + StandaloneCollectorConfig.TCP_LISTENER_PORT_SUFFIX,
+                "2404");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.SOURCES + " contains duplicate name: station-b");
+        assertContainsError(validation, StandaloneCollectorConfig.TCP_LISTENERS + " contains duplicate name: north");
+        assertContainsError(validation, "duplicate source id iec104:station-a");
+        assertContainsError(validation, "duplicate TCP listener endpoint 127.0.0.1:2404");
+    }
+
     private static StandaloneCollectorConfig config(int port, String sinkType) {
         return StandaloneCollectorConfig.fromProperties(baseProperties(port, sinkType));
     }
@@ -177,9 +280,37 @@ class StandaloneCollectorTest {
         return properties;
     }
 
+    private static Properties multiSourceProperties() {
+        Properties properties = new Properties();
+        properties.setProperty(StandaloneCollectorConfig.SOURCES, "station-a,station-b");
+        properties.setProperty(
+                StandaloneCollectorConfig.SOURCE_PREFIX + "station-a" + StandaloneCollectorConfig.SOURCE_ID_SUFFIX,
+                "iec104:station-a");
+        properties.setProperty(
+                StandaloneCollectorConfig.SOURCE_PREFIX + "station-b" + StandaloneCollectorConfig.SOURCE_ID_SUFFIX,
+                "iec104:station-b");
+        properties.setProperty(StandaloneCollectorConfig.TCP_LISTENERS, "north,south");
+        setListener(properties, "north", "station-a", 0);
+        setListener(properties, "south", "station-b", 0);
+        properties.setProperty(StandaloneCollectorConfig.SINK_TYPE, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, BackpressureDecision.ACCEPT.name());
+        return properties;
+    }
+
+    private static void setListener(Properties properties, String name, String sourceName, int port) {
+        String prefix = StandaloneCollectorConfig.TCP_LISTENER_PREFIX + name;
+        properties.setProperty(prefix + StandaloneCollectorConfig.TCP_LISTENER_HOST_SUFFIX, "127.0.0.1");
+        properties.setProperty(prefix + StandaloneCollectorConfig.TCP_LISTENER_PORT_SUFFIX, Integer.toString(port));
+        properties.setProperty(prefix + StandaloneCollectorConfig.TCP_LISTENER_SOURCE_SUFFIX, sourceName);
+    }
+
     private static void writeFrame(StandaloneCollector collector, byte[] frame) throws IOException {
+        writeFrame(collector.localAddress(), frame);
+    }
+
+    private static void writeFrame(InetSocketAddress address, byte[] frame) throws IOException {
         try (Socket socket = new Socket()) {
-            socket.connect(collector.localAddress());
+            socket.connect(address);
             socket.getOutputStream().write(frame);
             socket.getOutputStream().flush();
         }
@@ -237,6 +368,12 @@ class StandaloneCollectorTest {
             Thread.sleep(10);
         }
         assertEquals(expected, collector.activeConnectionCount());
+    }
+
+    private static void assertContainsError(CollectorConfigValidation validation, String expected) {
+        assertTrue(
+                validation.errors().stream().anyMatch(error -> error.contains(expected)),
+                () -> "Expected validation error containing '" + expected + "' but got " + validation.errors());
     }
 
     private static byte[] bytes(int... values) {

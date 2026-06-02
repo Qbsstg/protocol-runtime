@@ -245,6 +245,29 @@ java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
 | `collector.sink.file` | 未设置 | 当 `collector.sink.type=file` 时必须配置。 |
 | `collector.iec104.strictAsduParsing` | `false` | 是否启用 IEC104 SDK binding 的严格 ASDU 解析。 |
 
+`0.3.0` 引入启动前配置校验和内部多 source、多 listener 配置模型，同时保留
+上面的单 source 配置项。应用会在打开网络端口前校验 source id、TCP 端口、
+线程数、sink 类型、file sink 路径、重复 source 和重复 listener endpoint。
+
+命名 source 和 listener 使用显式列表：
+
+```properties
+collector.sources=station-a,station-b
+collector.source.station-a.id=iec104:station-a
+collector.source.station-b.id=iec104:station-b
+
+collector.tcp.listeners=north,south
+collector.tcp.listener.north.host=127.0.0.1
+collector.tcp.listener.north.port=2404
+collector.tcp.listener.north.source=station-a
+collector.tcp.listener.south.host=127.0.0.1
+collector.tcp.listener.south.port=2405
+collector.tcp.listener.south.source=station-b
+
+collector.sink.type=file
+collector.sink.file=target/runtime-records.ndjson
+```
+
 ### File Sink 输出格式
 
 file sink 每行输出一条类似 JSON 的记录。成功解析记录包含：

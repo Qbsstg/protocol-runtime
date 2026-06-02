@@ -17,11 +17,14 @@ lifecycle, health, observability, sink, failure, and backpressure behavior.
   - validate source id format, TCP ports, thread counts, sink selection, and
     file sink paths
   - report startup errors with operator-readable messages
+  - expose a validation result model so callers can inspect errors before
+    constructing the collector
 - Multi-source and multi-listener planning:
   - model more than one configured source
   - allow multiple TCP listeners in the app config
   - keep source-specific attributes stable in `IngressEnvelope`
   - avoid changing `runtime-core` just to support app-level configuration shape
+  - keep the existing single-source `collector.properties` shape compatible
 - Collector lifecycle state:
   - expose app states such as configured, starting, running, stopping, stopped,
     and failed
@@ -88,6 +91,15 @@ Before `0.3.0` release readiness, an operator should be able to:
 4. Confirm file sink output does not grow without a documented rotation policy.
 5. Confirm parse failures are isolated from successful traffic.
 6. Confirm backpressure behavior is visible and test-covered.
+
+## Development Progress
+
+- Configuration validation result model: started.
+- Startup validation before network bind: started.
+- Multi-source and multi-listener app configuration model: started.
+- Legacy single-source `collector.properties` compatibility: preserved.
+- Runtime status snapshot, file rotation, and richer backpressure policy:
+  still planned.
 
 ## Release Readiness Gate
 
