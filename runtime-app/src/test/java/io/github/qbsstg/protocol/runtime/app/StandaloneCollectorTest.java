@@ -49,6 +49,7 @@ class StandaloneCollectorTest {
             assertNull(configured.startedAt());
             assertEquals(SinkType.IN_MEMORY, configured.sinkType());
             assertEquals(FileSinkRotationConfig.defaults(), configured.fileSinkRotation());
+            assertEquals(CollectorRuntimeMetrics.empty(), configured.metrics());
             assertEquals(BackpressureDecision.ACCEPT, configured.backpressureDecision());
             assertFalse(configured.strictAsduParsing());
 
@@ -77,6 +78,9 @@ class StandaloneCollectorTest {
             assertEquals(0, running.tcpListeners().get(0).configuredPort());
             assertTrue(running.tcpListeners().get(0).running());
             assertNotNull(running.tcpListeners().get(0).boundPort());
+            assertEquals(1, running.metrics().parsedRecordCount());
+            assertEquals(0, running.metrics().parseFailureCount());
+            assertNull(running.metrics().lastParseFailureMessage());
         }
     }
 
@@ -130,6 +134,13 @@ class StandaloneCollectorTest {
             assertTrue(sink.records().isEmpty());
             assertEquals("iec104:station-1", failures.get(0).sourceId().qualifiedValue());
             assertTrue(failures.get(0).message().contains("Invalid IEC104 APDU length"));
+
+            CollectorStatusSnapshot snapshot = collector.statusSnapshot();
+            assertEquals(0, snapshot.metrics().parsedRecordCount());
+            assertEquals(1, snapshot.metrics().parseFailureCount());
+            assertEquals("iec104:station-1", snapshot.metrics().lastParseFailureSourceId());
+            assertTrue(snapshot.metrics().lastParseFailureMessage().contains("Invalid IEC104 APDU length"));
+            assertNotNull(snapshot.metrics().lastParseFailureAt());
         }
     }
 
@@ -148,6 +159,7 @@ class StandaloneCollectorTest {
             InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
             assertTrue(sink.records().isEmpty());
             assertTrue(sink.failures().isEmpty());
+            assertEquals(CollectorRuntimeMetrics.empty(), collector.statusSnapshot().metrics());
         }
     }
 
@@ -208,6 +220,7 @@ class StandaloneCollectorTest {
             }
             assertEquals(Set.of("iec104:station-a", "iec104:station-b"), sourceIds);
             assertTrue(sink.failures().isEmpty());
+            assertEquals(2, collector.statusSnapshot().metrics().parsedRecordCount());
         }
     }
 

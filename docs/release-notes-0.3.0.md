@@ -15,8 +15,9 @@ Draft release notes for the next `0.3.0` runtime release line.
 - Validate startup configuration before opening TCP listeners.
 - Expose collector lifecycle state and a minimal runtime status snapshot with
   configured/running/stopped/failed state, timestamps, startup failure reason,
-  listener bind information, active connection counts, sink type, backpressure
-  mode, and strict ASDU setting.
+  listener bind information, active connection counts, parsed record and parse
+  failure counters, last parse failure details, sink type, backpressure mode,
+  and strict ASDU setting.
 - Improve JDK logging and define app-level metrics counters/gauges before
   selecting any metrics exporter.
 - Add configurable file sink rotation with default byte and history limits so

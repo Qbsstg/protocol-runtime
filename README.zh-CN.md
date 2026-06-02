@@ -299,6 +299,8 @@ CollectorStatusSnapshot stopped = collector.statusSnapshot();
 - source 摘要
 - listener 配置 host/port 和实际 bind host/port
 - 每个 listener 以及整体 active connection count
+- parsed record 和 parse failure 计数
+- 最后一次 parse failure 的 source id、消息和发生时间
 - sink 类型、file 轮转策略、backpressure 模式和 strict ASDU 配置
 
 ### File Sink 输出格式

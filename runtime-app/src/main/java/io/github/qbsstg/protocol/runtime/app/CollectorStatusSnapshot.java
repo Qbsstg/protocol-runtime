@@ -15,6 +15,7 @@ public record CollectorStatusSnapshot(
         List<CollectorSourceStatus> sources,
         List<TcpListenerStatus> tcpListeners,
         int activeConnectionCount,
+        CollectorRuntimeMetrics metrics,
         SinkType sinkType,
         FileSinkRotationConfig fileSinkRotation,
         BackpressureDecision backpressureDecision,
@@ -23,6 +24,9 @@ public record CollectorStatusSnapshot(
     public CollectorStatusSnapshot {
         sources = List.copyOf(sources);
         tcpListeners = List.copyOf(tcpListeners);
+        if (metrics == null) {
+            throw new IllegalArgumentException("metrics must not be null");
+        }
         if (fileSinkRotation == null) {
             throw new IllegalArgumentException("fileSinkRotation must not be null");
         }

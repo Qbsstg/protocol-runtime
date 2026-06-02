@@ -328,6 +328,8 @@ The snapshot includes:
 - source summaries
 - listener configured host/port and bound host/port
 - per-listener and total active connection counts
+- parsed record and parse failure counters
+- last parse failure source id, message, and observed timestamp
 - sink type, file rotation policy, backpressure mode, and strict ASDU setting
 
 ### File Sink Format
