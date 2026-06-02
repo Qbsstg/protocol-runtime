@@ -98,8 +98,8 @@ Before `0.3.0` release readiness, an operator should be able to:
 - Startup validation before network bind: started.
 - Multi-source and multi-listener app configuration model: started.
 - Legacy single-source `collector.properties` compatibility: preserved.
-- Runtime status snapshot, file rotation, and richer backpressure policy:
-  still planned.
+- Collector lifecycle/status snapshot: started.
+- File rotation and richer backpressure policy: still planned.
 
 ## Release Readiness Gate
 
