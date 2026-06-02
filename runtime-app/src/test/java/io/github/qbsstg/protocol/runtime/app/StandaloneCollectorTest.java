@@ -3,6 +3,8 @@ package io.github.qbsstg.protocol.runtime.app;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,6 +12,8 @@ import io.github.qbsstg.protocol.iec104.Iec104Frame;
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
 import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
+import io.github.qbsstg.protocol.runtime.core.SourceId;
+import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -38,6 +42,13 @@ class StandaloneCollectorTest {
     @Test
     void startsStandaloneIec104CollectorAndRoutesRecordsToInMemorySink() throws Exception {
         try (StandaloneCollector collector = StandaloneCollector.create(config(0, "in-memory"))) {
+            CollectorStatusSnapshot configured = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.CONFIGURED, configured.state());
+            assertNull(configured.startedAt());
+            assertEquals(SinkType.IN_MEMORY, configured.sinkType());
+            assertEquals(BackpressureDecision.ACCEPT, configured.backpressureDecision());
+            assertFalse(configured.strictAsduParsing());
+
             collector.start();
 
             writeFrame(collector, SINGLE_POINT_FRAME);
@@ -50,6 +61,19 @@ class StandaloneCollectorTest {
             assertEquals("I_FORMAT", records.get(0).recordType());
             assertArrayEquals(SINGLE_POINT_FRAME, records.get(0).rawPayload());
             assertTrue(sink.failures().isEmpty());
+
+            CollectorStatusSnapshot running = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.RUNNING, running.state());
+            assertNotNull(running.startedAt());
+            assertNull(running.stoppedAt());
+            assertEquals(1, running.sources().size());
+            assertEquals("iec104:station-1", running.sources().get(0).sourceId());
+            assertEquals(1, running.tcpListeners().size());
+            assertEquals("default", running.tcpListeners().get(0).name());
+            assertEquals("127.0.0.1", running.tcpListeners().get(0).configuredHost());
+            assertEquals(0, running.tcpListeners().get(0).configuredPort());
+            assertTrue(running.tcpListeners().get(0).running());
+            assertNotNull(running.tcpListeners().get(0).boundPort());
         }
     }
 
@@ -141,6 +165,13 @@ class StandaloneCollectorTest {
 
         try (StandaloneCollector collector = StandaloneCollector.create(appConfig)) {
             collector.start();
+            CollectorStatusSnapshot running = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.RUNNING, running.state());
+            assertEquals(2, running.sources().size());
+            assertEquals(2, running.tcpListeners().size());
+            assertTrue(running.tcpListeners().stream().allMatch(TcpListenerStatus::running));
+            assertTrue(running.tcpListeners().stream().allMatch(listener -> listener.boundPort() != null));
+
             List<InetSocketAddress> addresses = collector.localAddresses();
 
             writeFrame(addresses.get(0), SINGLE_POINT_FRAME);
@@ -179,10 +210,18 @@ class StandaloneCollectorTest {
             socket = new Socket();
             socket.connect(collector.localAddress());
             awaitActiveConnections(collector, 1);
+            CollectorStatusSnapshot connected = collector.statusSnapshot();
+            assertEquals(1, connected.activeConnectionCount());
+            assertEquals(1, connected.tcpListeners().get(0).activeConnectionCount());
 
             collector.stop();
 
             assertFalse(collector.isRunning());
+            CollectorStatusSnapshot stopped = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.STOPPED, stopped.state());
+            assertNotNull(stopped.startedAt());
+            assertNotNull(stopped.stoppedAt());
+            assertNull(stopped.startupFailureReason());
             assertTrue(socket.isClosed() || socket.getInputStream().read() < 0);
             awaitActiveConnections(collector, 0);
         } finally {
@@ -199,7 +238,63 @@ class StandaloneCollectorTest {
 
             assertThrows(Exception.class, collector::start);
             assertFalse(collector.isRunning());
+            CollectorStatusSnapshot failed = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.FAILED, failed.state());
+            assertNotNull(failed.startupFailureReason());
+            assertNotNull(failed.lastExceptionType());
+            assertNotNull(failed.lastExceptionMessage());
+            assertNull(failed.startedAt());
+            assertNotNull(failed.stoppedAt());
         }
+    }
+
+    @Test
+    void partialMultiListenerStartupFailureRollsBackStartedListeners() throws Exception {
+        int port = freePort();
+        StandaloneCollectorAppConfig appConfig = duplicatePortAppConfig(port);
+        StandaloneCollector collector = StandaloneCollector.create(appConfig);
+
+        assertThrows(RuntimeException.class, collector::start);
+
+        CollectorStatusSnapshot failed = collector.statusSnapshot();
+        assertEquals(CollectorLifecycleState.FAILED, failed.state());
+        assertTrue(failed.startupFailureReason().contains("south"));
+        assertNotNull(failed.lastExceptionType());
+        assertNotNull(failed.lastExceptionMessage());
+        assertEquals(0, failed.activeConnectionCount());
+        assertTrue(failed.tcpListeners().stream().noneMatch(TcpListenerStatus::running));
+        assertTrue(failed.tcpListeners().stream().allMatch(listener -> listener.boundPort() == null));
+    }
+
+    @Test
+    void stopIsIdempotentBeforeAndAfterStart() {
+        StandaloneCollector configured = StandaloneCollector.create(config(0, "in-memory"));
+        configured.stop();
+        configured.stop();
+        assertEquals(CollectorLifecycleState.STOPPED, configured.state());
+        assertNotNull(configured.statusSnapshot().stoppedAt());
+
+        StandaloneCollector running = StandaloneCollector.create(config(0, "in-memory"));
+        running.start();
+        running.stop();
+        running.stop();
+        assertEquals(CollectorLifecycleState.STOPPED, running.state());
+        assertFalse(running.isRunning());
+    }
+
+    @Test
+    void restartAfterStopIsRejectedAndRecordedAsLastException() {
+        StandaloneCollector collector = StandaloneCollector.create(config(0, "in-memory"));
+        collector.start();
+        collector.stop();
+
+        IllegalStateException failure = assertThrows(IllegalStateException.class, collector::start);
+
+        CollectorStatusSnapshot snapshot = collector.statusSnapshot();
+        assertEquals(CollectorLifecycleState.STOPPED, snapshot.state());
+        assertEquals(IllegalStateException.class.getName(), snapshot.lastExceptionType());
+        assertTrue(snapshot.lastExceptionMessage().contains("cannot be restarted"));
+        assertTrue(failure.getMessage().contains("cannot be restarted"));
     }
 
     @Test
@@ -297,6 +392,28 @@ class StandaloneCollectorTest {
         return properties;
     }
 
+    private static StandaloneCollectorAppConfig duplicatePortAppConfig(int port) {
+        return new StandaloneCollectorAppConfig(
+                List.of(
+                        new CollectorSourceConfig("station-a", SourceId.of("iec104", "station-a")),
+                        new CollectorSourceConfig("station-b", SourceId.of("iec104", "station-b"))),
+                List.of(
+                        new TcpListenerConfig(
+                                "north",
+                                new TcpNettyServerConfig("127.0.0.1", port, 1, 1),
+                                "station-a",
+                                SourceId.of("iec104", "station-a")),
+                        new TcpListenerConfig(
+                                "south",
+                                new TcpNettyServerConfig("127.0.0.1", port, 1, 1),
+                                "station-b",
+                                SourceId.of("iec104", "station-b"))),
+                BackpressureDecision.ACCEPT,
+                SinkType.IN_MEMORY,
+                null,
+                false);
+    }
+
     private static void setListener(Properties properties, String name, String sourceName, int port) {
         String prefix = StandaloneCollectorConfig.TCP_LISTENER_PREFIX + name;
         properties.setProperty(prefix + StandaloneCollectorConfig.TCP_LISTENER_HOST_SUFFIX, "127.0.0.1");
@@ -374,6 +491,12 @@ class StandaloneCollectorTest {
         assertTrue(
                 validation.errors().stream().anyMatch(error -> error.contains(expected)),
                 () -> "Expected validation error containing '" + expected + "' but got " + validation.errors());
+    }
+
+    private static int freePort() throws IOException {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        }
     }
 
     private static byte[] bytes(int... values) {

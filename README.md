@@ -296,6 +296,34 @@ collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 ```
 
+### Lifecycle And Status Snapshot
+
+`0.3.0` adds a local lifecycle and status snapshot API for `runtime-app`.
+`StandaloneCollector` starts in `CONFIGURED`, moves through `STARTING` and
+`RUNNING`, and records `STOPPING`, `STOPPED`, or `FAILED` outcomes. Startup
+failures keep the collector in `FAILED` after rollback so the reason remains
+inspectable.
+
+```java
+StandaloneCollector collector = StandaloneCollector.create(appConfig);
+
+CollectorStatusSnapshot configured = collector.statusSnapshot();
+collector.start();
+CollectorStatusSnapshot running = collector.statusSnapshot();
+collector.stop();
+CollectorStatusSnapshot stopped = collector.statusSnapshot();
+```
+
+The snapshot includes:
+
+- lifecycle state
+- startup failure reason and last exception type/message
+- start and stop timestamps
+- source summaries
+- listener configured host/port and bound host/port
+- per-listener and total active connection counts
+- sink type, backpressure mode, and strict ASDU setting
+
 ### File Sink Format
 
 The file sink writes one JSON-like line per parsed record or parse failure. A

@@ -268,6 +268,33 @@ collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 ```
 
+### Lifecycle 和状态快照
+
+`0.3.0` 为 `runtime-app` 增加本地 lifecycle/status snapshot API。
+`StandaloneCollector` 初始状态是 `CONFIGURED`，启动时经过 `STARTING` 和
+`RUNNING`，停止或失败时记录 `STOPPING`、`STOPPED` 或 `FAILED`。启动失败会在
+回滚后保留 `FAILED` 状态，方便查看失败原因。
+
+```java
+StandaloneCollector collector = StandaloneCollector.create(appConfig);
+
+CollectorStatusSnapshot configured = collector.statusSnapshot();
+collector.start();
+CollectorStatusSnapshot running = collector.statusSnapshot();
+collector.stop();
+CollectorStatusSnapshot stopped = collector.statusSnapshot();
+```
+
+状态快照包含：
+
+- lifecycle 状态
+- 启动失败原因和最后一次异常类型/消息
+- 启动时间和停止时间
+- source 摘要
+- listener 配置 host/port 和实际 bind host/port
+- 每个 listener 以及整体 active connection count
+- sink 类型、backpressure 模式和 strict ASDU 配置
+
 ### File Sink 输出格式
 
 file sink 每行输出一条类似 JSON 的记录。成功解析记录包含：

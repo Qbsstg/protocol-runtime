@@ -13,7 +13,10 @@ Draft release notes for the next `0.3.0` runtime release line.
 - Preserve the existing single-source `collector.properties` shape while
   adding named `collector.sources` and `collector.tcp.listeners` lists.
 - Validate startup configuration before opening TCP listeners.
-- Expose collector lifecycle state and a minimal runtime status snapshot.
+- Expose collector lifecycle state and a minimal runtime status snapshot with
+  configured/running/stopped/failed state, timestamps, startup failure reason,
+  listener bind information, active connection counts, sink type, backpressure
+  mode, and strict ASDU setting.
 - Improve JDK logging and define app-level metrics counters/gauges before
   selecting any metrics exporter.
 - Add a file sink rotation policy so local file output does not grow without
