@@ -15,13 +15,13 @@ This repository is in bootstrap. `0.1.0` published the first runtime-core
 contract surface, IEC104 binding, and TCP/Netty ingress baseline. `0.2.0`
 published the first runnable standalone IEC104 TCP collector app.
 
-The current development line is `0.3.0-SNAPSHOT`. Its scope is production hardening for
+The current release branch is `0.3.0`. Its scope is production hardening for
 `runtime-app`: stronger configuration validation, multi-source and
 multi-listener planning, collector lifecycle state, local health/status output,
 basic metrics/logging, file sink rotation, parse failure isolation,
 backpressure policy enhancement, and future adapter boundaries.
 
-The `0.3.0` planning scope is tracked in
+The `0.3.0` release scope is tracked in
 [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md). Draft release notes are
 tracked in [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md).
 
@@ -72,7 +72,7 @@ published application dependency.
 | `runtime-core` | Bootstrap | Runtime-neutral contracts: source identity, ingress envelope, parser binding, parse results, record/failure sinks, backpressure, pipeline runner, and lifecycle boundary. |
 | `runtime-protocol-iec104` | Bootstrap | First runtime protocol binding around `io.github.qbsstg:protocol-iec104:0.7.0`. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-app` | 0.2.0 published / 0.3.0-SNAPSHOT development | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.3.0` production hardening covers validation, multi-source config, lifecycle/status, file rotation, failure isolation, and stronger backpressure policy. |
+| `runtime-app` | 0.2.0 published / 0.3.0 release branch | Standalone collector assembly for IEC104 over TCP with property-based configuration, JDK logging/file/in-memory sinks, and an executable shaded jar. `0.3.0` production hardening covers validation, multi-source config, lifecycle/status, file rotation, failure isolation, and stronger backpressure policy. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
@@ -183,7 +183,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current main branch builds it as `0.3.0-SNAPSHOT`:
+The current release branch builds it as `0.3.0`:
 
 ```text
 TcpNettyServer
@@ -201,7 +201,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.3.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.3.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -255,7 +255,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.3.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.3.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

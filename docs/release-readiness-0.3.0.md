@@ -7,6 +7,9 @@ The readiness branch keeps the Maven reactor version at `0.3.0-SNAPSHOT`.
 The release branch will set the Maven reactor version to `0.3.0`. This audit
 does not create a tag or perform a real Maven Central upload.
 
+The release branch now fixes the Maven reactor version at `0.3.0`. It does not
+create a tag or perform a real Maven Central upload.
+
 ## Release Scope
 
 `0.3.0` hardens the standalone collector app that was introduced in `0.2.0`.
@@ -160,6 +163,23 @@ PR:
 
 No tag is created and no real Maven Central upload is part of this readiness
 work.
+
+## Release Branch Checks On 2026-06-02
+
+These checks must pass on the `0.3.0` release branch before opening the release
+PR:
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Maven reactor version | Passed | Root and module parent versions are fixed at `0.3.0`. |
+| `git diff --check` | Passed | No whitespace errors exist in the release diff. |
+| `mvn -q verify` | Passed | Full JDK 21+ reactor verification passed at version `0.3.0` with Maven running on JDK 23. |
+| `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy` | Passed | Central profile smoke passed with publishing disabled and signing skipped. |
+| `JAVA_BIN=/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/bin/java sh examples/smoke-standalone.sh` | Passed | Standalone collector built `runtime-app-0.3.0-standalone.jar`, started on an ephemeral localhost TCP port, accepted the IEC104 example frame, and wrote a parsed record to the file sink. |
+| Dependency boundary checks | Passed | `runtime-core` and `runtime-protocol-iec104` stayed adapter-free; Netty appeared only in `runtime-ingress-tcp-netty` and app assembly; SDK artifacts appeared through `runtime-protocol-iec104`. |
+
+No tag is created and no real Maven Central upload is part of this release
+branch PR.
 
 ## Final Release Decision
 
