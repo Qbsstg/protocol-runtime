@@ -238,6 +238,8 @@ collector.source.id=iec104:station-1
 collector.backpressure=ACCEPT
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
+collector.sink.file.maxBytes=10485760
+collector.sink.file.maxHistory=5
 collector.iec104.strictAsduParsing=false
 ```
 
@@ -269,6 +271,8 @@ they can override checked-in defaults for local runs.
 | `collector.backpressure` | `ACCEPT` | One of `ACCEPT`, `RETRY_LATER`, or `DROP`. |
 | `collector.sink.type` | `logging` | One of `logging`, `file`, or `in-memory`. |
 | `collector.sink.file` | unset | Required when `collector.sink.type=file`. |
+| `collector.sink.file.maxBytes` | `10485760` | Rotate the file sink before the active file grows beyond this byte limit. |
+| `collector.sink.file.maxHistory` | `5` | Number of rotated file sink history files to keep. |
 | `collector.iec104.strictAsduParsing` | `false` | Enables strict IEC104 ASDU parsing in the SDK binding. |
 
 `0.3.0` introduces startup validation and an internal multi-source,
@@ -294,6 +298,8 @@ collector.tcp.listener.south.source=station-b
 
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
+collector.sink.file.maxBytes=10485760
+collector.sink.file.maxHistory=5
 ```
 
 ### Lifecycle And Status Snapshot
@@ -322,12 +328,17 @@ The snapshot includes:
 - source summaries
 - listener configured host/port and bound host/port
 - per-listener and total active connection counts
-- sink type, backpressure mode, and strict ASDU setting
+- sink type, file rotation policy, backpressure mode, and strict ASDU setting
 
 ### File Sink Format
 
-The file sink writes one JSON-like line per parsed record or parse failure. A
-successful record includes:
+The file sink writes one JSON-like line per parsed record or parse failure. It
+rotates before the active file grows beyond `collector.sink.file.maxBytes` and
+keeps `collector.sink.file.maxHistory` history files. For an output path such
+as `target/runtime-records.ndjson`, rotated files are named
+`runtime-records.ndjson.1`, `runtime-records.ndjson.2`, and so on.
+
+A successful record includes:
 
 - `kind`: `record`
 - `sourceId`

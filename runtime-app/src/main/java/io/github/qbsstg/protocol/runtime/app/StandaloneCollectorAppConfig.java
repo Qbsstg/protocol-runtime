@@ -12,6 +12,7 @@ public record StandaloneCollectorAppConfig(
         BackpressureDecision backpressureDecision,
         SinkType sinkType,
         Path sinkFile,
+        FileSinkRotationConfig fileSinkRotation,
         boolean strictAsduParsing) {
 
     public StandaloneCollectorAppConfig {
@@ -19,6 +20,7 @@ public record StandaloneCollectorAppConfig(
         tcpListeners = List.copyOf(Objects.requireNonNull(tcpListeners, "tcpListeners must not be null"));
         Objects.requireNonNull(backpressureDecision, "backpressureDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
+        Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
         if (sources.isEmpty()) {
             throw new IllegalArgumentException("sources must not be empty");
         }
@@ -40,6 +42,7 @@ public record StandaloneCollectorAppConfig(
                 config.backpressureDecision(),
                 config.sinkType(),
                 config.sinkFile(),
+                config.fileSinkRotation(),
                 config.strictAsduParsing());
     }
 
@@ -55,6 +58,7 @@ public record StandaloneCollectorAppConfig(
                 backpressureDecision,
                 sinkType,
                 sinkFile,
+                fileSinkRotation,
                 strictAsduParsing);
     }
 }

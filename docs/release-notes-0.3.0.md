@@ -19,8 +19,8 @@ Draft release notes for the next `0.3.0` runtime release line.
   mode, and strict ASDU setting.
 - Improve JDK logging and define app-level metrics counters/gauges before
   selecting any metrics exporter.
-- Add a file sink rotation policy so local file output does not grow without
-  bounds.
+- Add configurable file sink rotation with default byte and history limits so
+  local file output does not grow without bounds.
 - Isolate parse failures so malformed frames route to failure handling without
   stopping healthy traffic.
 - Expand backpressure policy beyond fixed smoke modes while keeping transport

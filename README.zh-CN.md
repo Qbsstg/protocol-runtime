@@ -213,6 +213,8 @@ collector.source.id=iec104:station-1
 collector.backpressure=ACCEPT
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
+collector.sink.file.maxBytes=10485760
+collector.sink.file.maxHistory=5
 collector.iec104.strictAsduParsing=false
 ```
 
@@ -243,6 +245,8 @@ java -jar runtime-app/target/runtime-app-0.2.0-standalone.jar \
 | `collector.backpressure` | `ACCEPT` | 可选 `ACCEPT`、`RETRY_LATER` 或 `DROP`。 |
 | `collector.sink.type` | `logging` | 可选 `logging`、`file` 或 `in-memory`。 |
 | `collector.sink.file` | 未设置 | 当 `collector.sink.type=file` 时必须配置。 |
+| `collector.sink.file.maxBytes` | `10485760` | 当前 file sink 输出文件超过该字节数前触发轮转。 |
+| `collector.sink.file.maxHistory` | `5` | 保留的轮转历史文件数量。 |
 | `collector.iec104.strictAsduParsing` | `false` | 是否启用 IEC104 SDK binding 的严格 ASDU 解析。 |
 
 `0.3.0` 引入启动前配置校验和内部多 source、多 listener 配置模型，同时保留
@@ -266,6 +270,8 @@ collector.tcp.listener.south.source=station-b
 
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
+collector.sink.file.maxBytes=10485760
+collector.sink.file.maxHistory=5
 ```
 
 ### Lifecycle 和状态快照
@@ -293,11 +299,17 @@ CollectorStatusSnapshot stopped = collector.statusSnapshot();
 - source 摘要
 - listener 配置 host/port 和实际 bind host/port
 - 每个 listener 以及整体 active connection count
-- sink 类型、backpressure 模式和 strict ASDU 配置
+- sink 类型、file 轮转策略、backpressure 模式和 strict ASDU 配置
 
 ### File Sink 输出格式
 
-file sink 每行输出一条类似 JSON 的记录。成功解析记录包含：
+file sink 每行输出一条类似 JSON 的记录。当前输出文件超过
+`collector.sink.file.maxBytes` 前会触发轮转，并保留
+`collector.sink.file.maxHistory` 个历史文件。比如输出路径是
+`target/runtime-records.ndjson` 时，历史文件命名为
+`runtime-records.ndjson.1`、`runtime-records.ndjson.2`，依次类推。
+
+成功解析记录包含：
 
 - `kind`: `record`
 - `sourceId`

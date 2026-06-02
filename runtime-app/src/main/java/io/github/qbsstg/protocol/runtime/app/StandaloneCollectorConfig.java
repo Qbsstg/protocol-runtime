@@ -26,6 +26,7 @@ public record StandaloneCollectorConfig(
         BackpressureDecision backpressureDecision,
         SinkType sinkType,
         Path sinkFile,
+        FileSinkRotationConfig fileSinkRotation,
         boolean strictAsduParsing) {
 
     public static final String TCP_HOST = "collector.tcp.host";
@@ -46,6 +47,8 @@ public record StandaloneCollectorConfig(
     public static final String BACKPRESSURE = "collector.backpressure";
     public static final String SINK_TYPE = "collector.sink.type";
     public static final String SINK_FILE = "collector.sink.file";
+    public static final String SINK_FILE_MAX_BYTES = "collector.sink.file.maxBytes";
+    public static final String SINK_FILE_MAX_HISTORY = "collector.sink.file.maxHistory";
     public static final String IEC104_STRICT_ASDU = "collector.iec104.strictAsduParsing";
 
     private static final String DEFAULT_SOURCE_NAME = "default";
@@ -56,6 +59,7 @@ public record StandaloneCollectorConfig(
         Objects.requireNonNull(sourceId, "sourceId must not be null");
         Objects.requireNonNull(backpressureDecision, "backpressureDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
+        Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
         if (sinkType == SinkType.FILE && sinkFile == null) {
             throw new IllegalArgumentException("collector.sink.file is required when collector.sink.type=file");
         }
@@ -68,6 +72,7 @@ public record StandaloneCollectorConfig(
                 BackpressureDecision.ACCEPT,
                 SinkType.LOGGING,
                 null,
+                FileSinkRotationConfig.defaults(),
                 false);
     }
 
@@ -130,6 +135,7 @@ public record StandaloneCollectorConfig(
                 property(properties, BACKPRESSURE, defaults.backpressureDecision().name()), errors);
         SinkType sinkType = parseSinkType(property(properties, SINK_TYPE, defaults.sinkType().configValue()), errors);
         Path sinkFile = parseSinkFile(properties, sinkType, errors);
+        FileSinkRotationConfig fileSinkRotation = parseFileSinkRotation(properties, defaults.fileSinkRotation(), errors);
         boolean strictAsduParsing = parseBoolean(properties, IEC104_STRICT_ASDU, defaults.strictAsduParsing(), errors);
 
         SourceParseResult sourceResult = parseSources(properties, defaults, errors);
@@ -148,6 +154,7 @@ public record StandaloneCollectorConfig(
                         backpressure,
                         sinkType,
                         sinkFile,
+                        fileSinkRotation,
                         strictAsduParsing),
                 CollectorConfigValidation.valid());
     }
@@ -375,6 +382,27 @@ public record StandaloneCollectorConfig(
         return sinkFile;
     }
 
+    private static FileSinkRotationConfig parseFileSinkRotation(
+            Properties properties,
+            FileSinkRotationConfig defaults,
+            List<String> errors) {
+        long maxBytes = longProperty(
+                properties,
+                SINK_FILE_MAX_BYTES,
+                defaults.maxBytes(),
+                1L,
+                Long.MAX_VALUE,
+                errors);
+        int maxHistory = intProperty(
+                properties,
+                SINK_FILE_MAX_HISTORY,
+                defaults.maxHistory(),
+                1,
+                Integer.MAX_VALUE,
+                errors);
+        return new FileSinkRotationConfig(maxBytes, maxHistory);
+    }
+
     private static boolean parseBoolean(Properties properties, String key, boolean defaultValue, List<String> errors) {
         String value = property(properties, key, null);
         if (value == null) {
@@ -490,6 +518,20 @@ public record StandaloneCollectorConfig(
         return parseInt(key, value, defaultValue, minInclusive, maxInclusive, errors);
     }
 
+    private static long longProperty(
+            Properties properties,
+            String key,
+            long defaultValue,
+            long minInclusive,
+            long maxInclusive,
+            List<String> errors) {
+        String value = property(properties, key, null);
+        if (value == null) {
+            return defaultValue;
+        }
+        return parseLong(key, value, defaultValue, minInclusive, maxInclusive, errors);
+    }
+
     private static int requiredIntProperty(
             Properties properties,
             String key,
@@ -522,6 +564,31 @@ public record StandaloneCollectorConfig(
             if (minInclusive == 0 && maxInclusive == 65535) {
                 errors.add(key + " must be between 0 and 65535");
             } else if (minInclusive == 1) {
+                errors.add(key + " must be positive");
+            } else {
+                errors.add(key + " must be between " + minInclusive + " and " + maxInclusive);
+            }
+            return fallback;
+        }
+        return parsed;
+    }
+
+    private static long parseLong(
+            String key,
+            String value,
+            long fallback,
+            long minInclusive,
+            long maxInclusive,
+            List<String> errors) {
+        long parsed;
+        try {
+            parsed = Long.parseLong(value);
+        } catch (NumberFormatException ex) {
+            errors.add(key + " must be an integer");
+            return fallback;
+        }
+        if (parsed < minInclusive || parsed > maxInclusive) {
+            if (minInclusive == 1) {
                 errors.add(key + " must be positive");
             } else {
                 errors.add(key + " must be between " + minInclusive + " and " + maxInclusive);
