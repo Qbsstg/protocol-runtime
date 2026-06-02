@@ -306,7 +306,8 @@ CollectorStatusSnapshot stopped = collector.statusSnapshot();
 - listener 配置 host/port 和实际 bind host/port
 - 每个 listener 以及整体 active connection count
 - parsed record 和 parse failure 计数
-- 最后一次 parse failure 的 source id、消息和发生时间
+- 最后一次 parse failure 的 source id、消息、发生时间、cause 类型、payload
+  大小、payload hex 预览和 TCP/session 属性
 - backpressure retry/drop 计数和最后一次 backpressure 决策详情
 - sink 类型、file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
 
@@ -329,7 +330,9 @@ file sink 每行输出一条类似 JSON 的记录。当前输出文件超过
 - `value`
 - `attributes`
 
-解析失败使用 `kind=failure`，并包含 `message`、`rawPayloadHex` 和可选 `cause`。
+解析失败使用 `kind=failure`，并包含 `message`、`rawPayloadHex`、TCP/session
+`attributes` 和可选 `cause`。当前 app 的 parse failure 策略是 continue：
+异常帧会进入配置的 failure sink，但不会停止 collector，也不会阻止后续健康帧解析。
 
 ### 常见问题
 

@@ -3,6 +3,7 @@ package io.github.qbsstg.protocol.runtime.app;
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 
 import java.time.Instant;
+import java.util.Map;
 
 public record CollectorRuntimeMetrics(
         long parsedRecordCount,
@@ -10,6 +11,10 @@ public record CollectorRuntimeMetrics(
         String lastParseFailureSourceId,
         String lastParseFailureMessage,
         Instant lastParseFailureAt,
+        String lastParseFailureCauseType,
+        int lastParseFailurePayloadSize,
+        String lastParseFailurePayloadPreviewHex,
+        Map<String, String> lastParseFailureAttributes,
         long backpressureRetryLaterCount,
         long backpressureDropCount,
         String lastBackpressureSourceId,
@@ -17,7 +22,13 @@ public record CollectorRuntimeMetrics(
         Instant lastBackpressureAt,
         int lastBackpressurePayloadSize) {
 
+    public CollectorRuntimeMetrics {
+        lastParseFailureAttributes = lastParseFailureAttributes == null
+                ? Map.of()
+                : Map.copyOf(lastParseFailureAttributes);
+    }
+
     public static CollectorRuntimeMetrics empty() {
-        return new CollectorRuntimeMetrics(0, 0, null, null, null, 0, 0, null, null, null, 0);
+        return new CollectorRuntimeMetrics(0, 0, null, null, null, null, 0, "", Map.of(), 0, 0, null, null, null, 0);
     }
 }

@@ -13,6 +13,7 @@ import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
 import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
 import io.github.qbsstg.protocol.runtime.core.SourceId;
+import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpConnectionAttributes;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
 import java.io.IOException;
@@ -129,7 +130,8 @@ class StandaloneCollectorTest {
         try (StandaloneCollector collector = StandaloneCollector.create(config(0, "in-memory"))) {
             collector.start();
 
-            writeFrame(collector, bytes(0x68, 0x03, 0x00, 0x00, 0x00));
+            byte[] malformed = bytes(0x68, 0x03, 0x00, 0x00, 0x00);
+            writeFrame(collector, malformed);
 
             InMemoryRuntimeSink<Iec104Frame> sink = collector.inMemorySink().orElseThrow();
             List<ParseFailure> failures = awaitFailures(sink, 1);
@@ -137,12 +139,24 @@ class StandaloneCollectorTest {
             assertEquals("iec104:station-1", failures.get(0).sourceId().qualifiedValue());
             assertTrue(failures.get(0).message().contains("Invalid IEC104 APDU length"));
 
+            writeFrame(collector, SINGLE_POINT_FRAME);
+            awaitRecords(sink, 1);
+
             CollectorStatusSnapshot snapshot = collector.statusSnapshot();
-            assertEquals(0, snapshot.metrics().parsedRecordCount());
+            assertEquals(1, snapshot.metrics().parsedRecordCount());
             assertEquals(1, snapshot.metrics().parseFailureCount());
             assertEquals("iec104:station-1", snapshot.metrics().lastParseFailureSourceId());
             assertTrue(snapshot.metrics().lastParseFailureMessage().contains("Invalid IEC104 APDU length"));
             assertNotNull(snapshot.metrics().lastParseFailureAt());
+            assertNull(snapshot.metrics().lastParseFailureCauseType());
+            assertEquals(malformed.length, snapshot.metrics().lastParseFailurePayloadSize());
+            assertEquals("6803000000", snapshot.metrics().lastParseFailurePayloadPreviewHex());
+            assertEquals("iec104", snapshot.metrics().lastParseFailureAttributes().get(
+                    TcpConnectionAttributes.SOURCE_NAMESPACE));
+            assertEquals("station-1", snapshot.metrics().lastParseFailureAttributes().get(
+                    TcpConnectionAttributes.SOURCE_VALUE));
+            assertTrue(snapshot.metrics().lastParseFailureAttributes().containsKey(
+                    TcpConnectionAttributes.SESSION_ID));
         }
     }
 

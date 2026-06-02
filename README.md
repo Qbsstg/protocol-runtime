@@ -335,7 +335,8 @@ The snapshot includes:
 - listener configured host/port and bound host/port
 - per-listener and total active connection counts
 - parsed record and parse failure counters
-- last parse failure source id, message, and observed timestamp
+- last parse failure source id, message, observed timestamp, cause type,
+  payload size, payload preview hex, and TCP/session attributes
 - backpressure retry/drop counters and last backpressure decision details
 - sink type, file rotation policy, backpressure mode, payload threshold policy,
   and strict ASDU setting
@@ -359,8 +360,10 @@ A successful record includes:
 - `value`
 - `attributes`
 
-Parse failures use `kind=failure` and include `message`, `rawPayloadHex`, and
-optional `cause`.
+Parse failures use `kind=failure` and include `message`, `rawPayloadHex`,
+TCP/session `attributes`, and optional `cause`. The app's current parse failure
+policy is continue: malformed frames are routed to the configured failure sink
+and do not stop the collector or prevent later healthy frames from parsing.
 
 ### Troubleshooting
 
