@@ -13,7 +13,8 @@ import java.util.logging.Logger;
 record RuntimeSinks(
         RecordSink<Iec104Frame> recordSink,
         FailureSink failureSink,
-        InMemoryRuntimeSink<Iec104Frame> inMemorySink) {
+        InMemoryRuntimeSink<Iec104Frame> inMemorySink,
+        RuntimeSinkCounters counters) {
 
     static RuntimeSinks from(StandaloneCollectorConfig config) {
         return from(StandaloneCollectorAppConfig.fromSingle(config));
@@ -24,17 +25,17 @@ record RuntimeSinks(
             case LOGGING -> {
                 LoggingRuntimeSink<Iec104Frame> sink = new LoggingRuntimeSink<>(
                         Logger.getLogger("io.github.qbsstg.protocol.runtime.collector"));
-                yield new RuntimeSinks(sink, sink, null);
+                yield new RuntimeSinks(sink, sink, null, new RuntimeSinkCounters());
             }
             case FILE -> {
                 FileRuntimeSink<Iec104Frame> sink = new FileRuntimeSink<>(
                         config.sinkFile(),
                         config.fileSinkRotation());
-                yield new RuntimeSinks(sink, sink, null);
+                yield new RuntimeSinks(sink, sink, null, new RuntimeSinkCounters());
             }
             case IN_MEMORY -> {
                 InMemoryRuntimeSink<Iec104Frame> sink = new InMemoryRuntimeSink<>();
-                yield new RuntimeSinks(sink, sink, sink);
+                yield new RuntimeSinks(sink, sink, sink, new RuntimeSinkCounters());
             }
         };
     }
@@ -48,6 +49,7 @@ record RuntimeSinks(
             @Override
             public void accept(ParsedRecord<Iec104Frame> record) {
                 recordSink.accept(record);
+                counters.recordParsedRecord(record);
             }
         };
     }
@@ -57,8 +59,13 @@ record RuntimeSinks(
             @Override
             public void accept(ParseFailure failure) {
                 failureSink.accept(failure);
+                counters.recordParseFailure(failure);
             }
         };
+    }
+
+    CollectorRuntimeMetrics metricsSnapshot() {
+        return counters.snapshot();
     }
 
     void stop() {

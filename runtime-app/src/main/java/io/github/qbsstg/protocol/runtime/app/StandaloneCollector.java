@@ -92,6 +92,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 sourceStatuses,
                 listenerStatuses,
                 listenerStatuses.stream().mapToInt(TcpListenerStatus::activeConnectionCount).sum(),
+                sinks.metricsSnapshot(),
                 appConfig.sinkType(),
                 appConfig.fileSinkRotation(),
                 appConfig.backpressureDecision(),
