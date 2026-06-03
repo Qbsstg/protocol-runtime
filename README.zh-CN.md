@@ -17,7 +17,7 @@ TCP collector app。`0.3.0` 已发布 runtime-app 生产化加固：配置校验
 source/listener app 配置、lifecycle/status 快照、状态输出、计数器、file sink
 轮转、解析失败隔离和 payload 大小背压策略。
 
-当前开发线是 `0.4.0-SNAPSHOT`。这一阶段的范围是多协议 runtime 扩展：
+当前 release candidate 线是 `0.4.0`。这一阶段的范围是多协议 runtime 扩展：
 围绕已发布的 `protocol-sdk:0.7.0` parser artifacts，提供 IEC101、IEC103 和
 Modbus runtime protocol binding，并在 app 层支持协议选择，同时保留现有
 IEC104 app 路径。
@@ -76,7 +76,7 @@ IEC104 app 路径。
 | `runtime-protocol-iec103` | 0.4.0 baseline | 基于 `io.github.qbsstg:protocol-iec103:0.7.0` 的 runtime binding，支持按 source 缓冲 stream decoder 和失败路由。 |
 | `runtime-protocol-modbus` | 0.4.0 baseline | 基于 `io.github.qbsstg:protocol-modbus:0.7.0` 的 runtime binding，支持 TCP stream 和 datagram parser 模式。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
-| `runtime-app` | 0.4.0-SNAPSHOT development | Standalone collector 装配层，支持 properties 配置、app 级协议选择、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
+| `runtime-app` | 0.4.0 release candidate | Standalone collector 装配层，支持 properties 配置、app 级协议选择、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 MQTT、Kafka、HTTP ingress、pipeline、更多 sink 和更完整的可部署
@@ -87,7 +87,7 @@ IEC104 app 路径。
 `0.4.0` 的目标是在不改变依赖方向的前提下，把 runtime 从 IEC104-only app
 baseline 推进到多协议 collector runtime：
 
-- Maven reactor 在发布前保持 `0.4.0-SNAPSHOT`。
+- Maven reactor 在 release 分支固定为 `0.4.0`。
 - 消费已发布的 `protocol-sdk:0.7.0` parser artifacts。
 - 以独立 `runtime-protocol-*` 模块提供 IEC101、IEC103 和 Modbus runtime
   binding。
@@ -163,8 +163,8 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 development build
-构建为 `0.4.0-SNAPSHOT`：
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 release candidate build
+构建为 `0.4.0`：
 
 ```text
 TcpNettyServer
@@ -182,7 +182,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -236,7 +236,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

@@ -7,7 +7,7 @@ Central Portal.
 
 The latest published runtime release is `0.3.0`.
 
-The current development line is `0.4.0-SNAPSHOT`.
+The current release-candidate line is `0.4.0`.
 
 The published `0.3.0` release includes:
 

@@ -1,10 +1,10 @@
 # Protocol Runtime 0.4.0 Release Notes
 
-Draft release notes for the `0.4.0` runtime development line.
+Draft release notes for the `0.4.0` runtime release-candidate line.
 
 ## Planned Highlights
 
-- Open the Maven reactor development line at `0.4.0-SNAPSHOT`.
+- Fix the Maven reactor release line at `0.4.0` after readiness passed.
 - Start multi-protocol runtime expansion after the published `0.3.0`
   runtime-app hardening release.
 - Plan runtime protocol binding modules for the published
@@ -66,12 +66,10 @@ Before release readiness, the branch should pass:
 
 ## Release Readiness Status
 
-Release-readiness audit work is complete on the readiness branch. The
-`0.4.0-SNAPSHOT` Maven line, roadmap, IEC101 runtime binding baseline, IEC103
-runtime binding baseline, Modbus runtime binding baseline, app-level protocol
-selection, and cross-module smoke coverage for additional protocols are in
-place.
+Release-readiness audit work is complete. The `0.4.0` release branch fixes
+Maven reactor versions from `0.4.0-SNAPSHOT` to `0.4.0` and reruns the release
+checks. No tag or real Maven Central upload is part of the release branch PR.
 
-The next planned step is a `0.4.0` release branch that fixes Maven reactor
-versions from `0.4.0-SNAPSHOT` to `0.4.0`, reruns the release checks, and opens
-the release PR. No tag or real Maven Central upload is part of readiness work.
+The next planned step after the release PR merges is to create the `v0.4.0` tag,
+run the final signed dry run, and perform the manually reviewed Maven Central
+upload.
