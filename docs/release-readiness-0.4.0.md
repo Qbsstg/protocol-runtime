@@ -4,8 +4,9 @@ This note records the release-readiness decision for the `0.4.0`
 `protocol-runtime` release target.
 
 The readiness branch keeps the Maven reactor version at `0.4.0-SNAPSHOT`.
-The release branch will set the Maven reactor version to `0.4.0`. No tag is
-created and no real Maven Central upload is part of this readiness work.
+The release branch fixes the Maven reactor version at `0.4.0`. No tag is
+created and no real Maven Central upload is part of readiness or release branch
+PR work.
 
 ## Release Scope
 
@@ -188,6 +189,23 @@ on JDK 23.
 
 No tag is created and no real Maven Central upload is part of this readiness
 work.
+
+## Release Branch Checks On 2026-06-03
+
+These checks passed on the `0.4.0` release branch before opening the release
+PR:
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Maven reactor version | Passed | Root and module parent versions are fixed at `0.4.0`. |
+| `git diff --check` | Passed | No whitespace errors exist in the release diff. |
+| `mvn -q verify` | Passed | Full JDK 21+ reactor verification passed at version `0.4.0`. |
+| `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy` | Passed | Central profile smoke passed with publishing disabled and signing skipped. |
+| `JAVA_BIN=/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/bin/java sh examples/smoke-standalone.sh` | Passed | Standalone collector built `runtime-app-0.4.0-standalone.jar`, started on an ephemeral localhost TCP port, accepted the IEC104 example frame, and wrote a parsed record to the file sink. |
+| Dependency boundary checks | Passed | `runtime-core` has no compile dependencies; `runtime-protocol-*` modules depend only on `runtime-core` and protocol SDK artifacts; Netty appears in `runtime-ingress-tcp-netty`, `runtime-app`, and `runtime-smoke-tests`; smoke dependencies are test-scoped. |
+
+No tag was created and no real Maven Central upload was part of the release
+branch PR.
 
 ## Final Release Decision
 

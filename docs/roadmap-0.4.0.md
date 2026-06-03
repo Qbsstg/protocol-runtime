@@ -1,7 +1,8 @@
 # Protocol Runtime 0.4.0 Roadmap
 
 `0.4.0` starts after the published `0.3.0` runtime-app hardening release. The
-development line opens with Maven reactor version `0.4.0-SNAPSHOT`.
+development line opened with Maven reactor version `0.4.0-SNAPSHOT`; the release
+branch fixes the Maven reactor at `0.4.0` after release readiness.
 
 The focus is multi-protocol runtime expansion. `protocol-sdk` already publishes
 IEC104, IEC101, IEC103, and Modbus parser artifacts at `0.7.0`; runtime should
@@ -72,6 +73,7 @@ keeping each protocol parser inside its SDK module.
 ## Development Progress
 
 - Maven `0.4.0-SNAPSHOT` line: complete.
+- Maven `0.4.0` release branch: complete.
 - Multi-protocol roadmap and release-note draft: complete.
 - `runtime-protocol-iec101` parser binding baseline: complete.
 - `runtime-protocol-iec103` parser binding baseline: complete.
@@ -83,7 +85,7 @@ keeping each protocol parser inside its SDK module.
 
 Before `0.4.0` release readiness:
 
-- README and Chinese README describe the `0.4.0` development line.
+- README and Chinese README describe the `0.4.0` release-candidate line.
 - `docs/module-plan.md` and `docs/module-boundaries.md` document
   `runtime-protocol-*` module rules.
 - At least one additional protocol binding has tests proving SDK parser output

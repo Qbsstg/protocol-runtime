@@ -19,7 +19,7 @@ multi-source/listener app configuration, lifecycle/status snapshots, status
 output, counters, file sink rotation, parse failure isolation, and payload-size
 backpressure policy.
 
-The current development line is `0.4.0-SNAPSHOT`. Its scope is multi-protocol
+The current release-candidate line is `0.4.0`. Its scope is multi-protocol
 runtime expansion: IEC101, IEC103, and Modbus runtime protocol bindings around
 the published `protocol-sdk:0.7.0` parser artifacts, plus app-level protocol
 selection while preserving the existing IEC104 app path.
@@ -78,7 +78,7 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-protocol-iec103` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0` with per-source stream decoder buffering and failure routing. |
 | `runtime-protocol-modbus` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0` with TCP stream and datagram parser modes. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-app` | 0.4.0-SNAPSHOT development | Standalone collector assembly with property-based configuration, app-level protocol selection, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.4.0 release candidate | Standalone collector assembly with property-based configuration, app-level protocol selection, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
@@ -90,7 +90,8 @@ here, not in `protocol-sdk`.
 `0.4.0` should move the runtime from an IEC104-only app baseline toward a
 multi-protocol collector runtime without changing dependency direction:
 
-- keep the Maven reactor on `0.4.0-SNAPSHOT` until release readiness
+- fix the Maven reactor at `0.4.0` on the release branch after release
+  readiness
 - consume published `protocol-sdk:0.7.0` parser artifacts
 - provide IEC101, IEC103, and Modbus runtime bindings as separate
   `runtime-protocol-*` modules
@@ -188,7 +189,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current development build uses `0.4.0-SNAPSHOT`:
+The current release-candidate build uses `0.4.0`:
 
 ```text
 TcpNettyServer
@@ -206,7 +207,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -261,7 +262,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.4.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.4.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
