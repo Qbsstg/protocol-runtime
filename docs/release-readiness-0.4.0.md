@@ -209,9 +209,14 @@ branch PR.
 
 ## Final Release Decision
 
-`0.4.0` will be ready to tag and upload after:
+`0.4.0` has been tagged, uploaded, published, and verified.
 
-- the release PR merges into `main`,
-- GitHub Actions passes on the merged release commit,
-- a final signed dry run passes with `central.skipPublishing=true`, and
-- the operator confirms the real Maven Central upload.
+| Release gate | Result | Note |
+| --- | --- | --- |
+| Release PR merged | Passed | Release commit `7d81a39111553b2b3970858329b7bee76e060c48` is on `main`. |
+| Final verification | Passed | `mvn -q verify` passed before upload. |
+| Signed dry run | Passed | `mvn -Pcentral-release -Dcentral.skipPublishing=true clean deploy` signed artifacts and completed without upload. |
+| Release tag | Passed | `v0.4.0` points to `7d81a39111553b2b3970858329b7bee76e060c48`. |
+| Central deployment | Passed | Deployment `921e97e5-e002-4498-865f-a3106ed06042` reached `PUBLISHED`. |
+| Central resolution | Passed | Published artifacts resolved from Maven Central with an isolated local Maven repository. |
+| GitHub Release | Passed | `v0.4.0` GitHub Release was created after Central publish. |

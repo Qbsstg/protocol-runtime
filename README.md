@@ -17,27 +17,25 @@ published the first runnable standalone IEC104 TCP collector app. `0.3.0`
 published runtime-app production hardening for configuration validation,
 multi-source/listener app configuration, lifecycle/status snapshots, status
 output, counters, file sink rotation, parse failure isolation, and payload-size
-backpressure policy.
-
-The current release-candidate line is `0.4.0`. Its scope is multi-protocol
-runtime expansion: IEC101, IEC103, and Modbus runtime protocol bindings around
-the published `protocol-sdk:0.7.0` parser artifacts, plus app-level protocol
-selection while preserving the existing IEC104 app path.
+backpressure policy. `0.4.0` published multi-protocol runtime expansion with
+IEC101, IEC103, and Modbus runtime protocol bindings around the published
+`protocol-sdk:0.7.0` parser artifacts, plus app-level protocol selection while
+preserving the existing IEC104 app path.
 
 The `0.4.0` release scope is tracked in
-[`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md). Draft release notes are
+[`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md). Release notes are
 tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.3.0`. Runtime modules are
+The latest published runtime release version is `0.4.0`. Runtime modules are
 JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -45,7 +43,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -53,7 +51,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -61,7 +59,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -78,20 +76,19 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-protocol-iec103` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0` with per-source stream decoder buffering and failure routing. |
 | `runtime-protocol-modbus` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0` with TCP stream and datagram parser modes. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-app` | 0.4.0 release candidate | Standalone collector assembly with property-based configuration, app-level protocol selection, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.4.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
 sinks, and richer deployable runtime applications. Those dependencies belong
 here, not in `protocol-sdk`.
 
-## `0.4.0` Multi-Protocol Runtime Plan
+## `0.4.0` Multi-Protocol Runtime Release
 
-`0.4.0` should move the runtime from an IEC104-only app baseline toward a
+`0.4.0` moves the runtime from an IEC104-only app baseline toward a
 multi-protocol collector runtime without changing dependency direction:
 
-- fix the Maven reactor at `0.4.0` on the release branch after release
-  readiness
+- publish the Maven reactor at `0.4.0`
 - consume published `protocol-sdk:0.7.0` parser artifacts
 - provide IEC101, IEC103, and Modbus runtime bindings as separate
   `runtime-protocol-*` modules
@@ -189,7 +186,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current release-candidate build uses `0.4.0`:
+The published `0.4.0` build uses app-level protocol selection:
 
 ```text
 TcpNettyServer
