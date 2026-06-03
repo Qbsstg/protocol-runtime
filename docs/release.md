@@ -5,30 +5,38 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.3.0`.
+The latest published runtime release is `0.4.0`.
 
-The current release-candidate line is `0.4.0`.
+The next release-candidate line has not been opened yet.
 
-The published `0.3.0` release includes:
+The published `0.4.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
 - `io.github.qbsstg:runtime-protocol-iec104`
+- `io.github.qbsstg:runtime-protocol-iec101`
+- `io.github.qbsstg:runtime-protocol-iec103`
+- `io.github.qbsstg:runtime-protocol-modbus`
 - `io.github.qbsstg:runtime-ingress-tcp-netty`
 - `io.github.qbsstg:runtime-app`
 
 `runtime-smoke-tests` is test-only and remains unsupported as an application
-dependency. The `0.3.0` artifact is visible on Maven Central because the
-Central publishing plugin did not honor `maven.deploy.skip=true`; future
-releases also set `central.skipPublishing=true` in that module.
+dependency. It is intentionally skipped for Central publishing from `0.4.0`
+onward.
 
-The current `0.4.0` roadmap is maintained in
-[`roadmap-0.4.0.md`](roadmap-0.4.0.md), and draft release notes are maintained
-in [`release-notes-0.4.0.md`](release-notes-0.4.0.md). The current `0.4.0`
-release-readiness audit is tracked in
+The `0.4.0` roadmap is maintained in
+[`roadmap-0.4.0.md`](roadmap-0.4.0.md), release notes are maintained in
+[`release-notes-0.4.0.md`](release-notes-0.4.0.md), and the
+`0.4.0` release-readiness audit is tracked in
 [`release-readiness-0.4.0.md`](release-readiness-0.4.0.md). The previous
-`0.3.0` release-readiness audit is tracked in
+`0.3.0` release notes are maintained in
+[`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
+release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.4.0` was tagged as `v0.4.0`, uploaded in Central deployment
+`921e97e5-e002-4498-865f-a3106ed06042`, published, and verified from Maven
+Central with an isolated local Maven repository.
 
 `0.3.0` was tagged as `v0.3.0`, uploaded in Central deployment
 `eaa2bf69-69d3-416f-9529-550924a33b28`, published, and verified from Maven
