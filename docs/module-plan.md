@@ -31,8 +31,8 @@ This note records the first open-source module shape for `protocol-runtime`.
 | Module | Reason deferred |
 | --- | --- |
 | `runtime-ingress-http` | `0.5.0` baseline; maps HTTP POST bodies to `IngressEnvelope` with request limits, configured/header/path source mapping, and response policy backed by runtime backpressure decisions. |
-| `runtime-ingress-kafka` | `0.5.x` candidate; needs topic/partition/offset identity, replay posture, commit timing, and error routing rules. |
-| `runtime-ingress-mqtt` | `0.5.x` candidate; needs topic/source mapping, QoS posture, retained-message handling, and reconnect/session ownership. |
+| `runtime-ingress-kafka` | `0.5.x` candidate; design now documents topic/partition/offset identity, replay posture, commit timing, and error routing rules before implementation. |
+| `runtime-ingress-mqtt` | `0.5.x` candidate; design now documents topic/source mapping, QoS posture, retained-message handling, and reconnect/session ownership before implementation. |
 | `runtime-sink-kafka` | `0.5.x` candidate; downstream delivery belongs outside ingress adapters and must not pull Kafka dependencies into `runtime-core`. |
 | `runtime-adapter-testkit` | `0.5.x` candidate; reusable adapter tests should stay test support and avoid production dependency leakage. |
 | `runtime-pipeline` | Needs backpressure and batching decisions proven by first ingress adapters. |
@@ -67,8 +67,8 @@ heavy adapter dependencies are introduced:
 | `runtime-ingress-tcp-netty` | Preserve the existing TCP byte ingress baseline and avoid protocol SDK dependencies. |
 | `runtime-app` | Remain the deployable assembly boundary; keep the `0.4.0` protocol selection and TCP configuration compatible. |
 | `runtime-ingress-http` | Provide the first JDK `HttpServer` baseline for request limits, source mapping, payload mapping, response policy, and backpressure behavior without pulling third-party HTTP dependencies into core. |
-| `runtime-ingress-kafka` | Document topic/partition/offset attributes, commit timing, replay posture, parse failure routing, and backpressure behavior before implementation. |
-| `runtime-ingress-mqtt` | Document topic/source mapping, QoS posture, retained-message handling, reconnect/session ownership, and backpressure behavior before implementation. |
+| `runtime-ingress-kafka` | Documented topic/partition/offset attributes, commit timing, replay posture, parse failure routing, and backpressure behavior before implementation. |
+| `runtime-ingress-mqtt` | Documented topic/source mapping, QoS posture, retained-message handling, reconnect/session ownership, and backpressure behavior before implementation. |
 | `runtime-sink-*` | Keep downstream delivery separate from ingress and core parsing; introduce sink dependencies only in dedicated modules. |
 | `runtime-smoke-tests` | Continue repository-only cross-module checks and add adapter smoke paths only after module boundaries are stable. |
 

@@ -104,7 +104,8 @@ contracts without polluting the core:
 - Kafka topic/partition/offset attributes, commit timing, and replay posture
   are documented for a future `runtime-ingress-kafka` module
 - MQTT topic/source mapping, QoS posture, retained-message handling, and
-  reconnect/session ownership belong in a future `runtime-ingress-mqtt` module
+  reconnect/session ownership are documented for a future
+  `runtime-ingress-mqtt` module
 - downstream delivery adapters, such as Kafka sinks, stay separate from
   ingress adapters
 - `runtime-app` remains the deployable assembly boundary
@@ -493,6 +494,7 @@ verified.
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
 - [`docs/runtime-ingress-http-design.md`](docs/runtime-ingress-http-design.md)
 - [`docs/runtime-ingress-kafka-design.md`](docs/runtime-ingress-kafka-design.md)
+- [`docs/runtime-ingress-mqtt-design.md`](docs/runtime-ingress-mqtt-design.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
