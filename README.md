@@ -22,9 +22,9 @@ IEC101, IEC103, and Modbus runtime protocol bindings around the published
 `protocol-sdk:0.7.0` parser artifacts, plus app-level protocol selection while
 preserving the existing IEC104 app path.
 
-The current development line is `0.5.0-SNAPSHOT`. Its scope is adapter
-boundary design for HTTP, Kafka, and MQTT ingestion before those dependencies
-are introduced into dedicated modules.
+The current release branch is `0.5.0`. Its scope is adapter boundary design for
+HTTP, Kafka, and MQTT ingestion before those dependencies are introduced into
+dedicated modules.
 
 The `0.5.0` release scope is tracked in
 [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md). Draft release notes are
@@ -93,7 +93,7 @@ deployable runtime applications. Those dependencies belong here, not in
 
 ## `0.5.0` Adapter Boundary Plan
 
-`0.5.0-SNAPSHOT` opens the adapter productionization line. The first target is
+`0.5.0` opens the adapter productionization line. The first target is
 to define how HTTP, Kafka, and MQTT ingestion fit around existing runtime
 contracts without polluting the core:
 
@@ -216,7 +216,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The published `0.4.0` build and the current `0.5.0-SNAPSHOT` source line use
+The published `0.4.0` build and the current `0.5.0` release branch use
 app-level protocol selection:
 
 ```text
@@ -235,7 +235,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.5.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.5.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -290,7 +290,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.5.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.5.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
