@@ -57,6 +57,12 @@ HTTP request mapping, response policy, backpressure behavior, parse-failure
 routing, request limits, and test strategy without adding third-party HTTP
 dependencies.
 
+The first Kafka ingress design contract is tracked in
+[`runtime-ingress-kafka-design.md`](runtime-ingress-kafka-design.md). It records
+consumer ownership, topic/partition/offset attributes, source mapping,
+backpressure handling, commit policy, replay posture, and parse-failure routing
+before any Kafka client dependency is added.
+
 ## `0.1.0` Published Surface
 
 The `0.1.0` release is a baseline library release:

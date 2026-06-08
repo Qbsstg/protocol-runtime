@@ -104,6 +104,9 @@ Before `0.5.0` release readiness:
   [`runtime-ingress-http-design.md`](runtime-ingress-http-design.md).
 - The first `runtime-ingress-http` implementation stays JDK-only and maps POST
   request bodies to `IngressEnvelope` without protocol SDK dependencies.
+- Kafka ingress topic/partition/offset attributes, commit timing, replay
+  posture, source mapping, and failure routing are captured in
+  [`runtime-ingress-kafka-design.md`](runtime-ingress-kafka-design.md).
 - `runtime-core` still has no Netty, SDK protocol, Spring, Kafka, MQTT, HTTP,
   database, Redis, or observability exporter dependencies.
 - `runtime-protocol-*` modules still do not depend on transport, app, or

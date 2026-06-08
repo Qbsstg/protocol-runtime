@@ -1,8 +1,8 @@
 # Runtime HTTP Ingress Design
 
 This note defines the first `runtime-ingress-http` boundary for the `0.5.0`
-development line. It is a design contract only; it does not introduce an HTTP
-server dependency yet.
+development line. The first implementation uses JDK `HttpServer`, keeping
+third-party HTTP dependencies out of the baseline.
 
 ## Goals
 
@@ -194,8 +194,8 @@ in-process HTTP server tests are acceptable inside `runtime-ingress-http`.
 
 ## Open Decisions
 
-- Whether the first implementation should use JDK `HttpServer`, Netty HTTP, or
-  another minimal HTTP stack.
+- Whether a later implementation should keep JDK `HttpServer`, move to Netty
+  HTTP, or add another minimal HTTP stack.
 - Whether response mode should be per listener or per source.
 - Whether the adapter should support batched payloads in the first release.
 - Whether authentication belongs in `runtime-ingress-http` or a later app
