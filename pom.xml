@@ -53,6 +53,7 @@
         <module>runtime-protocol-iec103</module>
         <module>runtime-protocol-modbus</module>
         <module>runtime-ingress-tcp-netty</module>
+        <module>runtime-ingress-http</module>
         <module>runtime-app</module>
         <module>runtime-smoke-tests</module>
     </modules>

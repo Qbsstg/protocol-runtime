@@ -80,11 +80,12 @@ release notes 记录在
 | `runtime-protocol-iec103` | 0.4.0 baseline | 基于 `io.github.qbsstg:protocol-iec103:0.7.0` 的 runtime binding，支持按 source 缓冲 stream decoder 和失败路由。 |
 | `runtime-protocol-modbus` | 0.4.0 baseline | 基于 `io.github.qbsstg:protocol-modbus:0.7.0` 的 runtime binding，支持 TCP stream 和 datagram parser 模式。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
+| `runtime-ingress-http` | 0.5.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-app` | 0.4.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
-未来可能补充 MQTT、Kafka、HTTP ingress、pipeline、更多 sink 和更完整的可部署
-运行时应用。这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+未来可能补充 MQTT、Kafka、pipeline、更多 sink 和更完整的可部署运行时应用。
+这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
 
 ## `0.5.0` Adapter 边界规划
 
@@ -93,8 +94,8 @@ MQTT 接入如何围绕现有 runtime 合同工作，同时避免污染 core：
 
 - `runtime-core` 继续不引入 HTTP、Kafka、MQTT、Spring、数据库、Redis 和
   observability exporter 依赖。
-- HTTP 请求大小限制、响应策略、payload/source 映射属于未来的
-  `runtime-ingress-http` 模块。
+- HTTP 请求大小限制、响应策略、payload/source 映射已经先落在 JDK-only
+  `runtime-ingress-http` baseline 中。
 - Kafka topic/partition/offset 属性、commit 时机和 replay 策略属于未来的
   `runtime-ingress-kafka` 模块。
 - MQTT topic/source 映射、QoS 策略、retained message 处理和 reconnect/session

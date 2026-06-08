@@ -83,12 +83,13 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-protocol-iec103` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0` with per-source stream decoder buffering and failure routing. |
 | `runtime-protocol-modbus` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0` with TCP stream and datagram parser modes. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
+| `runtime-ingress-http` | 0.5.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-app` | 0.4.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
-Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
-sinks, and richer deployable runtime applications. Those dependencies belong
-here, not in `protocol-sdk`.
+Future modules may include MQTT, Kafka, pipelines, additional sinks, and richer
+deployable runtime applications. Those dependencies belong here, not in
+`protocol-sdk`.
 
 ## `0.5.0` Adapter Boundary Plan
 
@@ -98,8 +99,8 @@ contracts without polluting the core:
 
 - `runtime-core` remains free of HTTP, Kafka, MQTT, Spring, database, Redis,
   and observability exporter dependencies
-- HTTP request limits, response policy, and payload/source mapping belong in a
-  future `runtime-ingress-http` module
+- HTTP request limits, response policy, and payload/source mapping are now
+  implemented first in the JDK-only `runtime-ingress-http` baseline
 - Kafka topic/partition/offset attributes, commit timing, and replay posture
   belong in a future `runtime-ingress-kafka` module
 - MQTT topic/source mapping, QoS posture, retained-message handling, and

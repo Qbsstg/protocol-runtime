@@ -35,6 +35,7 @@ deployment concerns.
 | `runtime-protocol-iec103` | `runtime-core`, released `protocol-iec103`, tests. | Netty, serial adapters, storage, deployment frameworks. |
 | `runtime-protocol-modbus` | `runtime-core`, released `protocol-modbus`, tests. | Netty, UDP/TCP adapters, storage, deployment frameworks. |
 | `runtime-ingress-tcp-netty` | `runtime-core`, Netty transport, tests. | Protocol SDK modules, Spring, Kafka, MQTT, HTTP, database, Redis. |
+| `runtime-ingress-http` | `runtime-core`, JDK `HttpServer`, tests. | Protocol SDK modules, Spring, Netty, Kafka, MQTT, database, Redis, changes to `runtime-core` for HTTP-specific policy. |
 | `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
 
@@ -45,16 +46,16 @@ where future dependencies may live once adapter implementation starts.
 
 | Module | Allowed dependencies | Not allowed |
 | --- | --- | --- |
-| `runtime-ingress-http` | `runtime-core`, an HTTP server/client stack selected by this module, tests. | Protocol SDK modules, Kafka, MQTT, database, Redis, changes to `runtime-core` for HTTP-specific policy. |
 | `runtime-ingress-kafka` | `runtime-core`, Kafka client libraries, tests. | Protocol SDK modules, HTTP/MQTT adapter dependencies, database, Redis, changes to `runtime-core` for offset policy. |
 | `runtime-ingress-mqtt` | `runtime-core`, MQTT client libraries, tests. | Protocol SDK modules, HTTP/Kafka adapter dependencies, database, Redis, changes to `runtime-core` for topic/session policy. |
 | `runtime-sink-kafka` | `runtime-core`, Kafka client libraries, tests. | Ingress ownership, protocol SDK modules, HTTP/MQTT adapter dependencies, changes to parser bindings. |
 | `runtime-adapter-testkit` | Test fixtures, fake sinks, fake runner wiring, and adapter boundary assertions. | Production runtime dependencies or application dependency use. |
 
-The first HTTP ingress design contract is tracked in
+The first HTTP ingress design contract and JDK `HttpServer` baseline are tracked in
 [`runtime-ingress-http-design.md`](runtime-ingress-http-design.md). It records
 HTTP request mapping, response policy, backpressure behavior, parse-failure
-routing, request limits, and test strategy before any HTTP dependency is added.
+routing, request limits, and test strategy without adding third-party HTTP
+dependencies.
 
 ## `0.1.0` Published Surface
 

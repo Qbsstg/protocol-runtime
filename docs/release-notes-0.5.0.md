@@ -11,6 +11,8 @@ Draft release notes for the `0.5.0` runtime release-candidate line.
 - Add the first HTTP ingress design note covering endpoint shape,
   configuration, envelope mapping, response policy, backpressure behavior,
   parse-failure routing, request limits, and tests.
+- Add the first JDK `HttpServer` based HTTP ingress baseline for POST payloads,
+  request limits, source mapping, and runtime backpressure responses.
 - Separate ingress adapter responsibilities from downstream sink adapter
   responsibilities.
 - Preserve the existing TCP/Netty standalone collector path and app-level
@@ -21,13 +23,13 @@ Draft release notes for the `0.5.0` runtime release-candidate line.
 
 ## Scope
 
-`0.5.0` starts the adapter productionization line. It should make future HTTP,
-Kafka, and MQTT collection work reviewable by first locking the module
-boundaries, dependency rules, configuration shape, and test strategy.
+`0.5.0` starts the adapter productionization line. It makes HTTP, Kafka, and
+MQTT collection work reviewable by first locking the module boundaries,
+dependency rules, configuration shape, and test strategy.
 
-The release may include the first narrow adapter implementation only after the
-boundary work is reviewed. Until then, adapter dependencies remain deferred to
-dedicated modules.
+The release line now includes the first narrow HTTP ingress implementation in a
+dedicated module. Kafka, MQTT, downstream broker sinks, and heavier adapter
+dependencies remain deferred to dedicated modules.
 
 ## Dependency Policy
 
@@ -54,8 +56,13 @@ Before release readiness, the branch should pass:
 
 ## Release Readiness Status
 
-This is a planning draft. No tag or real Maven Central upload is part of the
-initial `0.5.0` planning work.
+This remains a development draft. No tag or real Maven Central upload is part
+of the current HTTP ingress baseline branch.
 
 HTTP ingress design is tracked in
 [`runtime-ingress-http-design.md`](runtime-ingress-http-design.md).
+
+The first `runtime-ingress-http` baseline now uses JDK `HttpServer` to accept
+POST payloads, map configured/header/path `SourceId` values, enforce payload
+size limits, and translate runtime backpressure decisions to HTTP responses
+without adding third-party HTTP dependencies.
