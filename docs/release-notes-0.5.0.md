@@ -51,20 +51,20 @@ published SDK parser module, and tests.
 
 ## Verification Target
 
-Before release readiness, the branch should pass:
+Before release branch work, the readiness branch passed:
 
 - `git diff --check`
 - `mvn -q verify`
-- dependency boundary checks for `runtime-core` and `runtime-protocol-*`
-- documentation checks proving adapter dependencies are assigned to adapter
-  modules only
-- existing runtime-app and smoke-test coverage for the TCP/Netty and
-  multi-protocol paths
+- `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy`
+- standalone collector smoke through `examples/smoke-standalone.sh`
+- dependency boundary checks for `runtime-core`, `runtime-protocol-*`,
+  `runtime-ingress-http`, `runtime-app`, and `runtime-smoke-tests`
 
 ## Release Readiness Status
 
-This remains a development draft. No tag or real Maven Central upload is part
-of the current `0.5.0` development branch.
+The `0.5.0` readiness audit is tracked in
+[`release-readiness-0.5.0.md`](release-readiness-0.5.0.md). No tag or real
+Maven Central upload is part of readiness work.
 
 HTTP ingress design is tracked in
 [`runtime-ingress-http-design.md`](runtime-ingress-http-design.md).

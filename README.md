@@ -503,6 +503,8 @@ verified.
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-readiness-0.3.0.md`](docs/release-readiness-0.3.0.md)
+- [`docs/release-readiness-0.4.0.md`](docs/release-readiness-0.4.0.md)
+- [`docs/release-readiness-0.5.0.md`](docs/release-readiness-0.5.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)

@@ -116,3 +116,11 @@ Before `0.5.0` release readiness:
   adapter modules.
 - Any adapter implementation lives in a dedicated module or app/test assembly.
 - Existing TCP/Netty and multi-protocol runtime smoke tests continue to pass.
+
+## Release Readiness Result
+
+`0.5.0` readiness is tracked in
+[`release-readiness-0.5.0.md`](release-readiness-0.5.0.md). The readiness
+branch keeps the reactor at `0.5.0-SNAPSHOT`, validates the new HTTP ingress
+baseline and adapter design boundaries, and does not create a tag or perform a
+real Maven Central upload.
