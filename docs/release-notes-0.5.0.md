@@ -16,6 +16,10 @@ Draft release notes for the `0.5.0` runtime release-candidate line.
 - Add the first Kafka ingress design note covering consumer ownership,
   topic/partition/offset attributes, source mapping, commit timing, replay
   posture, backpressure behavior, parse-failure routing, and test strategy.
+- Add the first MQTT ingress design note covering client/session ownership,
+  topic/source mapping, QoS posture, retained and duplicate message policy,
+  reconnect behavior, backpressure behavior, parse-failure routing, and test
+  strategy.
 - Separate ingress adapter responsibilities from downstream sink adapter
   responsibilities.
 - Preserve the existing TCP/Netty standalone collector path and app-level
@@ -60,7 +64,7 @@ Before release readiness, the branch should pass:
 ## Release Readiness Status
 
 This remains a development draft. No tag or real Maven Central upload is part
-of the current HTTP ingress baseline branch.
+of the current `0.5.0` development branch.
 
 HTTP ingress design is tracked in
 [`runtime-ingress-http-design.md`](runtime-ingress-http-design.md).
@@ -75,3 +79,9 @@ Kafka ingress design is tracked in
 Kafka consumer lifecycle, offset commit timing, replay posture, and
 topic/partition/offset metadata inside a future adapter module rather than
 `runtime-core`.
+
+MQTT ingress design is tracked in
+[`runtime-ingress-mqtt-design.md`](runtime-ingress-mqtt-design.md). It keeps
+MQTT client/session lifecycle, QoS posture, retained and duplicate message
+policy, reconnect behavior, and topic metadata inside a future adapter module
+rather than `runtime-core`.

@@ -107,6 +107,9 @@ Before `0.5.0` release readiness:
 - Kafka ingress topic/partition/offset attributes, commit timing, replay
   posture, source mapping, and failure routing are captured in
   [`runtime-ingress-kafka-design.md`](runtime-ingress-kafka-design.md).
+- MQTT ingress topic/source mapping, QoS posture, retained and duplicate
+  message handling, reconnect/session ownership, and failure routing are
+  captured in [`runtime-ingress-mqtt-design.md`](runtime-ingress-mqtt-design.md).
 - `runtime-core` still has no Netty, SDK protocol, Spring, Kafka, MQTT, HTTP,
   database, Redis, or observability exporter dependencies.
 - `runtime-protocol-*` modules still do not depend on transport, app, or

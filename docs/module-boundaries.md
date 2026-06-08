@@ -63,6 +63,12 @@ consumer ownership, topic/partition/offset attributes, source mapping,
 backpressure handling, commit policy, replay posture, and parse-failure routing
 before any Kafka client dependency is added.
 
+The first MQTT ingress design contract is tracked in
+[`runtime-ingress-mqtt-design.md`](runtime-ingress-mqtt-design.md). It records
+client/session ownership, topic/source mapping, QoS posture, retained and
+duplicate message policy, reconnect behavior, backpressure handling, and
+parse-failure routing before any MQTT client dependency is added.
+
 ## `0.1.0` Published Surface
 
 The `0.1.0` release is a baseline library release:
