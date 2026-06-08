@@ -201,3 +201,20 @@ PR:
 
 No tag is created and no real Maven Central upload is part of this readiness
 work.
+
+## Release Branch Checks On 2026-06-08
+
+These checks passed on the `0.5.0` release branch before opening the release
+PR:
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Maven reactor version | Passed | Root and module parent versions are fixed at `0.5.0`. |
+| `git diff --check` | Passed | No whitespace errors exist in the release diff. |
+| `mvn -q verify` | Passed | Full JDK 21+ reactor verification passed at version `0.5.0`. |
+| `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy` | Passed | Central profile smoke passed with publishing disabled and signing skipped. |
+| `JAVA_BIN=/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/bin/java sh examples/smoke-standalone.sh` | Passed | Standalone collector built `runtime-app-0.5.0-standalone.jar`, started on an ephemeral localhost TCP port, accepted the IEC104 example frame, and wrote a parsed record to the file sink. |
+| Dependency boundary checks | Passed | `runtime-core` has no compile dependencies; `runtime-ingress-http` depends only on `runtime-core`; `runtime-protocol-*` modules depend only on `runtime-core` and protocol SDK artifacts; no Kafka or MQTT client dependencies are present; Netty remains in TCP ingress, app, and smoke-test scopes. |
+
+No tag was created and no real Maven Central upload was part of the release
+branch PR.
