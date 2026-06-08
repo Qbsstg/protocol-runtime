@@ -96,8 +96,8 @@ MQTT 接入如何围绕现有 runtime 合同工作，同时避免污染 core：
   observability exporter 依赖。
 - HTTP 请求大小限制、响应策略、payload/source 映射已经先落在 JDK-only
   `runtime-ingress-http` baseline 中。
-- Kafka topic/partition/offset 属性、commit 时机和 replay 策略属于未来的
-  `runtime-ingress-kafka` 模块。
+- Kafka topic/partition/offset 属性、commit 时机和 replay 策略已经先为未来的
+  `runtime-ingress-kafka` 模块完成设计文档。
 - MQTT topic/source 映射、QoS 策略、retained message 处理和 reconnect/session
   归属属于未来的 `runtime-ingress-mqtt` 模块。
 - Kafka sink 等下游投递 adapter 与 ingress adapter 分开。
@@ -451,6 +451,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
 - [`docs/runtime-ingress-http-design.md`](docs/runtime-ingress-http-design.md)
+- [`docs/runtime-ingress-kafka-design.md`](docs/runtime-ingress-kafka-design.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)

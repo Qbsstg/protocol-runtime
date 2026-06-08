@@ -13,6 +13,9 @@ Draft release notes for the `0.5.0` runtime release-candidate line.
   parse-failure routing, request limits, and tests.
 - Add the first JDK `HttpServer` based HTTP ingress baseline for POST payloads,
   request limits, source mapping, and runtime backpressure responses.
+- Add the first Kafka ingress design note covering consumer ownership,
+  topic/partition/offset attributes, source mapping, commit timing, replay
+  posture, backpressure behavior, parse-failure routing, and test strategy.
 - Separate ingress adapter responsibilities from downstream sink adapter
   responsibilities.
 - Preserve the existing TCP/Netty standalone collector path and app-level
@@ -66,3 +69,9 @@ The first `runtime-ingress-http` baseline now uses JDK `HttpServer` to accept
 POST payloads, map configured/header/path `SourceId` values, enforce payload
 size limits, and translate runtime backpressure decisions to HTTP responses
 without adding third-party HTTP dependencies.
+
+Kafka ingress design is tracked in
+[`runtime-ingress-kafka-design.md`](runtime-ingress-kafka-design.md). It keeps
+Kafka consumer lifecycle, offset commit timing, replay posture, and
+topic/partition/offset metadata inside a future adapter module rather than
+`runtime-core`.

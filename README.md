@@ -102,7 +102,7 @@ contracts without polluting the core:
 - HTTP request limits, response policy, and payload/source mapping are now
   implemented first in the JDK-only `runtime-ingress-http` baseline
 - Kafka topic/partition/offset attributes, commit timing, and replay posture
-  belong in a future `runtime-ingress-kafka` module
+  are documented for a future `runtime-ingress-kafka` module
 - MQTT topic/source mapping, QoS posture, retained-message handling, and
   reconnect/session ownership belong in a future `runtime-ingress-mqtt` module
 - downstream delivery adapters, such as Kafka sinks, stay separate from
@@ -492,6 +492,7 @@ verified.
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
 - [`docs/runtime-ingress-http-design.md`](docs/runtime-ingress-http-design.md)
+- [`docs/runtime-ingress-kafka-design.md`](docs/runtime-ingress-kafka-design.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
