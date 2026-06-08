@@ -7,7 +7,7 @@ Central Portal.
 
 The latest published runtime release is `0.4.0`.
 
-The next release-candidate line has not been opened yet.
+The current release-candidate line is `0.5.0-SNAPSHOT`.
 
 The published `0.4.0` release includes:
 
@@ -24,7 +24,10 @@ The published `0.4.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.4.0` roadmap is maintained in
+The current `0.5.0` roadmap is maintained in
+[`roadmap-0.5.0.md`](roadmap-0.5.0.md), and draft release notes are maintained
+in [`release-notes-0.5.0.md`](release-notes-0.5.0.md). The published `0.4.0`
+roadmap is maintained in
 [`roadmap-0.4.0.md`](roadmap-0.4.0.md), release notes are maintained in
 [`release-notes-0.4.0.md`](release-notes-0.4.0.md), and the
 `0.4.0` release-readiness audit is tracked in

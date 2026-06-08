@@ -30,9 +30,11 @@ This note records the first open-source module shape for `protocol-runtime`.
 
 | Module | Reason deferred |
 | --- | --- |
-| `runtime-ingress-mqtt` | Needs topic/source mapping and payload policy after core contracts settle. |
-| `runtime-ingress-kafka` | Needs replay semantics, offsets, error routing, and record identity rules. |
-| `runtime-ingress-http` | Needs request limits, response policy, and JSON/binary mapping decisions. |
+| `runtime-ingress-http` | `0.5.x` candidate; needs request limits, response policy, source mapping, and JSON/binary payload mapping decisions before implementation. |
+| `runtime-ingress-kafka` | `0.5.x` candidate; needs topic/partition/offset identity, replay posture, commit timing, and error routing rules. |
+| `runtime-ingress-mqtt` | `0.5.x` candidate; needs topic/source mapping, QoS posture, retained-message handling, and reconnect/session ownership. |
+| `runtime-sink-kafka` | `0.5.x` candidate; downstream delivery belongs outside ingress adapters and must not pull Kafka dependencies into `runtime-core`. |
+| `runtime-adapter-testkit` | `0.5.x` candidate; reusable adapter tests should stay test support and avoid production dependency leakage. |
 | `runtime-pipeline` | Needs backpressure and batching decisions proven by first ingress adapters. |
 | `runtime-sink-*` | Storage and downstream integrations should follow stable parsed-record contracts. |
 
@@ -49,6 +51,31 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 `runtime-app` may combine TCP ingress, protocol bindings, and app-level sinks
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
+
+## `0.5.0` Development Posture
+
+The `0.5.0` runtime line starts from the published `0.4.0` multi-protocol
+runtime release and opens the Maven reactor at `0.5.0-SNAPSHOT`.
+
+The goal is adapter boundary design for HTTP, Kafka, and MQTT ingestion before
+heavy adapter dependencies are introduced:
+
+| Module | 0.5.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no HTTP, Kafka, MQTT, Spring, database, Redis, or observability exporter dependencies. |
+| `runtime-protocol-*` | Preserve parser-binding-only responsibilities and continue consuming published `protocol-sdk:0.7.0` parser artifacts. |
+| `runtime-ingress-tcp-netty` | Preserve the existing TCP byte ingress baseline and avoid protocol SDK dependencies. |
+| `runtime-app` | Remain the deployable assembly boundary; keep the `0.4.0` protocol selection and TCP configuration compatible. |
+| `runtime-ingress-http` | Document request limits, source mapping, payload mapping, response policy, and backpressure behavior before implementation. |
+| `runtime-ingress-kafka` | Document topic/partition/offset attributes, commit timing, replay posture, parse failure routing, and backpressure behavior before implementation. |
+| `runtime-ingress-mqtt` | Document topic/source mapping, QoS posture, retained-message handling, reconnect/session ownership, and backpressure behavior before implementation. |
+| `runtime-sink-*` | Keep downstream delivery separate from ingress and core parsing; introduce sink dependencies only in dedicated modules. |
+| `runtime-smoke-tests` | Continue repository-only cross-module checks and add adapter smoke paths only after module boundaries are stable. |
+
+`0.5.0` should not introduce Spring, Kafka, MQTT, HTTP, database, Redis,
+observability exporter, serial-port, or UDP dependencies into `runtime-core`.
+If HTTP, Kafka, or MQTT implementations start in this release line, they should
+land in dedicated adapter modules and include dependency boundary tests.
 
 ## `0.4.0` Development Posture
 
