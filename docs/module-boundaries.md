@@ -51,6 +51,11 @@ where future dependencies may live once adapter implementation starts.
 | `runtime-sink-kafka` | `runtime-core`, Kafka client libraries, tests. | Ingress ownership, protocol SDK modules, HTTP/MQTT adapter dependencies, changes to parser bindings. |
 | `runtime-adapter-testkit` | Test fixtures, fake sinks, fake runner wiring, and adapter boundary assertions. | Production runtime dependencies or application dependency use. |
 
+The first HTTP ingress design contract is tracked in
+[`runtime-ingress-http-design.md`](runtime-ingress-http-design.md). It records
+HTTP request mapping, response policy, backpressure behavior, parse-failure
+routing, request limits, and test strategy before any HTTP dependency is added.
+
 ## `0.1.0` Published Surface
 
 The `0.1.0` release is a baseline library release:
