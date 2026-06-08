@@ -38,6 +38,19 @@ deployment concerns.
 | `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
 
+## Planned Adapter Module Rules
+
+These modules are not part of the current published surface yet. They define
+where future dependencies may live once adapter implementation starts.
+
+| Module | Allowed dependencies | Not allowed |
+| --- | --- | --- |
+| `runtime-ingress-http` | `runtime-core`, an HTTP server/client stack selected by this module, tests. | Protocol SDK modules, Kafka, MQTT, database, Redis, changes to `runtime-core` for HTTP-specific policy. |
+| `runtime-ingress-kafka` | `runtime-core`, Kafka client libraries, tests. | Protocol SDK modules, HTTP/MQTT adapter dependencies, database, Redis, changes to `runtime-core` for offset policy. |
+| `runtime-ingress-mqtt` | `runtime-core`, MQTT client libraries, tests. | Protocol SDK modules, HTTP/Kafka adapter dependencies, database, Redis, changes to `runtime-core` for topic/session policy. |
+| `runtime-sink-kafka` | `runtime-core`, Kafka client libraries, tests. | Ingress ownership, protocol SDK modules, HTTP/MQTT adapter dependencies, changes to parser bindings. |
+| `runtime-adapter-testkit` | Test fixtures, fake sinks, fake runner wiring, and adapter boundary assertions. | Production runtime dependencies or application dependency use. |
+
 ## `0.1.0` Published Surface
 
 The `0.1.0` release is a baseline library release:
@@ -126,3 +139,31 @@ Not allowed:
   observability exporter dependencies to `runtime-core`
 - adding Netty or app dependencies to `runtime-protocol-*`
 - changing `protocol-sdk` to depend on `protocol-runtime`
+
+## `0.5.0` Adapter Boundary
+
+The `0.5.0` line opens the runtime adapter productionization path. HTTP, Kafka,
+and MQTT support should be designed as adapter modules first, not as
+`runtime-core` features.
+
+Allowed:
+
+- the Maven reactor moves to `0.5.0-SNAPSHOT` after the published `0.4.0`
+  release
+- adapter boundary documents define source mapping, payload mapping,
+  acknowledgement/response behavior, and failure routing before implementation
+- adapter modules may own their respective client/server dependencies
+- `runtime-app` may assemble adapter modules after their boundaries are stable
+- tests may use fake brokers, embedded servers, or test-only fixtures inside
+  adapter/test modules
+
+Not allowed:
+
+- adding Spring, Kafka, MQTT, HTTP, database, Redis, or observability exporter
+  dependencies to `runtime-core`
+- adding adapter dependencies to `protocol-sdk`
+- adding adapter dependencies to `runtime-protocol-*`
+- mixing downstream sink delivery into ingress adapters without an explicit
+  sink boundary
+- making broker acknowledgement, HTTP response status, MQTT reconnect policy,
+  or topic/offset handling a `runtime-core` concern

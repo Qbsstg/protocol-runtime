@@ -22,8 +22,15 @@ IEC101, IEC103, and Modbus runtime protocol bindings around the published
 `protocol-sdk:0.7.0` parser artifacts, plus app-level protocol selection while
 preserving the existing IEC104 app path.
 
-The `0.4.0` release scope is tracked in
-[`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md). Release notes are
+The current development line is `0.5.0-SNAPSHOT`. Its scope is adapter
+boundary design for HTTP, Kafka, and MQTT ingestion before those dependencies
+are introduced into dedicated modules.
+
+The `0.5.0` release scope is tracked in
+[`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md). Draft release notes are
+tracked in [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md). The
+published `0.4.0` release scope is tracked in
+[`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md), and release notes are
 tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
@@ -82,6 +89,27 @@ application dependency even if a historical release is visible in Maven Central.
 Future modules may include MQTT, Kafka, HTTP ingress, pipelines, additional
 sinks, and richer deployable runtime applications. Those dependencies belong
 here, not in `protocol-sdk`.
+
+## `0.5.0` Adapter Boundary Plan
+
+`0.5.0-SNAPSHOT` opens the adapter productionization line. The first target is
+to define how HTTP, Kafka, and MQTT ingestion fit around existing runtime
+contracts without polluting the core:
+
+- `runtime-core` remains free of HTTP, Kafka, MQTT, Spring, database, Redis,
+  and observability exporter dependencies
+- HTTP request limits, response policy, and payload/source mapping belong in a
+  future `runtime-ingress-http` module
+- Kafka topic/partition/offset attributes, commit timing, and replay posture
+  belong in a future `runtime-ingress-kafka` module
+- MQTT topic/source mapping, QoS posture, retained-message handling, and
+  reconnect/session ownership belong in a future `runtime-ingress-mqtt` module
+- downstream delivery adapters, such as Kafka sinks, stay separate from
+  ingress adapters
+- `runtime-app` remains the deployable assembly boundary
+
+The detailed plan is maintained in
+[`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md).
 
 ## `0.4.0` Multi-Protocol Runtime Release
 
@@ -186,7 +214,8 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The published `0.4.0` build uses app-level protocol selection:
+The published `0.4.0` build and the current `0.5.0-SNAPSHOT` source line use
+app-level protocol selection:
 
 ```text
 TcpNettyServer
@@ -204,7 +233,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.4.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.5.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -259,7 +288,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.4.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.5.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -464,6 +493,7 @@ verified.
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
+- [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
@@ -472,3 +502,4 @@ verified.
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
 - [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)
+- [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)
