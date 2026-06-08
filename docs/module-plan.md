@@ -30,7 +30,7 @@ This note records the first open-source module shape for `protocol-runtime`.
 
 | Module | Reason deferred |
 | --- | --- |
-| `runtime-ingress-http` | `0.5.x` candidate; needs request limits, response policy, source mapping, and JSON/binary payload mapping decisions before implementation. |
+| `runtime-ingress-http` | `0.5.0` baseline; maps HTTP POST bodies to `IngressEnvelope` with request limits, configured/header/path source mapping, and response policy backed by runtime backpressure decisions. |
 | `runtime-ingress-kafka` | `0.5.x` candidate; needs topic/partition/offset identity, replay posture, commit timing, and error routing rules. |
 | `runtime-ingress-mqtt` | `0.5.x` candidate; needs topic/source mapping, QoS posture, retained-message handling, and reconnect/session ownership. |
 | `runtime-sink-kafka` | `0.5.x` candidate; downstream delivery belongs outside ingress adapters and must not pull Kafka dependencies into `runtime-core`. |
@@ -66,7 +66,7 @@ heavy adapter dependencies are introduced:
 | `runtime-protocol-*` | Preserve parser-binding-only responsibilities and continue consuming published `protocol-sdk:0.7.0` parser artifacts. |
 | `runtime-ingress-tcp-netty` | Preserve the existing TCP byte ingress baseline and avoid protocol SDK dependencies. |
 | `runtime-app` | Remain the deployable assembly boundary; keep the `0.4.0` protocol selection and TCP configuration compatible. |
-| `runtime-ingress-http` | Document request limits, source mapping, payload mapping, response policy, and backpressure behavior before implementation. |
+| `runtime-ingress-http` | Provide the first JDK `HttpServer` baseline for request limits, source mapping, payload mapping, response policy, and backpressure behavior without pulling third-party HTTP dependencies into core. |
 | `runtime-ingress-kafka` | Document topic/partition/offset attributes, commit timing, replay posture, parse failure routing, and backpressure behavior before implementation. |
 | `runtime-ingress-mqtt` | Document topic/source mapping, QoS posture, retained-message handling, reconnect/session ownership, and backpressure behavior before implementation. |
 | `runtime-sink-*` | Keep downstream delivery separate from ingress and core parsing; introduce sink dependencies only in dedicated modules. |
