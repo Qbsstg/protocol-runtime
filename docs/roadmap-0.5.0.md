@@ -97,6 +97,9 @@ Before `0.5.0` release readiness:
   dependency rules.
 - HTTP, Kafka, and MQTT adapter boundaries are documented before implementation
   work starts.
+- HTTP ingress request mapping, response policy, backpressure behavior, and
+  test strategy are captured in
+  [`runtime-ingress-http-design.md`](runtime-ingress-http-design.md).
 - `runtime-core` still has no Netty, SDK protocol, Spring, Kafka, MQTT, HTTP,
   database, Redis, or observability exporter dependencies.
 - `runtime-protocol-*` modules still do not depend on transport, app, or

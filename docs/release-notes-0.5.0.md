@@ -8,6 +8,9 @@ Draft release notes for the `0.5.0` runtime release-candidate line.
   multi-protocol runtime release.
 - Plan HTTP, Kafka, and MQTT ingestion adapter boundaries without moving those
   dependencies into `runtime-core` or `protocol-sdk`.
+- Add the first HTTP ingress design note covering endpoint shape,
+  configuration, envelope mapping, response policy, backpressure behavior,
+  parse-failure routing, request limits, and tests.
 - Separate ingress adapter responsibilities from downstream sink adapter
   responsibilities.
 - Preserve the existing TCP/Netty standalone collector path and app-level
@@ -53,3 +56,6 @@ Before release readiness, the branch should pass:
 
 This is a planning draft. No tag or real Maven Central upload is part of the
 initial `0.5.0` planning work.
+
+HTTP ingress design is tracked in
+[`runtime-ingress-http-design.md`](runtime-ingress-http-design.md).

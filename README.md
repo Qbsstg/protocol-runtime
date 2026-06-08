@@ -490,6 +490,7 @@ verified.
 
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
+- [`docs/runtime-ingress-http-design.md`](docs/runtime-ingress-http-design.md)
 - [`docs/roadmap-0.2.0.md`](docs/roadmap-0.2.0.md)
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
