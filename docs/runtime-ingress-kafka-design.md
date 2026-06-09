@@ -1,8 +1,8 @@
 # Runtime Kafka Ingress Design
 
-This note defines the first `runtime-ingress-kafka` boundary for the `0.5.0`
-development line. It is a design contract only; it does not introduce a Kafka
-client dependency or a Maven module yet.
+This note defines the first `runtime-ingress-kafka` boundary. It started as a
+`0.5.0` design contract and becomes an implementation baseline in the `0.7.0`
+development line.
 
 ## Goals
 
@@ -19,7 +19,8 @@ client dependency or a Maven module yet.
 ## Non-Goals
 
 - No Kafka dependency in `runtime-core`, `protocol-sdk`, or
-  `runtime-protocol-*`.
+  `runtime-protocol-*`; Kafka dependencies belong only in
+  `runtime-ingress-kafka` or test modules.
 - No protocol parsing inside the Kafka adapter.
 - No Kafka producer or downstream sink behavior in the ingress adapter.
 - No durable retry queue, database sink, Redis cache, or object storage.
@@ -235,14 +236,14 @@ Integration tests:
 - dependency boundary checks proving no Kafka dependency appears in
   `runtime-core`, `protocol-sdk`, or `runtime-protocol-*`
 
-The first implementation should avoid requiring a live broker in normal
-`mvn verify` unless the repository adds a dedicated profile for broker-backed
-tests.
+The first implementation avoids requiring a live broker in normal `mvn verify`.
+Broker-backed tests can be added later under a dedicated profile after the
+record mapping boundary is stable.
 
 ## Open Decisions
 
-- Whether the first implementation should depend directly on Kafka clients or
-  start with a small internal consumer-record abstraction.
+- Resolved for `0.7.0`: the first implementation depends directly on
+  `org.apache.kafka:kafka-clients` in `runtime-ingress-kafka`.
 - Whether source id mapping from topic names should use a simple template or a
   pluggable resolver.
 - Whether commit mode should be per consumer, per source, or per protocol.

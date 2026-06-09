@@ -23,10 +23,13 @@ JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档
 同时仍不把 Kafka/MQTT client 依赖引入 runtime。`0.6.0` 已发布 HTTP ingress
 生产化路线和 runtime-app HTTP collector 装配。
 
-下一条计划发布线是 `0.7.0`，重点是在 dedicated adapter module 中补充 Kafka
-ingress baseline。
+当前开发线是 `0.7.0-SNAPSHOT`，重点是在 dedicated adapter module 中补充
+Kafka ingress baseline。
 
-已发布的 `0.6.0` 范围记录在
+`0.7.0` 开发范围记录在
+[`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)，草案 release notes 记录在
+[`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)。已发布的
+`0.6.0` 范围记录在
 [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)，release notes 记录在
 [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)。上一个已发布的
 `0.5.0` 范围记录在 [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)，
@@ -95,11 +98,27 @@ release notes 记录在
 | `runtime-protocol-modbus` | 0.4.0 baseline | 基于 `io.github.qbsstg:protocol-modbus:0.7.0` 的 runtime binding，支持 TCP stream 和 datagram parser 模式。 |
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
+| `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
 | `runtime-app` | 0.6.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP listener 装配、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 MQTT、Kafka、pipeline、更多 sink 和更完整的可部署运行时应用。
 这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+
+## `0.7.0` Kafka Ingress 规划
+
+`0.7.0` 打开第一条 Kafka ingress 实现线：
+
+- `runtime-core` 继续不引入 Kafka、MQTT、HTTP、Spring、数据库、Redis 和
+  observability exporter 依赖。
+- `runtime-ingress-kafka` 负责 Kafka client 依赖、source 映射、
+  record-to-envelope 映射、背压结果映射和 commit mode 决策。
+- Kafka topic、partition、offset、timestamp、key、headers、source id mode
+  和选定协议继续作为 envelope attributes。
+- `runtime-protocol-*` 继续只解析协议 payload，不引入 Kafka 依赖。
+- runtime-app Kafka collector 装配会在 adapter record 边界稳定后再继续。
+
+详细规划维护在 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)。
 
 ## `0.6.0` HTTP Runtime-App 发布
 
@@ -536,6 +555,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
 - [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)
 - [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)
+- [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
@@ -548,3 +568,4 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)
 - [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)
 - [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)
+- [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)

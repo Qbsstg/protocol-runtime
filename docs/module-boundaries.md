@@ -36,6 +36,7 @@ deployment concerns.
 | `runtime-protocol-modbus` | `runtime-core`, released `protocol-modbus`, tests. | Netty, UDP/TCP adapters, storage, deployment frameworks. |
 | `runtime-ingress-tcp-netty` | `runtime-core`, Netty transport, tests. | Protocol SDK modules, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-ingress-http` | `runtime-core`, JDK `HttpServer`, tests. | Protocol SDK modules, Spring, Netty, Kafka, MQTT, database, Redis, changes to `runtime-core` for HTTP-specific policy. |
+| `runtime-ingress-kafka` | `runtime-core`, Kafka client libraries, tests. | Protocol SDK modules, HTTP/MQTT adapter dependencies, database, Redis, changes to `runtime-core` for offset policy. |
 | `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
 
@@ -46,7 +47,6 @@ where future dependencies may live once adapter implementation starts.
 
 | Module | Allowed dependencies | Not allowed |
 | --- | --- | --- |
-| `runtime-ingress-kafka` | `runtime-core`, Kafka client libraries, tests. | Protocol SDK modules, HTTP/MQTT adapter dependencies, database, Redis, changes to `runtime-core` for offset policy. |
 | `runtime-ingress-mqtt` | `runtime-core`, MQTT client libraries, tests. | Protocol SDK modules, HTTP/Kafka adapter dependencies, database, Redis, changes to `runtime-core` for topic/session policy. |
 | `runtime-sink-kafka` | `runtime-core`, Kafka client libraries, tests. | Ingress ownership, protocol SDK modules, HTTP/MQTT adapter dependencies, changes to parser bindings. |
 | `runtime-adapter-testkit` | Test fixtures, fake sinks, fake runner wiring, and adapter boundary assertions. | Production runtime dependencies or application dependency use. |
@@ -60,8 +60,9 @@ dependencies.
 The first Kafka ingress design contract is tracked in
 [`runtime-ingress-kafka-design.md`](runtime-ingress-kafka-design.md). It records
 consumer ownership, topic/partition/offset attributes, source mapping,
-backpressure handling, commit policy, replay posture, and parse-failure routing
-before any Kafka client dependency is added.
+backpressure handling, commit policy, replay posture, and parse-failure routing.
+The `0.7.0` line adds the first implementation baseline while keeping Kafka
+dependencies isolated to `runtime-ingress-kafka`.
 
 The first MQTT ingress design contract is tracked in
 [`runtime-ingress-mqtt-design.md`](runtime-ingress-mqtt-design.md). It records
@@ -215,3 +216,31 @@ Not allowed:
   implementation modules are opened
 - moving HTTP response policy, Kafka offset policy, or MQTT reconnect policy
   into `runtime-core`
+
+## `0.7.0` Kafka Ingress Boundary
+
+The `0.7.0` line opens the Kafka ingress implementation path while preserving
+the adapter model from the previous releases.
+
+Allowed:
+
+- the Maven reactor moves to `0.7.0-SNAPSHOT` after the published `0.6.0`
+  release
+- `runtime-ingress-kafka` owns Kafka client dependencies, consumer
+  configuration, source id resolution, record-to-envelope mapping, Kafka
+  attributes, backpressure result mapping, and commit-mode decisions
+- Kafka attributes stay in `IngressEnvelope.attributes()` and do not become
+  `runtime-core` fields
+- tests may construct Kafka `ConsumerRecord` fixtures without requiring a live
+  broker in normal `mvn verify`
+
+Not allowed:
+
+- adding Kafka, MQTT, Spring, database, Redis, or observability exporter
+  dependencies to `runtime-core`
+- adding Kafka ingress dependencies to `runtime-protocol-*`
+- adding runtime-app Kafka collector assembly before the adapter record
+  boundary is stable
+- mixing downstream Kafka producer/sink behavior into the ingress adapter
+- moving Kafka offset, poll, partition pause/resume, or replay policy into
+  `runtime-core`
