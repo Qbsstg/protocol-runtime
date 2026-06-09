@@ -54,3 +54,9 @@ Before release branch work, the readiness branch should pass:
   invalid source handling, backpressure result mapping, and commit decisions
 - runtime-app Kafka tests for Kafka-only config parsing, status formatting,
   fake-source dispatch, parse failure routing, and backpressure behavior
+
+## Release Branch Status
+
+The `0.7.0` release branch fixes the Maven reactor at `0.7.0`. The release PR
+does not create a tag and does not perform a real Maven Central upload; those
+remain final publication steps after the release PR merges to `main`.
