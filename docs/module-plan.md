@@ -25,6 +25,7 @@ This note records the first open-source module shape for `protocol-runtime`.
 | `runtime-ingress-tcp-netty` | Provide the first Netty TCP ingress baseline: server bootstrap, port binding, per-connection `RuntimePipelineRunner` creation, active session registry, connection lifecycle events, `ByteBuf` to `IngressEnvelope`, source id resolution, session attributes, backpressure handling, exception routing, and dispatch to sinks. | IEC104 sessions, Modbus TCP sessions, reconnects, heartbeat policy, TLS, and durable retry queues. |
 | `runtime-ingress-http` | `0.5.0` JDK `HttpServer` baseline for HTTP POST payloads, source mapping, request limits, response policy, and runtime backpressure behavior. | `0.6.0` runtime-app HTTP collector assembly, lifecycle hardening, richer response policy, and smoke coverage. |
 | `runtime-ingress-kafka` | `0.7.0` Kafka `ConsumerRecord` baseline for source mapping, payload mapping, envelope attributes, polling lifecycle, backpressure result mapping, and commit-mode decisions. | Broker-backed integration tests, retry/dead-letter posture, and downstream Kafka sink boundaries. |
+| `runtime-ingress-mqtt` | `0.8.0` MQTT message baseline for source mapping, payload mapping, envelope attributes, Paho client lifecycle, and backpressure result mapping. | Runtime-app MQTT client assembly, broker-backed integration tests, reconnect hardening, and downstream MQTT sink boundaries. |
 | `runtime-app` | Provide the standalone collector assembly with property-based configuration, source id selection, app-level protocol selection, TCP/HTTP/Kafka assembly, backpressure mode, and logging/file/in-memory sinks. | MQTT assembly, service wrappers, metrics exporters, TLS, reconnect policy, and downstream sink adapters. |
 | `runtime-smoke-tests` | Prove the first IEC104 over TCP runtime path with EmbeddedChannel and real localhost socket tests through `TcpNettyServer`, `TcpNettyIngressHandler`, `RuntimePipelineRunner`, `Iec104RuntimeBinding`, sinks, active sessions, and disconnect lifecycle. | More cross-module runtime paths after new ingress and protocol bindings land. |
 
@@ -32,7 +33,6 @@ This note records the first open-source module shape for `protocol-runtime`.
 
 | Module | Reason deferred |
 | --- | --- |
-| `runtime-ingress-mqtt` | `0.8.0` candidate; design now documents topic/source mapping, QoS posture, retained-message handling, and reconnect/session ownership before implementation. |
 | `runtime-sink-kafka` | Future candidate; downstream delivery belongs outside ingress adapters and must not pull Kafka dependencies into `runtime-core`. |
 | `runtime-adapter-testkit` | Future candidate; reusable adapter tests should stay test support and avoid production dependency leakage. |
 | `runtime-pipeline` | Needs backpressure and batching decisions proven by first ingress adapters. |
@@ -62,7 +62,7 @@ The goal is the first MQTT ingress implementation baseline:
 | Module | 0.8.0 goal |
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add no MQTT, Kafka, HTTP, Spring, database, Redis, or observability exporter dependencies. |
-| `runtime-ingress-mqtt` | Add MQTT client dependency in this module only; map MQTT payloads to `IngressEnvelope`; provide client lifecycle; cover configured/topic/property source resolution, attributes, retained/duplicate flags, backpressure results, and lifecycle decisions. |
+| `runtime-ingress-mqtt` | Add MQTT client dependency in this module only; map MQTT payloads to `IngressEnvelope`; provide client lifecycle; cover configured/topic source resolution, attributes, retained/duplicate flags, backpressure results, and lifecycle decisions. |
 | `runtime-app` | Add MQTT client properties, app-owned source/protocol binding, status snapshot, and standalone collector assembly through `runtime-ingress-mqtt` without moving MQTT APIs into `runtime-core`. |
 | `runtime-protocol-*` | Reuse parser bindings for MQTT payloads without transport or app dependencies. |
 | `runtime-ingress-kafka` | Preserve the published Kafka path and avoid coupling it to MQTT work. |

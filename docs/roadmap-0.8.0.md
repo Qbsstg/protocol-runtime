@@ -18,8 +18,8 @@ scopes. They must not enter `runtime-core`, `runtime-protocol-*`, or
   protocol parsing inside the adapter.
 - Preserve topic, QoS, retained flag, duplicate flag, packet id, selected
   protocol, source id mode, and client identity as envelope attributes.
-- Support source id resolution from configured source, topic, or user property
-  where the selected MQTT client exposes those properties.
+- Support source id resolution from configured source or topic in the first
+  Paho MQTT v3 baseline.
 - Map runtime backpressure decisions to MQTT adapter handling results without
   moving acknowledgement, reconnect, or session policy into `runtime-core`.
 - Add runtime-app MQTT client configuration and standalone collector assembly
@@ -31,7 +31,7 @@ scopes. They must not enter `runtime-core`, `runtime-protocol-*`, or
 | --- | --- |
 | `runtime-core` | No MQTT, broker, topic, acknowledgement, reconnect, or session APIs. Existing envelope and pipeline contracts should be enough for the first baseline. |
 | `runtime-ingress-mqtt` | Add MQTT client dependency, client config model, source id resolution, message-to-envelope mapping, client lifecycle, backpressure result mapping, and unit tests using fake MQTT message fixtures. |
-| `runtime-app` | Add MQTT client properties, source binding, protocol runner assembly, collector status, and app tests with fake MQTT message sources. MQTT APIs are allowed here only through the dedicated adapter module. |
+| `runtime-app` | Add MQTT client properties, source binding, protocol runner assembly, collector status, and app tests with fake MQTT message sources after the adapter baseline is stable. MQTT APIs are allowed here only through the dedicated adapter module. |
 | `runtime-protocol-*` | Reuse existing parser bindings for MQTT payloads without transport-specific code. |
 | `runtime-smoke-tests` | Live-broker MQTT smoke coverage remains follow-up; normal verification uses app-level fake source tests first. |
 
@@ -45,7 +45,7 @@ scopes. They must not enter `runtime-core`, `runtime-protocol-*`, or
 4. Add message-to-envelope mapping for payload and MQTT attributes.
 5. Add `MqttMessageHandler` for `RuntimePipelineRunner` dispatch and
    backpressure result mapping.
-6. Add unit tests for configured/topic/property source id resolution,
+6. Add unit tests for configured/topic source id resolution,
    attributes, invalid source handling, retained/duplicate flags, and module
    factories.
 7. Add runtime-app MQTT collector configuration, status snapshot, standalone
@@ -62,6 +62,20 @@ scopes. They must not enter `runtime-core`, `runtime-protocol-*`, or
   management.
 - HTTP management APIs, metrics exporters, dashboards, and health endpoints.
 - New parser behavior inside `protocol-sdk`.
+
+## Progress
+
+- `runtime-ingress-mqtt` adapter module opened with
+  `org.eclipse.paho:org.eclipse.paho.client.mqttv3` isolated to that module.
+- `MqttIngressClientConfig`, `MqttMessageEnvelopeMapper`,
+  `MqttMessageHandler`, `MqttPahoMessageSource`, and module factories establish
+  the first MQTT message-to-runtime boundary.
+- Unit tests cover configured/topic source id resolution, MQTT envelope
+  attributes, invalid source handling, backpressure result mapping, and module
+  factory exposure without requiring a live broker.
+
+Remaining `0.8.0` work includes runtime-app MQTT collector assembly,
+configuration examples, status output, and release-readiness verification.
 
 ## Dependency Boundaries
 

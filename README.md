@@ -116,6 +116,7 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
+| `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
 | `runtime-app` | 0.7.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
@@ -129,7 +130,7 @@ deployable runtime applications. Those dependencies belong here, not in
 
 - `runtime-core` remains free of MQTT, Kafka, HTTP, Spring, database, Redis,
   and observability exporter dependencies
-- `runtime-ingress-mqtt` will own the MQTT client dependency, topic/source
+- `runtime-ingress-mqtt` owns the MQTT client dependency, topic/source
   mapping, payload-to-envelope mapping, QoS acknowledgement posture, retained
   message handling, duplicate delivery posture, reconnect/session ownership,
   and backpressure result mapping
@@ -137,7 +138,7 @@ deployable runtime applications. Those dependencies belong here, not in
   selected protocol should remain envelope attributes
 - `runtime-protocol-*` modules continue to parse protocol payloads without
   MQTT dependencies
-- `runtime-app` owns MQTT client configuration and standalone collector
+- `runtime-app` will own MQTT client configuration and standalone collector
   assembly while keeping MQTT APIs out of `runtime-core`
 
 The detailed plan is maintained in
