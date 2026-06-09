@@ -46,10 +46,12 @@ assembly boundary. MQTT dependencies still must not enter `runtime-core` or
 
 ## Verification Target
 
-Before release branch work, the readiness branch should pass:
+Before release branch work, the readiness branch passed:
 
 - `git diff --check`
 - `mvn -q verify`
+- `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy`
+- standalone TCP and HTTP smoke scripts with a JDK 21+ `JAVA_BIN`
 - dependency boundary checks proving MQTT is isolated to
   `runtime-ingress-mqtt` and app assembly, not `runtime-core` or
   `runtime-protocol-*`
@@ -59,3 +61,6 @@ Before release branch work, the readiness branch should pass:
   fake-source dispatch, parse failure routing, and backpressure behavior
 - an example MQTT collector configuration for manual broker-backed runs outside
   normal `mvn verify`
+
+The readiness audit is tracked in
+[`release-readiness-0.8.0.md`](release-readiness-0.8.0.md).
