@@ -23,6 +23,7 @@ This note records the first open-source module shape for `protocol-runtime`.
 | `runtime-protocol-iec103` | `0.4.0` runtime binding for `protocol-iec103` parser output. | Protection-event mapping and serial-session policy after the parser binding baseline is stable. |
 | `runtime-protocol-modbus` | `0.4.0` runtime binding for `protocol-modbus` parser output. | Modbus TCP/UDP runtime policy after the parser binding baseline is stable. |
 | `runtime-ingress-tcp-netty` | Provide the first Netty TCP ingress baseline: server bootstrap, port binding, per-connection `RuntimePipelineRunner` creation, active session registry, connection lifecycle events, `ByteBuf` to `IngressEnvelope`, source id resolution, session attributes, backpressure handling, exception routing, and dispatch to sinks. | IEC104 sessions, Modbus TCP sessions, reconnects, heartbeat policy, TLS, and durable retry queues. |
+| `runtime-ingress-http` | `0.5.0` JDK `HttpServer` baseline for HTTP POST payloads, source mapping, request limits, response policy, and runtime backpressure behavior. | `0.6.0` runtime-app HTTP collector assembly, lifecycle hardening, richer response policy, and smoke coverage. |
 | `runtime-app` | Provide the standalone collector assembly with property-based configuration, source id selection, app-level protocol selection, backpressure mode, and logging/file/in-memory sinks. | Service wrappers, metrics exporters, TLS, reconnect policy, and downstream sink adapters. |
 | `runtime-smoke-tests` | Prove the first IEC104 over TCP runtime path with EmbeddedChannel and real localhost socket tests through `TcpNettyServer`, `TcpNettyIngressHandler`, `RuntimePipelineRunner`, `Iec104RuntimeBinding`, sinks, active sessions, and disconnect lifecycle. | More cross-module runtime paths after new ingress and protocol bindings land. |
 
@@ -30,11 +31,10 @@ This note records the first open-source module shape for `protocol-runtime`.
 
 | Module | Reason deferred |
 | --- | --- |
-| `runtime-ingress-http` | `0.5.0` baseline; maps HTTP POST bodies to `IngressEnvelope` with request limits, configured/header/path source mapping, and response policy backed by runtime backpressure decisions. |
-| `runtime-ingress-kafka` | `0.5.x` candidate; design now documents topic/partition/offset identity, replay posture, commit timing, and error routing rules before implementation. |
-| `runtime-ingress-mqtt` | `0.5.x` candidate; design now documents topic/source mapping, QoS posture, retained-message handling, and reconnect/session ownership before implementation. |
-| `runtime-sink-kafka` | `0.5.x` candidate; downstream delivery belongs outside ingress adapters and must not pull Kafka dependencies into `runtime-core`. |
-| `runtime-adapter-testkit` | `0.5.x` candidate; reusable adapter tests should stay test support and avoid production dependency leakage. |
+| `runtime-ingress-kafka` | Future candidate; design now documents topic/partition/offset identity, replay posture, commit timing, and error routing rules before implementation. |
+| `runtime-ingress-mqtt` | Future candidate; design now documents topic/source mapping, QoS posture, retained-message handling, and reconnect/session ownership before implementation. |
+| `runtime-sink-kafka` | Future candidate; downstream delivery belongs outside ingress adapters and must not pull Kafka dependencies into `runtime-core`. |
+| `runtime-adapter-testkit` | Future candidate; reusable adapter tests should stay test support and avoid production dependency leakage. |
 | `runtime-pipeline` | Needs backpressure and batching decisions proven by first ingress adapters. |
 | `runtime-sink-*` | Storage and downstream integrations should follow stable parsed-record contracts. |
 
@@ -51,6 +51,30 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 `runtime-app` may combine TCP ingress, protocol bindings, and app-level sinks
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
+
+## `0.6.0` Development Posture
+
+The `0.6.0` runtime line starts from the published `0.5.0` adapter-boundary
+release and opens the Maven reactor at `0.6.0-SNAPSHOT`.
+
+The goal is HTTP ingress productionization and runtime-app HTTP collector
+assembly before Kafka and MQTT client dependencies are introduced:
+
+| Module | 0.6.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no HTTP, Kafka, MQTT, Spring, database, Redis, or observability exporter dependencies. |
+| `runtime-ingress-http` | Harden the JDK `HttpServer` adapter baseline for lifecycle, source mapping, request limits, response policy, parse failure routing, and backpressure behavior. |
+| `runtime-app` | Add HTTP listener configuration and app-owned assembly while preserving TCP collector defaults. |
+| `runtime-protocol-*` | Reuse parser bindings for HTTP payloads without transport or app dependencies. |
+| `runtime-ingress-tcp-netty` | Preserve the TCP path and avoid coupling it to HTTP work. |
+| `runtime-ingress-kafka` | Remain design-only until a dedicated implementation release opens. |
+| `runtime-ingress-mqtt` | Remain design-only until a dedicated implementation release opens. |
+| `runtime-smoke-tests` | Add repository-only HTTP end-to-end smoke coverage after app assembly lands. |
+
+`0.6.0` should not introduce Spring, Kafka, MQTT, database, Redis,
+observability exporter, serial-port, or UDP dependencies into `runtime-core`.
+HTTP dependencies should remain JDK-only in `runtime-ingress-http` and
+app-owned assembly code for this line.
 
 ## `0.5.0` Development Posture
 

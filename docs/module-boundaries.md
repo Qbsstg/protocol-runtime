@@ -185,3 +185,28 @@ Not allowed:
   sink boundary
 - making broker acknowledgement, HTTP response status, MQTT reconnect policy,
   or topic/offset handling a `runtime-core` concern
+
+## `0.6.0` HTTP App Assembly Boundary
+
+The `0.6.0` line keeps the adapter model from `0.5.0` and focuses on making
+HTTP ingress usable from the standalone runtime app.
+
+Allowed:
+
+- the Maven reactor moves to `0.6.0-SNAPSHOT` after the published `0.5.0`
+  release
+- `runtime-ingress-http` owns HTTP request handling, response policy, payload
+  limits, source mapping, and adapter lifecycle
+- `runtime-app` owns HTTP listener configuration and combines HTTP ingress,
+  runtime protocol bindings, and app sinks
+- tests may verify HTTP end-to-end behavior in app or smoke-test modules
+
+Not allowed:
+
+- adding HTTP, Kafka, MQTT, Spring, database, Redis, or observability exporter
+  dependencies to `runtime-core`
+- adding HTTP ingress or app dependencies to `runtime-protocol-*`
+- introducing Kafka or MQTT client dependencies before their dedicated
+  implementation modules are opened
+- moving HTTP response policy, Kafka offset policy, or MQTT reconnect policy
+  into `runtime-core`
