@@ -16,13 +16,19 @@ import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
 import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
 import io.github.qbsstg.protocol.runtime.core.SourceId;
+import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressResponseMode;
+import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpConnectionAttributes;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -239,6 +245,7 @@ class StandaloneCollectorTest {
 
         assertEquals(1, appConfig.sources().size());
         assertEquals(1, appConfig.tcpListeners().size());
+        assertTrue(appConfig.httpListeners().isEmpty());
         assertEquals("default", appConfig.sources().get(0).name());
         assertEquals("iec104:station-1", appConfig.sources().get(0).sourceId().qualifiedValue());
         assertEquals(RuntimeProtocol.IEC104, appConfig.sources().get(0).protocol());
@@ -246,6 +253,237 @@ class StandaloneCollectorTest {
         assertEquals("default", appConfig.tcpListeners().get(0).sourceName());
         assertEquals(RuntimeProtocol.IEC104, appConfig.tcpListeners().get(0).protocol());
         assertEquals(2404, appConfig.tcpListeners().get(0).tcp().port());
+    }
+
+    @Test
+    void parsesHttpOnlyAppConfigurationWithoutDefaultTcpListener() {
+        Properties properties = httpProperties(8080, "logging");
+        properties.setProperty(
+                StandaloneCollectorConfig.HTTP_LISTENER_PREFIX
+                        + "http-main"
+                        + StandaloneCollectorConfig.HTTP_LISTENER_MAX_PAYLOAD_BYTES_SUFFIX,
+                "65536");
+        properties.setProperty(
+                StandaloneCollectorConfig.HTTP_LISTENER_PREFIX
+                        + "http-main"
+                        + StandaloneCollectorConfig.HTTP_LISTENER_WORKER_THREADS_SUFFIX,
+                "2");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertTrue(validation.isValid());
+        assertEquals(1, appConfig.sources().size());
+        assertTrue(appConfig.tcpListeners().isEmpty());
+        assertEquals(1, appConfig.httpListeners().size());
+        HttpListenerConfig listener = appConfig.httpListeners().get(0);
+        assertEquals("http-main", listener.name());
+        assertEquals("default", listener.sourceName());
+        assertEquals("iec104:station-1", listener.sourceId().qualifiedValue());
+        assertEquals(RuntimeProtocol.IEC104, listener.protocol());
+        assertEquals("127.0.0.1", listener.http().host());
+        assertEquals(8080, listener.http().port());
+        assertEquals("/ingress", listener.http().path());
+        assertEquals(HttpIngressSourceIdMode.CONFIGURED, listener.http().sourceIdMode());
+        assertEquals(HttpIngressResponseMode.ACK_ON_ACCEPT, listener.http().responseMode());
+        assertEquals(65536, listener.http().maxPayloadBytes());
+        assertEquals(2, listener.http().workerThreads());
+        assertThrows(IllegalArgumentException.class, appConfig::singleCollectorConfig);
+    }
+
+    @Test
+    void startsHttpCollectorAndRoutesIec104PostsToInMemorySink() throws Exception {
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(httpProperties(0, "in-memory")))) {
+            CollectorStatusSnapshot configured = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.CONFIGURED, configured.state());
+            assertTrue(configured.tcpListeners().isEmpty());
+            assertEquals(1, configured.httpListeners().size());
+            assertFalse(configured.httpListeners().get(0).running());
+
+            collector.start();
+
+            HttpResponse<String> response = postHttp(collector, "/ingress?trace=1", SINGLE_POINT_FRAME);
+
+            assertEquals(202, response.statusCode());
+            assertEquals("{\"status\":\"accepted\"}", response.body());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParsedRecord<Object>> records = awaitRecords(sink, 1);
+            assertEquals("iec104:station-1", records.get(0).sourceId().qualifiedValue());
+            assertEquals("iec104", records.get(0).protocol());
+            assertEquals("I_FORMAT", records.get(0).recordType());
+            assertArrayEquals(SINGLE_POINT_FRAME, records.get(0).rawPayload());
+            assertTrue(sink.failures().isEmpty());
+
+            CollectorStatusSnapshot running = collector.statusSnapshot();
+            assertTrue(collector.isRunning());
+            assertEquals(CollectorLifecycleState.RUNNING, running.state());
+            assertTrue(running.tcpListeners().isEmpty());
+            assertEquals(1, running.httpListeners().size());
+            HttpListenerStatus listener = running.httpListeners().get(0);
+            assertEquals("http-main", listener.name());
+            assertEquals("iec104", listener.protocol());
+            assertEquals("/ingress", listener.path());
+            assertEquals(HttpIngressSourceIdMode.CONFIGURED, listener.sourceIdMode());
+            assertTrue(listener.running());
+            assertNotNull(listener.boundPort());
+            assertEquals(0, running.activeConnectionCount());
+            assertEquals(1, running.metrics().parsedRecordCount());
+            assertEquals(0, running.metrics().parseFailureCount());
+
+            String status = CollectorStatusFormatter.format(running);
+            assertTrue(status.contains("listeners=1"));
+            assertTrue(status.contains("tcpListeners=[]"));
+            assertTrue(status.contains("httpListeners=[http-main@127.0.0.1:0/ingress->"));
+            assertTrue(status.contains("/sourceIdMode=CONFIGURED/protocol=iec104"));
+        }
+    }
+
+    @Test
+    void routesHeaderSourceHttpPostsWithConfiguredProtocol() throws Exception {
+        Properties properties = httpProperties(0, "in-memory");
+        String prefix = StandaloneCollectorConfig.HTTP_LISTENER_PREFIX + "http-main";
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.HTTP_LISTENER_SOURCE_ID_MODE_SUFFIX,
+                "header");
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.HTTP_LISTENER_SOURCE_ID_HEADER_SUFFIX,
+                "X-Protocol-Source");
+
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(properties))) {
+            collector.start();
+
+            HttpResponse<String> response = postHttp(
+                    collector,
+                    "/ingress",
+                    SINGLE_POINT_FRAME,
+                    Map.of("X-Protocol-Source", "iec104:station-header"));
+
+            assertEquals(202, response.statusCode());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            ParsedRecord<Object> record = awaitRecords(sink, 1).get(0);
+            assertEquals("iec104:station-header", record.sourceId().qualifiedValue());
+            assertEquals("iec104", record.protocol());
+            assertEquals(HttpIngressSourceIdMode.HEADER, collector.statusSnapshot().httpListeners().get(0).sourceIdMode());
+        }
+    }
+
+    @Test
+    void routesMalformedHttpPayloadsToFailureSink() throws Exception {
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(httpProperties(0, "in-memory")))) {
+            collector.start();
+
+            byte[] malformed = bytes(0x68, 0x03, 0x00, 0x00, 0x00);
+            HttpResponse<String> response = postHttp(collector, "/ingress", malformed);
+
+            assertEquals(202, response.statusCode());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParseFailure> failures = awaitFailures(sink, 1);
+            assertTrue(sink.records().isEmpty());
+            assertEquals("iec104:station-1", failures.get(0).sourceId().qualifiedValue());
+            assertTrue(failures.get(0).message().contains("Invalid IEC104 APDU length"));
+            assertEquals(1, collector.statusSnapshot().metrics().parseFailureCount());
+        }
+    }
+
+    @Test
+    void retryLaterHttpBackpressureReturnsUnavailableWithoutParsing() throws Exception {
+        Properties properties = httpProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, "RETRY_LATER");
+
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(properties))) {
+            collector.start();
+
+            HttpResponse<String> response = postHttp(collector, "/ingress", SINGLE_POINT_FRAME);
+
+            assertEquals(503, response.statusCode());
+            assertEquals("1", response.headers().firstValue("Retry-After").orElse(""));
+            assertEquals("{\"status\":\"retry_later\"}", response.body());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            assertTrue(sink.records().isEmpty());
+            assertTrue(sink.failures().isEmpty());
+            CollectorRuntimeMetrics metrics = awaitRetryLaterBackpressure(collector, 1);
+            assertEquals(0, metrics.parsedRecordCount());
+            assertEquals(0, metrics.parseFailureCount());
+            assertEquals("iec104:station-1", metrics.lastBackpressureSourceId());
+        }
+    }
+
+    @Test
+    void httpPayloadLimitRejectsBeforeRuntimeParsing() throws Exception {
+        Properties properties = httpProperties(0, "in-memory");
+        properties.setProperty(
+                StandaloneCollectorConfig.HTTP_LISTENER_PREFIX
+                        + "http-main"
+                        + StandaloneCollectorConfig.HTTP_LISTENER_MAX_PAYLOAD_BYTES_SUFFIX,
+                "1");
+
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(properties))) {
+            collector.start();
+
+            HttpResponse<String> response = postHttp(collector, "/ingress", SINGLE_POINT_FRAME);
+
+            assertEquals(413, response.statusCode());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            assertTrue(sink.records().isEmpty());
+            assertTrue(sink.failures().isEmpty());
+            CollectorRuntimeMetrics metrics = collector.statusSnapshot().metrics();
+            assertEquals(0, metrics.parsedRecordCount());
+            assertEquals(0, metrics.parseFailureCount());
+            assertEquals(0, metrics.backpressureRetryLaterCount());
+            assertEquals(0, metrics.backpressureDropCount());
+        }
+    }
+
+    @Test
+    void httpPortConflictFailsFast() throws Exception {
+        try (StandaloneCollector bound = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(httpProperties(0, "in-memory")))) {
+            bound.start();
+            Properties properties = httpProperties(bound.httpPorts().get(0), "in-memory");
+            try (StandaloneCollector collector = StandaloneCollector.create(
+                    StandaloneCollectorConfig.appConfigFromProperties(properties))) {
+
+                assertThrows(Exception.class, collector::start);
+
+                CollectorStatusSnapshot failed = collector.statusSnapshot();
+                assertEquals(CollectorLifecycleState.FAILED, failed.state());
+                assertTrue(failed.startupFailureReason().contains("HTTP listener http-main"));
+                assertNotNull(failed.lastExceptionType());
+                assertNotNull(failed.lastExceptionMessage());
+                assertTrue(failed.tcpListeners().isEmpty());
+                assertEquals(1, failed.httpListeners().size());
+                assertFalse(failed.httpListeners().get(0).running());
+                assertNull(failed.startedAt());
+                assertNotNull(failed.stoppedAt());
+            }
+        }
+    }
+
+    @Test
+    void validatesHttpListenerConfiguration() {
+        Properties properties = httpProperties(0, "in-memory");
+        String prefix = StandaloneCollectorConfig.HTTP_LISTENER_PREFIX + "http-main";
+        properties.setProperty(StandaloneCollectorConfig.HTTP_LISTENERS, "http-main,http-main");
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_PORT_SUFFIX, "70000");
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_PATH_SUFFIX, "ingress/{sourceId}");
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_SOURCE_ID_MODE_SUFFIX, "path");
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_RESPONSE_MODE_SUFFIX, "body");
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_WORKER_THREADS_SUFFIX, "0");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.HTTP_LISTENERS + " contains duplicate name: http-main");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.HTTP_LISTENER_PORT_SUFFIX + " must be between");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.HTTP_LISTENER_RESPONSE_MODE_SUFFIX
+                + " must be ACK_ON_ACCEPT or NO_BODY");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.HTTP_LISTENER_WORKER_THREADS_SUFFIX
+                + " must be positive");
     }
 
     @Test
@@ -583,6 +821,16 @@ class StandaloneCollectorTest {
         return properties;
     }
 
+    private static Properties httpProperties(int port, String sinkType) {
+        Properties properties = new Properties();
+        properties.setProperty(StandaloneCollectorConfig.SOURCE_ID, "iec104:station-1");
+        properties.setProperty(StandaloneCollectorConfig.SINK_TYPE, sinkType);
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, BackpressureDecision.ACCEPT.name());
+        properties.setProperty(StandaloneCollectorConfig.HTTP_LISTENERS, "http-main");
+        setHttpListener(properties, "http-main", "default", port);
+        return properties;
+    }
+
     private static Properties protocolProperties(RuntimeProtocol protocol, String sourceId) {
         Properties properties = baseProperties(0, "in-memory");
         properties.setProperty(StandaloneCollectorConfig.PROTOCOL, protocol.configValue());
@@ -639,6 +887,14 @@ class StandaloneCollectorTest {
         properties.setProperty(prefix + StandaloneCollectorConfig.TCP_LISTENER_SOURCE_SUFFIX, sourceName);
     }
 
+    private static void setHttpListener(Properties properties, String name, String sourceName, int port) {
+        String prefix = StandaloneCollectorConfig.HTTP_LISTENER_PREFIX + name;
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_HOST_SUFFIX, "127.0.0.1");
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_PORT_SUFFIX, Integer.toString(port));
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_PATH_SUFFIX, "/ingress");
+        properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_SOURCE_SUFFIX, sourceName);
+    }
+
     private static void writeFrame(StandaloneCollector collector, byte[] frame) throws IOException {
         writeFrame(collector.localAddress(), frame);
     }
@@ -649,6 +905,27 @@ class StandaloneCollectorTest {
             socket.getOutputStream().write(frame);
             socket.getOutputStream().flush();
         }
+    }
+
+    private static HttpResponse<String> postHttp(
+            StandaloneCollector collector,
+            String path,
+            byte[] payload) throws IOException, InterruptedException {
+        return postHttp(collector, path, payload, Map.of());
+    }
+
+    private static HttpResponse<String> postHttp(
+            StandaloneCollector collector,
+            String path,
+            byte[] payload,
+            Map<String, String> headers) throws IOException, InterruptedException {
+        InetSocketAddress address = collector.httpLocalAddresses().get(0);
+        URI uri = URI.create("http://" + address.getHostString() + ":" + address.getPort() + path);
+        HttpRequest.Builder request = HttpRequest.newBuilder(uri)
+                .header("Content-Type", "application/octet-stream")
+                .POST(HttpRequest.BodyPublishers.ofByteArray(payload));
+        headers.forEach(request::header);
+        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private static List<ParsedRecord<Object>> awaitRecords(

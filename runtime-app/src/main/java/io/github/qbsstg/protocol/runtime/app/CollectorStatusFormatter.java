@@ -10,7 +10,7 @@ final class CollectorStatusFormatter {
         return "Protocol Runtime collector status"
                 + " state=" + snapshot.state()
                 + " sources=" + snapshot.sources().size()
-                + " listeners=" + snapshot.tcpListeners().size()
+                + " listeners=" + (snapshot.tcpListeners().size() + snapshot.httpListeners().size())
                 + " activeConnections=" + snapshot.activeConnectionCount()
                 + " parsedRecords=" + metrics.parsedRecordCount()
                 + " parseFailures=" + metrics.parseFailureCount()
@@ -21,7 +21,8 @@ final class CollectorStatusFormatter {
                 + " maxPayloadBytes=" + snapshot.backpressureMaxPayloadBytes()
                 + " oversizedPayloadDecision=" + snapshot.oversizedPayloadDecision()
                 + " strictAsdu=" + snapshot.strictAsduParsing()
-                + " tcpListeners=" + tcpListeners(snapshot);
+                + " tcpListeners=" + tcpListeners(snapshot)
+                + " httpListeners=" + httpListeners(snapshot);
     }
 
     private static String tcpListeners(CollectorStatusSnapshot snapshot) {
@@ -47,6 +48,37 @@ final class CollectorStatusFormatter {
                     .append(listener.running())
                     .append("/active=")
                     .append(listener.activeConnectionCount())
+                    .append("/protocol=")
+                    .append(listener.protocol());
+        }
+        value.append(']');
+        return value.toString();
+    }
+
+    private static String httpListeners(CollectorStatusSnapshot snapshot) {
+        StringBuilder value = new StringBuilder("[");
+        boolean first = true;
+        for (HttpListenerStatus listener : snapshot.httpListeners()) {
+            if (!first) {
+                value.append(',');
+            }
+            first = false;
+            value.append(listener.name())
+                    .append('@')
+                    .append(listener.configuredHost())
+                    .append(':')
+                    .append(listener.configuredPort())
+                    .append(listener.path());
+            if (listener.boundPort() != null) {
+                value.append("->")
+                        .append(listener.boundHost())
+                        .append(':')
+                        .append(listener.boundPort());
+            }
+            value.append("/running=")
+                    .append(listener.running())
+                    .append("/sourceIdMode=")
+                    .append(listener.sourceIdMode())
                     .append("/protocol=")
                     .append(listener.protocol());
         }

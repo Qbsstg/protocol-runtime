@@ -2,6 +2,9 @@ package io.github.qbsstg.protocol.runtime.app;
 
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 import io.github.qbsstg.protocol.runtime.core.SourceId;
+import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressResponseMode;
+import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressServerConfig;
+import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
 import java.io.IOException;
@@ -43,6 +46,18 @@ public record StandaloneCollectorConfig(
     public static final String TCP_LISTENER_BOSS_THREADS_SUFFIX = ".bossThreads";
     public static final String TCP_LISTENER_WORKER_THREADS_SUFFIX = ".workerThreads";
     public static final String TCP_LISTENER_SOURCE_SUFFIX = ".source";
+    public static final String HTTP_LISTENERS = "collector.http.listeners";
+    public static final String HTTP_LISTENER_PREFIX = "collector.http.listener.";
+    public static final String HTTP_LISTENER_HOST_SUFFIX = ".host";
+    public static final String HTTP_LISTENER_PORT_SUFFIX = ".port";
+    public static final String HTTP_LISTENER_PATH_SUFFIX = ".path";
+    public static final String HTTP_LISTENER_SOURCE_SUFFIX = ".source";
+    public static final String HTTP_LISTENER_SOURCE_ID_MODE_SUFFIX = ".sourceIdMode";
+    public static final String HTTP_LISTENER_SOURCE_ID_HEADER_SUFFIX = ".sourceIdHeader";
+    public static final String HTTP_LISTENER_MAX_PAYLOAD_BYTES_SUFFIX = ".maxPayloadBytes";
+    public static final String HTTP_LISTENER_RESPONSE_MODE_SUFFIX = ".responseMode";
+    public static final String HTTP_LISTENER_BACKLOG_SUFFIX = ".backlog";
+    public static final String HTTP_LISTENER_WORKER_THREADS_SUFFIX = ".workerThreads";
     public static final String SOURCES = "collector.sources";
     public static final String SOURCE_ID = "collector.source.id";
     public static final String SOURCE_PREFIX = "collector.source.";
@@ -61,6 +76,8 @@ public record StandaloneCollectorConfig(
 
     private static final String DEFAULT_SOURCE_NAME = "default";
     private static final String DEFAULT_LISTENER_NAME = "default";
+    private static final String DEFAULT_HTTP_HOST = "127.0.0.1";
+    private static final String DEFAULT_HTTP_PATH = "/ingress";
 
     public StandaloneCollectorConfig {
         Objects.requireNonNull(tcp, "tcp must not be null");
@@ -176,9 +193,21 @@ public record StandaloneCollectorConfig(
         boolean strictAsduParsing = parseBoolean(properties, IEC104_STRICT_ASDU, defaults.strictAsduParsing(), errors);
 
         SourceParseResult sourceResult = parseSources(properties, defaults, protocol, errors);
-        List<TcpListenerConfig> listeners = parseTcpListeners(properties, defaults, sourceResult, errors);
+        boolean httpListenersDeclared = rawProperty(properties, HTTP_LISTENERS) != null;
+        List<TcpListenerConfig> tcpListeners = parseTcpListeners(
+                properties,
+                defaults,
+                sourceResult,
+                httpListenersDeclared,
+                errors);
+        List<HttpListenerConfig> httpListeners = parseHttpListeners(properties, sourceResult, errors);
         addDuplicateSourceIdErrors(sourceResult.sources(), errors);
-        addDuplicateListenerEndpointErrors(listeners, errors);
+        addDuplicateTcpListenerEndpointErrors(tcpListeners, errors);
+        addDuplicateHttpListenerEndpointErrors(httpListeners, errors);
+        addDuplicateNetworkListenerEndpointErrors(tcpListeners, httpListeners, errors);
+        if (tcpListeners.isEmpty() && httpListeners.isEmpty()) {
+            errors.add("at least one TCP or HTTP listener is required");
+        }
 
         if (!errors.isEmpty()) {
             return new ConfigParseResult(null, new CollectorConfigValidation(errors));
@@ -187,7 +216,8 @@ public record StandaloneCollectorConfig(
         return new ConfigParseResult(
                 new StandaloneCollectorAppConfig(
                         sourceResult.sources(),
-                        listeners,
+                        tcpListeners,
+                        httpListeners,
                         backpressure,
                         backpressureMaxPayloadBytes,
                         oversizedPayloadDecision,
@@ -249,9 +279,13 @@ public record StandaloneCollectorConfig(
             Properties properties,
             StandaloneCollectorConfig defaults,
             SourceParseResult sourceResult,
+            boolean httpListenersDeclared,
             List<String> errors) {
         String rawNames = rawProperty(properties, TCP_LISTENERS);
         if (rawNames == null) {
+            if (httpListenersDeclared) {
+                return List.of();
+            }
             return parseDefaultTcpListener(properties, defaults, sourceResult, errors);
         }
         if (rawNames.isBlank()) {
@@ -282,6 +316,47 @@ public record StandaloneCollectorConfig(
             TcpNettyServerConfig tcp = parseNamedTcpConfig(properties, defaults, prefix, errors);
             if (sourceName != null && source != null && tcp != null) {
                 listeners.add(new TcpListenerConfig(name, tcp, sourceName, source.sourceId(), source.protocol()));
+            }
+        }
+        return listeners;
+    }
+
+    private static List<HttpListenerConfig> parseHttpListeners(
+            Properties properties,
+            SourceParseResult sourceResult,
+            List<String> errors) {
+        String rawNames = rawProperty(properties, HTTP_LISTENERS);
+        if (rawNames == null) {
+            return List.of();
+        }
+        if (rawNames.isBlank()) {
+            errors.add(HTTP_LISTENERS + " must not be blank");
+            return List.of();
+        }
+
+        List<String> names = parseNameList(HTTP_LISTENERS, rawNames, errors);
+        addDuplicateNameErrors(HTTP_LISTENERS, names, errors);
+        List<HttpListenerConfig> listeners = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (String name : names) {
+            if (!seen.add(name)) {
+                continue;
+            }
+            String prefix = HTTP_LISTENER_PREFIX + name;
+            String sourceName = property(properties, prefix + HTTP_LISTENER_SOURCE_SUFFIX, null);
+            if (sourceName == null) {
+                errors.add(prefix + HTTP_LISTENER_SOURCE_SUFFIX + " is required");
+                continue;
+            }
+            sourceName = normalizeName(prefix + HTTP_LISTENER_SOURCE_SUFFIX, sourceName, errors);
+            CollectorSourceConfig source = sourceResult.sourceByName().get(sourceName);
+            if (sourceName != null && source == null) {
+                errors.add(prefix + HTTP_LISTENER_SOURCE_SUFFIX + " references unknown source: " + sourceName);
+            }
+
+            HttpIngressServerConfig http = parseNamedHttpConfig(properties, prefix, source, name, errors);
+            if (sourceName != null && source != null && http != null) {
+                listeners.add(new HttpListenerConfig(name, http, sourceName, source.sourceId(), source.protocol()));
             }
         }
         return listeners;
@@ -365,6 +440,68 @@ public record StandaloneCollectorConfig(
         return new TcpNettyServerConfig(host, port, bossThreads, workerThreads);
     }
 
+    private static HttpIngressServerConfig parseNamedHttpConfig(
+            Properties properties,
+            String prefix,
+            CollectorSourceConfig source,
+            String listenerName,
+            List<String> errors) {
+        String hostKey = prefix + HTTP_LISTENER_HOST_SUFFIX;
+        String portKey = prefix + HTTP_LISTENER_PORT_SUFFIX;
+        String pathKey = prefix + HTTP_LISTENER_PATH_SUFFIX;
+        String sourceIdModeKey = prefix + HTTP_LISTENER_SOURCE_ID_MODE_SUFFIX;
+        String sourceIdHeaderKey = prefix + HTTP_LISTENER_SOURCE_ID_HEADER_SUFFIX;
+        String maxPayloadBytesKey = prefix + HTTP_LISTENER_MAX_PAYLOAD_BYTES_SUFFIX;
+        String responseModeKey = prefix + HTTP_LISTENER_RESPONSE_MODE_SUFFIX;
+        String backlogKey = prefix + HTTP_LISTENER_BACKLOG_SUFFIX;
+        String workerThreadsKey = prefix + HTTP_LISTENER_WORKER_THREADS_SUFFIX;
+
+        String host = property(properties, hostKey, DEFAULT_HTTP_HOST);
+        int port = requiredIntProperty(properties, portKey, 0, 65535, errors);
+        String path = property(properties, pathKey, DEFAULT_HTTP_PATH);
+        HttpIngressSourceIdMode sourceIdMode = parseHttpSourceIdMode(
+                sourceIdModeKey,
+                property(properties, sourceIdModeKey, HttpIngressSourceIdMode.CONFIGURED.name()),
+                errors);
+        String sourceIdHeader = property(properties, sourceIdHeaderKey, null);
+        int maxPayloadBytes = intProperty(properties, maxPayloadBytesKey, 0, 0, Integer.MAX_VALUE, errors);
+        HttpIngressResponseMode responseMode = parseHttpResponseMode(
+                responseModeKey,
+                property(properties, responseModeKey, HttpIngressResponseMode.ACK_ON_ACCEPT.name()),
+                errors);
+        int backlog = intProperty(properties, backlogKey, 0, 0, Integer.MAX_VALUE, errors);
+        int workerThreads = intProperty(properties, workerThreadsKey, 1, 1, Integer.MAX_VALUE, errors);
+
+        if (host == null || host.isBlank()) {
+            errors.add(hostKey + " must not be blank");
+        }
+        if (path == null || path.isBlank()) {
+            errors.add(pathKey + " must not be blank");
+        }
+        if (hasErrorForPrefix(errors, prefix) || source == null) {
+            return null;
+        }
+        SourceId configuredSourceId =
+                sourceIdMode == HttpIngressSourceIdMode.CONFIGURED ? source.sourceId() : null;
+        try {
+            return new HttpIngressServerConfig(
+                    host,
+                    port,
+                    path,
+                    sourceIdMode,
+                    sourceIdHeader,
+                    configuredSourceId,
+                    maxPayloadBytes,
+                    responseMode,
+                    backlog,
+                    workerThreads,
+                    listenerName);
+        } catch (IllegalArgumentException ex) {
+            errors.add(prefix + " is invalid: " + ex.getMessage());
+            return null;
+        }
+    }
+
     private static Properties loadProperties(Path path) {
         Properties properties = new Properties();
         try (InputStream input = Files.newInputStream(path)) {
@@ -429,6 +566,24 @@ public record StandaloneCollectorConfig(
         } catch (RuntimeException ex) {
             errors.add(key + " must be iec104, iec101, iec103, or modbus");
             return RuntimeProtocol.IEC104;
+        }
+    }
+
+    private static HttpIngressSourceIdMode parseHttpSourceIdMode(String key, String value, List<String> errors) {
+        try {
+            return HttpIngressSourceIdMode.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (RuntimeException ex) {
+            errors.add(key + " must be CONFIGURED, HEADER, or PATH");
+            return HttpIngressSourceIdMode.CONFIGURED;
+        }
+    }
+
+    private static HttpIngressResponseMode parseHttpResponseMode(String key, String value, List<String> errors) {
+        try {
+            return HttpIngressResponseMode.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (RuntimeException ex) {
+            errors.add(key + " must be ACK_ON_ACCEPT or NO_BODY");
+            return HttpIngressResponseMode.ACK_ON_ACCEPT;
         }
     }
 
@@ -546,7 +701,7 @@ public record StandaloneCollectorConfig(
         }
     }
 
-    private static void addDuplicateListenerEndpointErrors(List<TcpListenerConfig> listeners, List<String> errors) {
+    private static void addDuplicateTcpListenerEndpointErrors(List<TcpListenerConfig> listeners, List<String> errors) {
         Map<String, String> seen = new HashMap<>();
         for (TcpListenerConfig listener : listeners) {
             if (listener.tcp().port() == 0) {
@@ -557,6 +712,47 @@ public record StandaloneCollectorConfig(
             if (previous != null) {
                 errors.add("duplicate TCP listener endpoint " + endpoint
                         + " for listeners " + previous + " and " + listener.name());
+            }
+        }
+    }
+
+    private static void addDuplicateHttpListenerEndpointErrors(List<HttpListenerConfig> listeners, List<String> errors) {
+        Map<String, String> seen = new HashMap<>();
+        for (HttpListenerConfig listener : listeners) {
+            if (listener.http().port() == 0) {
+                continue;
+            }
+            String endpoint = listener.http().host() + ":" + listener.http().port();
+            String previous = seen.putIfAbsent(endpoint, listener.name());
+            if (previous != null) {
+                errors.add("duplicate HTTP listener endpoint " + endpoint
+                        + " for listeners " + previous + " and " + listener.name());
+            }
+        }
+    }
+
+    private static void addDuplicateNetworkListenerEndpointErrors(
+            List<TcpListenerConfig> tcpListeners,
+            List<HttpListenerConfig> httpListeners,
+            List<String> errors) {
+        Map<String, String> seen = new HashMap<>();
+        for (TcpListenerConfig listener : tcpListeners) {
+            if (listener.tcp().port() == 0) {
+                continue;
+            }
+            seen.putIfAbsent(
+                    listener.tcp().host() + ":" + listener.tcp().port(),
+                    "TCP listener " + listener.name());
+        }
+        for (HttpListenerConfig listener : httpListeners) {
+            if (listener.http().port() == 0) {
+                continue;
+            }
+            String endpoint = listener.http().host() + ":" + listener.http().port();
+            String previous = seen.putIfAbsent(endpoint, "HTTP listener " + listener.name());
+            if (previous != null && !previous.equals("HTTP listener " + listener.name())) {
+                errors.add("duplicate network listener endpoint " + endpoint
+                        + " for " + previous + " and HTTP listener " + listener.name());
             }
         }
     }

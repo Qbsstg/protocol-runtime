@@ -216,11 +216,11 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。已发布的 `0.5.0`
-构建使用 app 级协议选择：
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。`0.6.0-SNAPSHOT`
+开发线可以把 TCP/Netty 或 JDK HTTP ingress 接到同一个 app-owned pipeline：
 
 ```text
-TcpNettyServer
+TcpNettyServer or HttpIngressServer
   -> RuntimePipelineRunner
   -> selected RuntimeParserBinding
   -> configured RecordSink / FailureSink
@@ -235,7 +235,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.5.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.6.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -257,10 +257,18 @@ tail -f target/runtime-records.ndjson
 sh examples/smoke-standalone.sh
 ```
 
+HTTP collector smoke 会启动 HTTP-only app，通过 `curl` POST 一段 IEC104 原始
+APDU，并验证 file sink 输出：
+
+```bash
+sh examples/smoke-standalone-http.sh
+```
+
 如果默认 `java` 低于 JDK 21，运行 smoke 前设置 `JAVA_BIN`：
 
 ```bash
 JAVA_BIN=/path/to/jdk-21-or-newer/bin/java sh examples/smoke-standalone.sh
+JAVA_BIN=/path/to/jdk-21-or-newer/bin/java sh examples/smoke-standalone-http.sh
 ```
 
 最小配置项：
@@ -303,6 +311,17 @@ java -jar runtime-app/target/runtime-app-0.5.0-standalone.jar \
 | `collector.tcp.port` | `2404` | TCP 监听端口。端口 `0` 会让系统分配临时端口，适合 smoke test。 |
 | `collector.tcp.bossThreads` | `1` | Netty boss event loop 线程数。 |
 | `collector.tcp.workerThreads` | `1` | Netty worker event loop 线程数。 |
+| `collector.http.listeners` | 未设置 | HTTP listener 名称列表。配置该项且不配置 `collector.tcp.listeners` 时，应用只启动 HTTP listener。 |
+| `collector.http.listener.<name>.host` | `127.0.0.1` | 指定 HTTP listener 的监听地址。 |
+| `collector.http.listener.<name>.port` | 必填 | 指定 HTTP listener 的监听端口。端口 `0` 会让系统分配临时端口，适合测试。 |
+| `collector.http.listener.<name>.path` | `/ingress` | HTTP context path。`PATH` source-id 模式要求 path 以 `{sourceId}` 结尾。 |
+| `collector.http.listener.<name>.source` | 必填 | 引用的 `collector.sources` 条目；旧单 source 配置下使用 `default`。 |
+| `collector.http.listener.<name>.sourceIdMode` | `CONFIGURED` | 可选 `CONFIGURED`、`HEADER` 或 `PATH`。 |
+| `collector.http.listener.<name>.sourceIdHeader` | 未设置 | 当 `sourceIdMode=HEADER` 时必填。 |
+| `collector.http.listener.<name>.maxPayloadBytes` | `0` | HTTP adapter 在进入 runtime pipeline 前的请求大小限制。`0` 表示不限制。 |
+| `collector.http.listener.<name>.responseMode` | `ACK_ON_ACCEPT` | 可选 `ACK_ON_ACCEPT` 或 `NO_BODY`。 |
+| `collector.http.listener.<name>.backlog` | `0` | JDK `HttpServer` backlog。 |
+| `collector.http.listener.<name>.workerThreads` | `1` | JDK `HttpServer` worker 线程数。 |
 | `collector.protocol` | `iec104` | 旧单 source 配置使用的协议 binding。可选 `iec104`、`iec101`、`iec103` 或 `modbus`。 |
 | `collector.source.id` | `iec104:station-1` | 运行时数据源标识，格式必须是 `namespace:value`。 |
 | `collector.backpressure` | `ACCEPT` | 可选 `ACCEPT`、`RETRY_LATER` 或 `DROP`。 |
@@ -348,6 +367,33 @@ collector.sink.file.maxHistory=5
 `modbus` 当前选择 Modbus TCP stream binding；Modbus UDP 留到未来 UDP ingress
 adapter。
 
+`0.6.0` 增加 app 层 HTTP listener 装配。只声明 `collector.http.listeners`、
+不声明 `collector.tcp.listeners` 时，应用会启动 HTTP-only collector，不会再隐式
+打开旧的默认 TCP listener：
+
+```properties
+collector.source.id=iec104:station-1
+collector.protocol=iec104
+
+collector.http.listeners=http-main
+collector.http.listener.http-main.host=127.0.0.1
+collector.http.listener.http-main.port=8080
+collector.http.listener.http-main.path=/ingress
+collector.http.listener.http-main.source=default
+collector.http.listener.http-main.sourceIdMode=CONFIGURED
+collector.http.listener.http-main.maxPayloadBytes=65536
+collector.http.listener.http-main.responseMode=ACK_ON_ACCEPT
+collector.http.listener.http-main.workerThreads=2
+
+collector.sink.type=file
+collector.sink.file=target/runtime-http-records.ndjson
+```
+
+如果需要动态 source 映射，可以配置 `sourceIdMode=HEADER` 并设置
+`sourceIdHeader`，或者配置 `sourceIdMode=PATH` 并让 path 以 `{sourceId}`
+结尾。HTTP adapter 会把 runtime 的 `ACCEPT`、`RETRY_LATER`、`DROP` 决策映射为
+HTTP 响应；协议 payload 解析失败会进入已配置的 failure sink。
+
 ### Lifecycle 和状态快照
 
 `0.3.0` 为 `runtime-app` 增加本地 lifecycle/status snapshot API。
@@ -375,8 +421,10 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
 - 启动失败原因和最后一次异常类型/消息
 - 启动时间和停止时间
 - source 摘要
-- listener 配置 host/port 和实际 bind host/port
-- 每个 listener 以及整体 active connection count
+- TCP 和 HTTP listener 的配置 host/port 与实际 bind host/port
+- HTTP listener 的 path、source id mode、response mode、payload limit、backlog
+  和 worker thread 摘要
+- 每个 TCP listener 以及整体 active connection count
 - parsed record 和 parse failure 计数
 - 最后一次 parse failure 的 source id、消息、发生时间、cause 类型、payload
   大小、payload hex 预览和 TCP/session 属性

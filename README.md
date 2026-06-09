@@ -249,10 +249,11 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The published `0.5.0` build uses app-level protocol selection:
+The `0.6.0-SNAPSHOT` line can run TCP/Netty or JDK HTTP ingress through the
+same app-owned pipeline:
 
 ```text
-TcpNettyServer
+TcpNettyServer or HttpIngressServer
   -> RuntimePipelineRunner
   -> selected RuntimeParserBinding
   -> configured RecordSink / FailureSink
@@ -267,7 +268,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.5.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.6.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -289,11 +290,19 @@ You can also run the full local smoke flow:
 sh examples/smoke-standalone.sh
 ```
 
+The HTTP collector smoke starts an HTTP-only app, posts a raw IEC104 APDU with
+`curl`, and verifies file-sink output:
+
+```bash
+sh examples/smoke-standalone-http.sh
+```
+
 If your default `java` is older than JDK 21, set `JAVA_BIN` before running the
 smoke script:
 
 ```bash
 JAVA_BIN=/path/to/jdk-21-or-newer/bin/java sh examples/smoke-standalone.sh
+JAVA_BIN=/path/to/jdk-21-or-newer/bin/java sh examples/smoke-standalone-http.sh
 ```
 
 Minimal configuration keys:
@@ -337,6 +346,17 @@ they can override checked-in defaults for local runs.
 | `collector.tcp.port` | `2404` | TCP listen port. Port `0` requests an ephemeral port for smoke tests. |
 | `collector.tcp.bossThreads` | `1` | Netty boss event loop threads. |
 | `collector.tcp.workerThreads` | `1` | Netty worker event loop threads. |
+| `collector.http.listeners` | unset | Comma-separated HTTP listener names. When this key is set without `collector.tcp.listeners`, the app starts HTTP listeners only. |
+| `collector.http.listener.<name>.host` | `127.0.0.1` | HTTP listen host for a named HTTP listener. |
+| `collector.http.listener.<name>.port` | required | HTTP listen port. Port `0` requests an ephemeral port for tests. |
+| `collector.http.listener.<name>.path` | `/ingress` | HTTP context path. `PATH` source-id mode requires a path ending in `{sourceId}`. |
+| `collector.http.listener.<name>.source` | required | Referenced `collector.sources` entry, or `default` for the legacy single-source path. |
+| `collector.http.listener.<name>.sourceIdMode` | `CONFIGURED` | One of `CONFIGURED`, `HEADER`, or `PATH`. |
+| `collector.http.listener.<name>.sourceIdHeader` | unset | Required when `sourceIdMode=HEADER`. |
+| `collector.http.listener.<name>.maxPayloadBytes` | `0` | HTTP adapter request limit before the runtime pipeline is called. `0` disables the limit. |
+| `collector.http.listener.<name>.responseMode` | `ACK_ON_ACCEPT` | One of `ACK_ON_ACCEPT` or `NO_BODY`. |
+| `collector.http.listener.<name>.backlog` | `0` | JDK `HttpServer` backlog. |
+| `collector.http.listener.<name>.workerThreads` | `1` | JDK `HttpServer` worker threads. |
 | `collector.protocol` | `iec104` | Protocol binding for the legacy single-source configuration. Supported values are `iec104`, `iec101`, `iec103`, and `modbus`. |
 | `collector.source.id` | `iec104:station-1` | Runtime source id in `namespace:value` form. |
 | `collector.backpressure` | `ACCEPT` | One of `ACCEPT`, `RETRY_LATER`, or `DROP`. |
@@ -384,6 +404,34 @@ Named listeners inherit the protocol from their referenced source. `iec104`,
 baseline; serial adapters remain deferred. `modbus` selects the Modbus TCP
 stream binding; Modbus UDP remains deferred to a future UDP ingress adapter.
 
+`0.6.0` adds app-level HTTP listener assembly. Declaring
+`collector.http.listeners` without `collector.tcp.listeners` starts an
+HTTP-only collector and keeps the legacy TCP defaults disabled for that run:
+
+```properties
+collector.source.id=iec104:station-1
+collector.protocol=iec104
+
+collector.http.listeners=http-main
+collector.http.listener.http-main.host=127.0.0.1
+collector.http.listener.http-main.port=8080
+collector.http.listener.http-main.path=/ingress
+collector.http.listener.http-main.source=default
+collector.http.listener.http-main.sourceIdMode=CONFIGURED
+collector.http.listener.http-main.maxPayloadBytes=65536
+collector.http.listener.http-main.responseMode=ACK_ON_ACCEPT
+collector.http.listener.http-main.workerThreads=2
+
+collector.sink.type=file
+collector.sink.file=target/runtime-http-records.ndjson
+```
+
+For dynamic HTTP source mapping, set `sourceIdMode=HEADER` with
+`sourceIdHeader`, or set `sourceIdMode=PATH` with a path ending in
+`{sourceId}`. HTTP `ACCEPT`, `RETRY_LATER`, and `DROP` runtime decisions are
+translated into adapter-owned HTTP responses, while malformed protocol payloads
+are routed to the configured failure sink.
+
 ### Lifecycle And Status Snapshot
 
 `0.3.0` adds a local lifecycle and status snapshot API for `runtime-app`.
@@ -413,8 +461,10 @@ The snapshot includes:
 - startup failure reason and last exception type/message
 - start and stop timestamps
 - source summaries
-- listener configured host/port and bound host/port
-- per-listener and total active connection counts
+- TCP and HTTP listener configured host/port and bound host/port
+- HTTP listener path, source id mode, response mode, payload limit, backlog,
+  and worker thread summary
+- per-TCP-listener and total active connection counts
 - parsed record and parse failure counters
 - last parse failure source id, message, observed timestamp, cause type,
   payload size, payload preview hex, and TCP/session attributes

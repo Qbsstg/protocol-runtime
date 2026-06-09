@@ -6,14 +6,20 @@ Draft release notes for the `0.6.0` runtime release-candidate line.
 
 - Open the Maven reactor at `0.6.0-SNAPSHOT` after the published `0.5.0`
   adapter-boundary release.
-- Productionize the JDK `HttpServer` based `runtime-ingress-http` baseline.
+- Productionize the JDK `HttpServer` based `runtime-ingress-http` baseline from
+  the standalone app boundary.
 - Add runtime-app HTTP listener configuration and validation while preserving
-  the existing TCP collector defaults.
+  the existing TCP collector defaults. HTTP-only app configurations do not
+  implicitly start the legacy TCP listener.
 - Prove HTTP POST payloads can flow through `HttpIngressServer`,
   `RuntimePipelineRunner`, selected `runtime-protocol-*` binding, and the
   configured sinks.
 - Cover HTTP success, parse failure, backpressure, payload-size rejection,
   lifecycle, and port conflict behavior.
+- Add HTTP listener status snapshot and one-line formatter output alongside
+  existing TCP listener status.
+- Add `examples/collector-http.properties` and
+  `examples/smoke-standalone-http.sh` as runnable HTTP collector examples.
 - Keep Kafka and MQTT as design-only adapter boundaries until their client
   dependencies are introduced in dedicated modules.
 
@@ -23,6 +29,10 @@ Draft release notes for the `0.6.0` runtime release-candidate line.
 not just a library-level adapter. The release should keep the dependency shape
 established in `0.5.0`: `runtime-core` remains adapter-free, protocol bindings
 remain parser-only, and app assembly owns transport composition.
+
+The current `0.6.0-SNAPSHOT` line supports named HTTP listeners with host,
+port, path, source reference, configured/header/path source id mapping, payload
+limit, response mode, backlog, and worker thread settings.
 
 ## Dependency Policy
 
@@ -44,7 +54,6 @@ Before release branch work, the readiness branch should pass:
 - `mvn -q verify`
 - Central profile smoke with publishing disabled and signing skipped
 - standalone TCP collector smoke through `examples/smoke-standalone.sh`
-- HTTP collector smoke after the app assembly lands
+- HTTP collector smoke through `examples/smoke-standalone-http.sh`
 - dependency boundary checks for `runtime-core`, `runtime-ingress-http`,
   `runtime-app`, and `runtime-smoke-tests`
-

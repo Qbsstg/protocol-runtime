@@ -14,6 +14,7 @@ public record CollectorStatusSnapshot(
         String lastExceptionMessage,
         List<CollectorSourceStatus> sources,
         List<TcpListenerStatus> tcpListeners,
+        List<HttpListenerStatus> httpListeners,
         int activeConnectionCount,
         CollectorRuntimeMetrics metrics,
         SinkType sinkType,
@@ -26,6 +27,7 @@ public record CollectorStatusSnapshot(
     public CollectorStatusSnapshot {
         sources = List.copyOf(sources);
         tcpListeners = List.copyOf(tcpListeners);
+        httpListeners = List.copyOf(httpListeners);
         if (metrics == null) {
             throw new IllegalArgumentException("metrics must not be null");
         }
