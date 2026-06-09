@@ -26,10 +26,13 @@ MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
 of the runtime. `0.6.0` published the HTTP ingress productionization line and
 runtime-app HTTP collector assembly.
 
-The next planned release line is `0.7.0`, focused on the Kafka ingress baseline
-in a dedicated adapter module.
+The current development line is `0.7.0-SNAPSHOT`, focused on the Kafka ingress
+baseline in a dedicated adapter module.
 
-The published `0.6.0` release scope is tracked in
+The `0.7.0` development scope is tracked in
+[`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md), and draft release notes are
+tracked in [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md). The
+published `0.6.0` release scope is tracked in
 [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md), and release notes are tracked
 in [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md). The previous
 published `0.5.0` release scope is tracked in
@@ -98,12 +101,32 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-protocol-modbus` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0` with TCP stream and datagram parser modes. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
+| `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-app` | 0.6.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP listener assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, pipelines, additional sinks, and richer
 deployable runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
+
+## `0.7.0` Kafka Ingress Plan
+
+`0.7.0` opens the first Kafka ingress implementation line:
+
+- `runtime-core` remains free of Kafka, MQTT, HTTP, Spring, database, Redis,
+  and observability exporter dependencies
+- `runtime-ingress-kafka` owns the Kafka client dependency, source mapping,
+  record-to-envelope mapping, backpressure result mapping, and commit-mode
+  decisions
+- Kafka topic, partition, offset, timestamp, key, headers, source id mode, and
+  selected protocol remain envelope attributes
+- `runtime-protocol-*` modules continue to parse protocol payloads without
+  Kafka dependencies
+- runtime-app Kafka collector assembly stays as follow-up work after the
+  adapter record boundary is stable
+
+The detailed plan is maintained in
+[`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md).
 
 ## `0.6.0` HTTP Runtime-App Release
 
@@ -582,6 +605,7 @@ verified.
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
 - [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)
 - [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)
+- [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
@@ -594,3 +618,4 @@ verified.
 - [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)
 - [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)
 - [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)
+- [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)

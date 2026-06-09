@@ -9,15 +9,20 @@
         <version>0.7.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>runtime-ingress-http</artifactId>
-    <name>Protocol Runtime HTTP Ingress</name>
-    <description>JDK HttpServer based HTTP ingress adapter for Protocol Runtime.</description>
+    <artifactId>runtime-ingress-kafka</artifactId>
+    <name>Protocol Runtime Kafka Ingress</name>
+    <description>Kafka ingress adapter for protocol-runtime pipelines.</description>
 
     <dependencies>
         <dependency>
             <groupId>io.github.qbsstg</groupId>
             <artifactId>runtime-core</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.clients.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
