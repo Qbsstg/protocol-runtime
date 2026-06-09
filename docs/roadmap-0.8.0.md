@@ -3,6 +3,9 @@
 `0.8.0` starts after the published `0.7.0` Kafka runtime-app release. The
 development line opens with Maven reactor version `0.8.0-SNAPSHOT`.
 
+`0.8.0` has since been tagged as `v0.8.0`, published to Maven Central, verified
+with isolated local Maven repositories, and published as a GitHub Release.
+
 The release target is the first MQTT ingress baseline. MQTT client dependencies
 are allowed only in `runtime-ingress-mqtt`, runtime-app assembly, and test
 scopes. They must not enter `runtime-core`, `runtime-protocol-*`, or
@@ -80,8 +83,9 @@ scopes. They must not enter `runtime-core`, `runtime-protocol-*`, or
 - [`examples/collector-mqtt.properties`](../examples/collector-mqtt.properties)
   documents the minimal IEC104-over-MQTT standalone collector shape.
 
-Remaining `0.8.0` work is release-readiness verification and final release
-branch preparation.
+`0.8.0` release-readiness verification, release branch preparation, Central
+publication, Maven Central resolution checks, and GitHub Release publication
+are complete.
 
 ## Dependency Boundaries
 

@@ -26,13 +26,14 @@ This note records the first open-source module shape for `protocol-runtime`.
 | `runtime-ingress-http` | `0.5.0` JDK `HttpServer` baseline for HTTP POST payloads, source mapping, request limits, response policy, and runtime backpressure behavior. | `0.6.0` runtime-app HTTP collector assembly, lifecycle hardening, richer response policy, and smoke coverage. |
 | `runtime-ingress-kafka` | `0.7.0` Kafka `ConsumerRecord` baseline for source mapping, payload mapping, envelope attributes, polling lifecycle, backpressure result mapping, and commit-mode decisions. | Broker-backed integration tests, retry/dead-letter posture, and downstream Kafka sink boundaries. |
 | `runtime-ingress-mqtt` | `0.8.0` MQTT message baseline for source mapping, payload mapping, envelope attributes, Paho client lifecycle, and backpressure result mapping. | Broker-backed integration tests, reconnect hardening, and downstream MQTT sink boundaries. |
-| `runtime-app` | Provide the standalone collector assembly with property-based configuration, source id selection, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, backpressure mode, and logging/file/in-memory sinks. | Service wrappers, metrics exporters, TLS, reconnect policy, and downstream sink adapters. |
+| `runtime-app` | Provide the standalone collector assembly with property-based configuration, source id selection, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, backpressure mode, and logging/file/in-memory sinks. | Service wrappers, health/status surfaces, TLS, reconnect policy, and downstream sink adapters. |
 | `runtime-smoke-tests` | Prove the first IEC104 over TCP runtime path with EmbeddedChannel and real localhost socket tests through `TcpNettyServer`, `TcpNettyIngressHandler`, `RuntimePipelineRunner`, `Iec104RuntimeBinding`, sinks, active sessions, and disconnect lifecycle. | More cross-module runtime paths after new ingress and protocol bindings land. |
 
 ## Deferred Modules
 
 | Module | Reason deferred |
 | --- | --- |
+| `runtime-sink-file` | Future candidate; file delivery hardening belongs outside ingress adapters and can prove sink lifecycle, error routing, and rotation policy before broker-backed sinks. |
 | `runtime-sink-kafka` | Future candidate; downstream delivery belongs outside ingress adapters and must not pull Kafka dependencies into `runtime-core`. |
 | `runtime-adapter-testkit` | Future candidate; reusable adapter tests should stay test support and avoid production dependency leakage. |
 | `runtime-pipeline` | Needs backpressure and batching decisions proven by first ingress adapters. |
@@ -52,10 +53,35 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
+## `0.9.0` Development Posture
+
+The `0.9.0` runtime line starts from the published `0.8.0` MQTT runtime-app
+release and opens the Maven reactor at `0.9.0-SNAPSHOT`.
+
+The goal is downstream sink and operations hardening after the TCP, HTTP,
+Kafka, and MQTT ingress baselines are all published:
+
+| Module | 0.9.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, or observability exporter dependencies unless a protocol-neutral contract is proven necessary. |
+| `runtime-app` | Harden app-owned sink configuration, sink lifecycle, status output, parse-failure isolation, and backpressure/failure routing across TCP, HTTP, Kafka, and MQTT collectors. |
+| `runtime-sink-*` | Introduce downstream delivery modules only if the sink boundary is stable enough to avoid leaking broker, storage, retry, or operational dependencies into `runtime-core`. |
+| `runtime-ingress-*` | Preserve published ingress behavior and route delivery concerns through sink contracts instead of coupling ingress adapters to downstream systems. |
+| `runtime-protocol-*` | Continue to parse protocol payloads without transport, app, or downstream sink dependencies. |
+| `runtime-smoke-tests` | Expand cross-module smoke coverage only for stable runtime paths that should remain repository-only verification. |
+
+`0.9.0` should not introduce Spring, database, Redis, object storage,
+observability exporter, Kafka producer, MQTT publisher, or HTTP management
+dependencies into `runtime-core`. Those dependencies belong only in dedicated
+adapter/app modules after their boundaries are explicit.
+
 ## `0.8.0` Development Posture
 
 The `0.8.0` runtime line starts from the published `0.7.0` Kafka runtime-app
 release and opens the Maven reactor at `0.8.0-SNAPSHOT`.
+
+`0.8.0` has since been published as the MQTT ingress and runtime-app MQTT
+collector assembly release.
 
 The goal is the first MQTT ingress implementation baseline:
 

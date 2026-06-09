@@ -275,3 +275,33 @@ Not allowed:
 - changing `protocol-sdk` to depend on `protocol-runtime`
 - moving MQTT acknowledgement policy, reconnect/session policy, or downstream
   sink delivery into `runtime-core`
+
+## `0.9.0` Sink And Operations Boundary
+
+The `0.9.0` line starts after the published `0.8.0` MQTT runtime-app release.
+Its boundary is downstream delivery and operational hardening after TCP, HTTP,
+Kafka, and MQTT ingress baselines are available.
+
+Allowed:
+
+- the Maven reactor moves to `0.9.0-SNAPSHOT` after the published `0.8.0`
+  release
+- `runtime-app` owns app-level sink configuration, status output, lifecycle
+  reporting, and operator-facing examples
+- dedicated `runtime-sink-*` modules may own downstream delivery dependencies
+  after their contracts are explicit
+- ingress adapters route accepted records through runtime sinks rather than
+  directly depending on downstream delivery systems
+- sink failures and parse failures can be isolated and reported without moving
+  sink-specific policy into parser bindings
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or
+  observability exporter dependencies to `runtime-core`
+- moving Kafka producer, MQTT publisher, HTTP management, database, Redis,
+  retry-store, or metrics-exporter dependencies into ingress adapters unless
+  that adapter is explicitly responsible for the matching external boundary
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- moving sink delivery, broker publishing, or storage retry policy into
+  `runtime-protocol-*`

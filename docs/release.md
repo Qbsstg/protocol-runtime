@@ -5,11 +5,13 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.7.0`.
+The latest published runtime release is `0.8.0`.
 
-The current release branch fixes the reactor at `0.8.0`.
+The current development line is `0.9.0-SNAPSHOT`; its roadmap is maintained in
+[`roadmap-0.9.0.md`](roadmap-0.9.0.md), and draft release notes are maintained
+in [`release-notes-0.9.0.md`](release-notes-0.9.0.md).
 
-The published `0.7.0` release includes:
+The published `0.8.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -20,6 +22,7 @@ The published `0.7.0` release includes:
 - `io.github.qbsstg:runtime-ingress-tcp-netty`
 - `io.github.qbsstg:runtime-ingress-http`
 - `io.github.qbsstg:runtime-ingress-kafka`
+- `io.github.qbsstg:runtime-ingress-mqtt`
 - `io.github.qbsstg:runtime-app`
 
 `runtime-smoke-tests` is test-only and remains unsupported as an application
@@ -27,7 +30,7 @@ dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
 The `0.8.0` roadmap is maintained in
-[`roadmap-0.8.0.md`](roadmap-0.8.0.md), and draft release notes are maintained
+[`roadmap-0.8.0.md`](roadmap-0.8.0.md), release notes are maintained
 in [`release-notes-0.8.0.md`](release-notes-0.8.0.md). The `0.8.0`
 release-readiness audit is tracked in
 [`release-readiness-0.8.0.md`](release-readiness-0.8.0.md). The published `0.7.0`
@@ -54,6 +57,12 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.8.0` was tagged as `v0.8.0`, uploaded in Central deployment
+`f2b54d7a-924f-44f2-bbd9-6199fa1514a3`, published, and verified from Maven
+Central with an isolated local Maven repository. GitHub release notes are
+published at
+<https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.8.0>.
 
 `0.7.0` was tagged as `v0.7.0`, uploaded in Central deployment
 `64ef1af3-adb0-4cbd-9a84-8bb2214ecc9f`, published, and verified from Maven
