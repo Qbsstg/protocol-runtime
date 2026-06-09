@@ -12,7 +12,8 @@ final class CollectorStatusFormatter {
                 + " sources=" + snapshot.sources().size()
                 + " listeners=" + (snapshot.tcpListeners().size()
                         + snapshot.httpListeners().size()
-                        + snapshot.kafkaConsumers().size())
+                        + snapshot.kafkaConsumers().size()
+                        + snapshot.mqttClients().size())
                 + " activeConnections=" + snapshot.activeConnectionCount()
                 + " parsedRecords=" + metrics.parsedRecordCount()
                 + " parseFailures=" + metrics.parseFailureCount()
@@ -25,7 +26,8 @@ final class CollectorStatusFormatter {
                 + " strictAsdu=" + snapshot.strictAsduParsing()
                 + " tcpListeners=" + tcpListeners(snapshot)
                 + " httpListeners=" + httpListeners(snapshot)
-                + " kafkaConsumers=" + kafkaConsumers(snapshot);
+                + " kafkaConsumers=" + kafkaConsumers(snapshot)
+                + " mqttClients=" + mqttClients(snapshot);
     }
 
     private static String tcpListeners(CollectorStatusSnapshot snapshot) {
@@ -108,6 +110,30 @@ final class CollectorStatusFormatter {
                     .append(consumer.sourceIdMode())
                     .append("/protocol=")
                     .append(consumer.protocol());
+        }
+        value.append(']');
+        return value.toString();
+    }
+
+    private static String mqttClients(CollectorStatusSnapshot snapshot) {
+        StringBuilder value = new StringBuilder("[");
+        boolean first = true;
+        for (MqttClientStatus client : snapshot.mqttClients()) {
+            if (!first) {
+                value.append(',');
+            }
+            first = false;
+            value.append(client.name())
+                    .append('@')
+                    .append(client.brokerUri())
+                    .append("/clientId=")
+                    .append(client.clientId())
+                    .append("/running=")
+                    .append(client.running())
+                    .append("/sourceIdMode=")
+                    .append(client.sourceIdMode())
+                    .append("/protocol=")
+                    .append(client.protocol());
         }
         value.append(']');
         return value.toString();
