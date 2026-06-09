@@ -5,11 +5,11 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.5.0`.
+The latest published runtime release is `0.6.0`.
 
-The current release-candidate line is `0.6.0`.
+The next planned release line is `0.7.0`.
 
-The published `0.5.0` release includes:
+The published `0.6.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -25,12 +25,12 @@ The published `0.5.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The current `0.6.0` roadmap is maintained in
-[`roadmap-0.6.0.md`](roadmap-0.6.0.md), and draft release notes are maintained
-in [`release-notes-0.6.0.md`](release-notes-0.6.0.md). The `0.6.0`
+The published `0.6.0` roadmap is maintained in
+[`roadmap-0.6.0.md`](roadmap-0.6.0.md), release notes are maintained in
+[`release-notes-0.6.0.md`](release-notes-0.6.0.md), and the `0.6.0`
 release-readiness audit is tracked in
-[`release-readiness-0.6.0.md`](release-readiness-0.6.0.md). The published
-`0.5.0` roadmap is maintained in
+[`release-readiness-0.6.0.md`](release-readiness-0.6.0.md). The previous
+published `0.5.0` roadmap is maintained in
 [`roadmap-0.5.0.md`](roadmap-0.5.0.md), release notes are maintained in
 [`release-notes-0.5.0.md`](release-notes-0.5.0.md), and the `0.5.0`
 release-readiness audit is tracked in
@@ -44,6 +44,10 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.6.0` was tagged as `v0.6.0`, uploaded in Central deployment
+`7b908e63-6006-4ecb-9b87-d099d89582be`, published, and verified from Maven
+Central with an isolated local Maven repository.
 
 `0.5.0` was tagged as `v0.5.0`, uploaded in Central deployment
 `7de75e6d-21a3-4fdb-aaef-2a9660ded7d7`, published, and verified from Maven

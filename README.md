@@ -23,15 +23,15 @@ IEC101, IEC103, and Modbus runtime protocol bindings around the published
 preserving the existing IEC104 app path. `0.5.0` published the first adapter
 boundary release with a JDK-only HTTP ingress baseline and HTTP, Kafka, and
 MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
-of the runtime.
+of the runtime. `0.6.0` published the HTTP ingress productionization line and
+runtime-app HTTP collector assembly.
 
-The current release branch is `0.6.0`. Its scope is HTTP ingress
-productionization and runtime-app HTTP collector assembly before Kafka and MQTT
-client dependencies are introduced.
+The next planned release line is `0.7.0`, focused on the Kafka ingress baseline
+in a dedicated adapter module.
 
-The `0.6.0` release scope is tracked in
-[`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md). Draft release notes are
-tracked in [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md). The
+The published `0.6.0` release scope is tracked in
+[`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md), and release notes are tracked
+in [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md). The previous
 published `0.5.0` release scope is tracked in
 [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md), and release notes are tracked
 in [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md). The previous
@@ -41,14 +41,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.5.0`. Runtime modules are
+The latest published runtime release version is `0.6.0`. Runtime modules are
 JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -56,7 +56,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -64,7 +64,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -72,7 +72,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -80,7 +80,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -97,19 +97,19 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-protocol-iec103` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-iec103:0.7.0` with per-source stream decoder buffering and failure routing. |
 | `runtime-protocol-modbus` | 0.4.0 baseline | Runtime binding around `io.github.qbsstg:protocol-modbus:0.7.0` with TCP stream and datagram parser modes. |
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
-| `runtime-ingress-http` | 0.5.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
-| `runtime-app` | 0.4.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
+| `runtime-app` | 0.6.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP listener assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include MQTT, Kafka, pipelines, additional sinks, and richer
 deployable runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
 
-## `0.6.0` HTTP Runtime-App Plan
+## `0.6.0` HTTP Runtime-App Release
 
-`0.6.0` starts the HTTP productionization line. The target is to make
-the JDK-only HTTP ingress usable from the standalone runtime app while
-preserving the current TCP collector path:
+`0.6.0` published the HTTP productionization line. The JDK-only HTTP ingress is
+usable from the standalone runtime app while preserving the current TCP
+collector path:
 
 - `runtime-core` remains free of HTTP, Kafka, MQTT, Spring, database, Redis,
   and observability exporter dependencies

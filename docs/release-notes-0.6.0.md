@@ -1,13 +1,11 @@
 # Protocol Runtime 0.6.0 Release Notes
 
-Draft release notes for the `0.6.0` runtime release line.
+Release notes for the published `0.6.0` runtime release.
 
-## Planned Highlights
+## Highlights
 
-- Open the Maven reactor at `0.6.0` after the published `0.5.0`
-  adapter-boundary release.
-- Productionize the JDK `HttpServer` based `runtime-ingress-http` baseline from
-  the standalone app boundary.
+- Published the JDK `HttpServer` based `runtime-ingress-http` baseline from the
+  standalone app boundary.
 - Add runtime-app HTTP listener configuration and validation while preserving
   the existing TCP collector defaults. HTTP-only app configurations do not
   implicitly start the legacy TCP listener.
@@ -46,9 +44,9 @@ explicitly documented release scope.
 Kafka and MQTT client dependencies remain out of the reactor for this planned
 release.
 
-## Verification Target
+## Release Verification
 
-Before release branch work, the readiness branch should pass:
+The release process passed:
 
 - `git diff --check`
 - `mvn -q verify`
@@ -57,3 +55,15 @@ Before release branch work, the readiness branch should pass:
 - HTTP collector smoke through `examples/smoke-standalone-http.sh`
 - dependency boundary checks for `runtime-core`, `runtime-ingress-http`,
   `runtime-app`, and `runtime-smoke-tests`
+
+## Published Release Verification
+
+- Git tag: `v0.6.0`
+- Release commit: `3fb6af480f16e9c95d075c6eb6d8c76b78e429dc`
+- Central deployment: `7b908e63-6006-4ecb-9b87-d099d89582be`
+- Central state: `PUBLISHED`
+- GitHub Release:
+  <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.6.0>
+- Maven Central verification: an isolated local Maven repository resolved the
+  parent POM, runtime modules, `runtime-ingress-http`, `runtime-app`, and the
+  `runtime-app` `standalone` classifier.
