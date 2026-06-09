@@ -37,7 +37,7 @@ deployment concerns.
 | `runtime-ingress-tcp-netty` | `runtime-core`, Netty transport, tests. | Protocol SDK modules, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-ingress-http` | `runtime-core`, JDK `HttpServer`, tests. | Protocol SDK modules, Spring, Netty, Kafka, MQTT, database, Redis, changes to `runtime-core` for HTTP-specific policy. |
 | `runtime-ingress-kafka` | `runtime-core`, Kafka client libraries, tests. | Protocol SDK modules, HTTP/MQTT adapter dependencies, database, Redis, changes to `runtime-core` for offset policy. |
-| `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring, Kafka, MQTT, HTTP, database, Redis. |
+| `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring framework, database, Redis, moving adapter dependencies into core or protocol bindings. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
 
 ## Planned Adapter Module Rules
@@ -242,9 +242,36 @@ Not allowed:
 
 - adding Kafka, MQTT, Spring, database, Redis, or observability exporter
   dependencies to `runtime-core`
-- adding Kafka ingress dependencies to `runtime-protocol-*`
-- moving runtime-app Kafka collector assembly concerns into `runtime-core` or
-  `runtime-protocol-*`
-- mixing downstream Kafka producer/sink behavior into the ingress adapter
-- moving Kafka offset, poll, partition pause/resume, or replay policy into
-  `runtime-core`
+- adding Kafka ingress or app dependencies to `runtime-protocol-*`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- moving Kafka offset policy, broker retry policy, or downstream sink delivery
+  into `runtime-core`
+
+## `0.8.0` MQTT Ingress Boundary
+
+The `0.8.0` line opens the MQTT ingress implementation path while preserving the
+adapter model from the previous releases.
+
+Allowed:
+
+- the Maven reactor moves to `0.8.0-SNAPSHOT` after the published `0.7.0`
+  release
+- `runtime-ingress-mqtt` owns MQTT client dependencies, client configuration,
+  source id resolution, message-to-envelope mapping, MQTT attributes, client
+  lifecycle, backpressure result mapping, and acknowledgement posture
+- `runtime-app` may depend on `runtime-ingress-mqtt` for MQTT client
+  configuration, source/protocol binding, status reporting, and standalone
+  collector assembly
+- MQTT attributes stay in `IngressEnvelope.attributes()` and do not become
+  `runtime-core` fields
+- tests may construct MQTT message fixtures without requiring a live broker in
+  normal `mvn verify`
+
+Not allowed:
+
+- adding MQTT, Kafka, HTTP, Spring, database, Redis, or observability exporter
+  dependencies to `runtime-core`
+- adding MQTT ingress or app dependencies to `runtime-protocol-*`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- moving MQTT acknowledgement policy, reconnect/session policy, or downstream
+  sink delivery into `runtime-core`

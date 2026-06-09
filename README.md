@@ -24,15 +24,19 @@ preserving the existing IEC104 app path. `0.5.0` published the first adapter
 boundary release with a JDK-only HTTP ingress baseline and HTTP, Kafka, and
 MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
 of the runtime. `0.6.0` published the HTTP ingress productionization line and
-runtime-app HTTP collector assembly.
+runtime-app HTTP collector assembly. `0.7.0` published the Kafka ingress
+baseline and runtime-app Kafka collector assembly.
 
-The current release branch fixes `0.7.0`, focused on the Kafka ingress baseline
-and runtime-app Kafka collector assembly.
+The current development line is `0.8.0-SNAPSHOT`, focused on the MQTT ingress
+baseline and runtime-app MQTT collector assembly.
 
-The `0.7.0` development scope is tracked in
-[`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md), and draft release notes are
-tracked in [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md). The
-`0.7.0` release-readiness audit is tracked in
+The `0.8.0` development scope is tracked in
+[`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md), and draft release notes are
+tracked in [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md). The
+published `0.7.0` release scope is tracked in
+[`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md), release notes are tracked in
+[`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md), and the
+release-readiness audit is tracked in
 [`docs/release-readiness-0.7.0.md`](docs/release-readiness-0.7.0.md). The
 published `0.6.0` release scope is tracked in
 [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md), and release notes are tracked
@@ -46,14 +50,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.6.0`. Runtime modules are
+The latest published runtime release version is `0.7.0`. Runtime modules are
 JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -61,7 +65,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -69,7 +73,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -77,7 +81,15 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-ingress-kafka</artifactId>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -85,7 +97,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -104,16 +116,36 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-tcp-netty` | Baseline | Minimal Netty TCP ingress handler and server bootstrap that bind a TCP port, create one `RuntimePipelineRunner` per accepted connection, convert `ByteBuf` payloads to `IngressEnvelope`, apply backpressure decisions, and dispatch to sinks. |
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
-| `runtime-app` | 0.6.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP listener assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.7.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
-Future modules may include MQTT, Kafka, pipelines, additional sinks, and richer
+Future modules may include MQTT, pipelines, additional sinks, and richer
 deployable runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
 
-## `0.7.0` Kafka Ingress Plan
+## `0.8.0` MQTT Ingress Plan
 
-`0.7.0` opens the first Kafka ingress implementation line:
+`0.8.0` opens the first MQTT ingress implementation line:
+
+- `runtime-core` remains free of MQTT, Kafka, HTTP, Spring, database, Redis,
+  and observability exporter dependencies
+- `runtime-ingress-mqtt` will own the MQTT client dependency, topic/source
+  mapping, payload-to-envelope mapping, QoS acknowledgement posture, retained
+  message handling, duplicate delivery posture, reconnect/session ownership,
+  and backpressure result mapping
+- MQTT topic, QoS, retained flag, duplicate flag, packet id, source id mode, and
+  selected protocol should remain envelope attributes
+- `runtime-protocol-*` modules continue to parse protocol payloads without
+  MQTT dependencies
+- `runtime-app` owns MQTT client configuration and standalone collector
+  assembly while keeping MQTT APIs out of `runtime-core`
+
+The detailed plan is maintained in
+[`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md).
+
+## `0.7.0` Kafka Ingress Release
+
+`0.7.0` published the first Kafka ingress implementation line:
 
 - `runtime-core` remains free of Kafka, MQTT, HTTP, Spring, database, Redis,
   and observability exporter dependencies
@@ -276,11 +308,11 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The `0.6.0` line can run TCP/Netty or JDK HTTP ingress through the
-same app-owned pipeline:
+The published `0.7.0` line can run TCP/Netty, JDK HTTP, or Kafka ingress
+through the same app-owned pipeline:
 
 ```text
-TcpNettyServer or HttpIngressServer
+TcpNettyServer, HttpIngressServer, or KafkaRecordSource
   -> RuntimePipelineRunner
   -> selected RuntimeParserBinding
   -> configured RecordSink / FailureSink
@@ -295,7 +327,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.6.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -358,7 +390,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.5.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -610,12 +642,15 @@ verified.
 - [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)
 - [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)
 - [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)
+- [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-readiness-0.3.0.md`](docs/release-readiness-0.3.0.md)
 - [`docs/release-readiness-0.4.0.md`](docs/release-readiness-0.4.0.md)
 - [`docs/release-readiness-0.5.0.md`](docs/release-readiness-0.5.0.md)
+- [`docs/release-readiness-0.6.0.md`](docs/release-readiness-0.6.0.md)
+- [`docs/release-readiness-0.7.0.md`](docs/release-readiness-0.7.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
@@ -623,3 +658,4 @@ verified.
 - [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)
 - [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)
 - [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)
+- [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)

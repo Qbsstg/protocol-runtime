@@ -209,3 +209,18 @@ PR:
 
 No tag is created and no real Maven Central upload is part of this readiness
 work.
+
+## Published Release Verification On 2026-06-09
+
+These checks passed after the release PR merged to `main`:
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Release tag | Passed | `v0.7.0` points at release commit `85090fc3619e59221144836a19022ec3df09ee78`. |
+| Central deployment | Passed | Deployment `64ef1af3-adb0-4cbd-9a84-8bb2214ecc9f` reached `PUBLISHED`. |
+| Public POM resolution | Passed | `runtime-core:0.7.0` and `runtime-ingress-kafka:0.7.0` POMs returned HTTP 200 from Maven Central. |
+| Maven consumer resolution | Passed | An isolated local Maven repository resolved `runtime-core:0.7.0`, `runtime-ingress-kafka:0.7.0`, and `runtime-app:0.7.0` from Maven Central. |
+
+`0.7.0` is now the latest published runtime release. The next development line
+is `0.8.0-SNAPSHOT`, focused on the MQTT ingress baseline and runtime-app MQTT
+collector assembly.
