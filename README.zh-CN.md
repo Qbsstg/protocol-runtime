@@ -116,7 +116,10 @@ release notes 记录在
 - Kafka topic、partition、offset、timestamp、key、headers、source id mode
   和选定协议继续作为 envelope attributes。
 - `runtime-protocol-*` 继续只解析协议 payload，不引入 Kafka 依赖。
-- runtime-app Kafka collector 装配会在 adapter record 边界稳定后再继续。
+- `runtime-app` 负责 Kafka consumer 配置和 standalone collector 装配，同时
+  保持 Kafka API 不进入 `runtime-core`。
+- [`examples/collector-kafka.properties`](examples/collector-kafka.properties)
+  提供最小 IEC104 over Kafka collector 配置示例。
 
 详细规划维护在 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)。
 

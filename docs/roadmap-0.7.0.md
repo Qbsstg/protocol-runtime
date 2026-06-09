@@ -22,18 +22,18 @@ or `protocol-sdk`.
   key.
 - Map runtime backpressure decisions to Kafka adapter handling results without
   moving offset or polling policy into `runtime-core`.
-- Keep runtime-app Kafka collector assembly as follow-up work after the adapter
-  record boundary is stable.
+- Add runtime-app Kafka consumer configuration and standalone collector
+  assembly after the adapter record boundary is stable.
 
 ## Target Module Work
 
 | Module | `0.7.0` target |
 | --- | --- |
 | `runtime-core` | No Kafka, broker, offset, or polling APIs. Existing envelope and pipeline contracts should be enough for the first baseline. |
-| `runtime-ingress-kafka` | Add Kafka client dependency, consumer config model, source id resolution, record-to-envelope mapping, backpressure result mapping, commit mode decisions, and unit tests using fake `ConsumerRecord` instances. |
-| `runtime-app` | Stay free of Kafka dependencies until app-level Kafka collector assembly is explicitly added. |
+| `runtime-ingress-kafka` | Add Kafka client dependency, consumer config model, source id resolution, record-to-envelope mapping, polling source lifecycle, backpressure result mapping, commit mode decisions, and unit tests using fake `ConsumerRecord` instances. |
+| `runtime-app` | Add Kafka consumer properties, source binding, protocol runner assembly, collector status, and app tests with fake Kafka record sources. Kafka APIs are allowed here only through the dedicated adapter module. |
 | `runtime-protocol-*` | Reuse existing parser bindings for Kafka payloads without transport-specific code. |
-| `runtime-smoke-tests` | Add Kafka/app smoke coverage only after runtime-app Kafka assembly lands. |
+| `runtime-smoke-tests` | Broker-backed smoke coverage remains follow-up; normal verification uses app-level fake source tests. |
 | `runtime-ingress-mqtt` | Remain design-only until the `0.8.0` implementation line opens. |
 
 ## Candidate Work Items
@@ -47,8 +47,8 @@ or `protocol-sdk`.
    backpressure result mapping.
 5. Add unit tests for configured/header/topic/key source id resolution,
    attributes, commit decisions, invalid source handling, and module factories.
-6. Add runtime-app Kafka collector configuration and assembly in a later PR
-   after the adapter record boundary is stable.
+6. Add runtime-app Kafka collector configuration, status snapshot, standalone
+   assembly, and fake-source app tests.
 7. Add release-readiness notes before the `0.7.0` release branch.
 
 ## Non-Goals
@@ -58,8 +58,8 @@ or `protocol-sdk`.
   storage, or schema registry integration.
 - Kafka Streams, transactions, management UI, metrics exporter, or operational
   dashboard.
-- Runtime-app Kafka listener/consumer assembly until the adapter boundary is
-  proven by unit tests.
+- Broker-backed integration tests that require a live Kafka cluster in normal
+  `mvn verify`.
 - MQTT implementation before the `0.8.0` line.
 - New parser behavior inside `protocol-sdk`.
 
@@ -69,6 +69,9 @@ or `protocol-sdk`.
   Redis, object storage, or observability exporter artifacts.
 - `runtime-ingress-kafka` may depend on `org.apache.kafka:kafka-clients` and
   `runtime-core`.
+- `runtime-app` may depend on `runtime-ingress-kafka` for standalone collector
+  assembly, but must not move Kafka APIs into `runtime-core` or
+  `runtime-protocol-*`.
 - `runtime-ingress-kafka` must not depend on protocol SDK modules,
   `runtime-protocol-*`, `runtime-ingress-http`, `runtime-ingress-mqtt`,
   database, Redis, or downstream sink modules.
@@ -85,6 +88,10 @@ Before `0.7.0` release readiness:
   ingress adapter boundary.
 - Kafka record mapping, source id resolution, invalid source handling,
   backpressure results, and commit decisions are covered by unit tests.
+- runtime-app Kafka consumer parsing, status output, fake-source dispatch,
+  malformed payload routing, and backpressure behavior are covered by tests.
+- `examples/collector-kafka.properties` documents the minimal standalone Kafka
+  collector configuration.
 - `git diff --check` passes.
 - `mvn -q verify` passes.
 - dependency boundary checks prove Kafka remains isolated to

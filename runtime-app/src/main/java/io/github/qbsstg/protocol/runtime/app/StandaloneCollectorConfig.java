@@ -5,6 +5,9 @@ import io.github.qbsstg.protocol.runtime.core.SourceId;
 import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressResponseMode;
 import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressServerConfig;
 import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressSourceIdMode;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaCommitMode;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaIngressConsumerConfig;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
 import java.io.IOException;
@@ -58,6 +61,19 @@ public record StandaloneCollectorConfig(
     public static final String HTTP_LISTENER_RESPONSE_MODE_SUFFIX = ".responseMode";
     public static final String HTTP_LISTENER_BACKLOG_SUFFIX = ".backlog";
     public static final String HTTP_LISTENER_WORKER_THREADS_SUFFIX = ".workerThreads";
+    public static final String KAFKA_CONSUMERS = "collector.kafka.consumers";
+    public static final String KAFKA_CONSUMER_PREFIX = "collector.kafka.consumer.";
+    public static final String KAFKA_CONSUMER_BOOTSTRAP_SERVERS_SUFFIX = ".bootstrapServers";
+    public static final String KAFKA_CONSUMER_GROUP_ID_SUFFIX = ".groupId";
+    public static final String KAFKA_CONSUMER_TOPICS_SUFFIX = ".topics";
+    public static final String KAFKA_CONSUMER_TOPIC_PATTERN_SUFFIX = ".topicPattern";
+    public static final String KAFKA_CONSUMER_SOURCE_SUFFIX = ".source";
+    public static final String KAFKA_CONSUMER_SOURCE_ID_MODE_SUFFIX = ".sourceIdMode";
+    public static final String KAFKA_CONSUMER_SOURCE_ID_HEADER_SUFFIX = ".sourceIdHeader";
+    public static final String KAFKA_CONSUMER_COMMIT_MODE_SUFFIX = ".commitMode";
+    public static final String KAFKA_CONSUMER_AUTO_OFFSET_RESET_SUFFIX = ".autoOffsetReset";
+    public static final String KAFKA_CONSUMER_MAX_POLL_RECORDS_SUFFIX = ".maxPollRecords";
+    public static final String KAFKA_CONSUMER_POLL_TIMEOUT_MILLIS_SUFFIX = ".pollTimeoutMillis";
     public static final String SOURCES = "collector.sources";
     public static final String SOURCE_ID = "collector.source.id";
     public static final String SOURCE_PREFIX = "collector.source.";
@@ -194,19 +210,21 @@ public record StandaloneCollectorConfig(
 
         SourceParseResult sourceResult = parseSources(properties, defaults, protocol, errors);
         boolean httpListenersDeclared = rawProperty(properties, HTTP_LISTENERS) != null;
+        boolean kafkaConsumersDeclared = rawProperty(properties, KAFKA_CONSUMERS) != null;
         List<TcpListenerConfig> tcpListeners = parseTcpListeners(
                 properties,
                 defaults,
                 sourceResult,
-                httpListenersDeclared,
+                httpListenersDeclared || kafkaConsumersDeclared,
                 errors);
         List<HttpListenerConfig> httpListeners = parseHttpListeners(properties, sourceResult, errors);
+        List<KafkaConsumerConfig> kafkaConsumers = parseKafkaConsumers(properties, sourceResult, errors);
         addDuplicateSourceIdErrors(sourceResult.sources(), errors);
         addDuplicateTcpListenerEndpointErrors(tcpListeners, errors);
         addDuplicateHttpListenerEndpointErrors(httpListeners, errors);
         addDuplicateNetworkListenerEndpointErrors(tcpListeners, httpListeners, errors);
-        if (tcpListeners.isEmpty() && httpListeners.isEmpty()) {
-            errors.add("at least one TCP or HTTP listener is required");
+        if (tcpListeners.isEmpty() && httpListeners.isEmpty() && kafkaConsumers.isEmpty()) {
+            errors.add("at least one TCP listener, HTTP listener, or Kafka consumer is required");
         }
 
         if (!errors.isEmpty()) {
@@ -218,6 +236,7 @@ public record StandaloneCollectorConfig(
                         sourceResult.sources(),
                         tcpListeners,
                         httpListeners,
+                        kafkaConsumers,
                         backpressure,
                         backpressureMaxPayloadBytes,
                         oversizedPayloadDecision,
@@ -362,6 +381,47 @@ public record StandaloneCollectorConfig(
         return listeners;
     }
 
+    private static List<KafkaConsumerConfig> parseKafkaConsumers(
+            Properties properties,
+            SourceParseResult sourceResult,
+            List<String> errors) {
+        String rawNames = rawProperty(properties, KAFKA_CONSUMERS);
+        if (rawNames == null) {
+            return List.of();
+        }
+        if (rawNames.isBlank()) {
+            errors.add(KAFKA_CONSUMERS + " must not be blank");
+            return List.of();
+        }
+
+        List<String> names = parseNameList(KAFKA_CONSUMERS, rawNames, errors);
+        addDuplicateNameErrors(KAFKA_CONSUMERS, names, errors);
+        List<KafkaConsumerConfig> consumers = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (String name : names) {
+            if (!seen.add(name)) {
+                continue;
+            }
+            String prefix = KAFKA_CONSUMER_PREFIX + name;
+            String sourceName = property(properties, prefix + KAFKA_CONSUMER_SOURCE_SUFFIX, null);
+            if (sourceName == null) {
+                errors.add(prefix + KAFKA_CONSUMER_SOURCE_SUFFIX + " is required");
+                continue;
+            }
+            sourceName = normalizeName(prefix + KAFKA_CONSUMER_SOURCE_SUFFIX, sourceName, errors);
+            CollectorSourceConfig source = sourceResult.sourceByName().get(sourceName);
+            if (sourceName != null && source == null) {
+                errors.add(prefix + KAFKA_CONSUMER_SOURCE_SUFFIX + " references unknown source: " + sourceName);
+            }
+
+            KafkaIngressConsumerConfig kafka = parseNamedKafkaConfig(properties, prefix, source, name, errors);
+            if (sourceName != null && source != null && kafka != null) {
+                consumers.add(new KafkaConsumerConfig(name, kafka, sourceName, source.sourceId(), source.protocol()));
+            }
+        }
+        return consumers;
+    }
+
     private static List<TcpListenerConfig> parseDefaultTcpListener(
             Properties properties,
             StandaloneCollectorConfig defaults,
@@ -502,6 +562,65 @@ public record StandaloneCollectorConfig(
         }
     }
 
+    private static KafkaIngressConsumerConfig parseNamedKafkaConfig(
+            Properties properties,
+            String prefix,
+            CollectorSourceConfig source,
+            String consumerName,
+            List<String> errors) {
+        String bootstrapServersKey = prefix + KAFKA_CONSUMER_BOOTSTRAP_SERVERS_SUFFIX;
+        String groupIdKey = prefix + KAFKA_CONSUMER_GROUP_ID_SUFFIX;
+        String topicsKey = prefix + KAFKA_CONSUMER_TOPICS_SUFFIX;
+        String topicPatternKey = prefix + KAFKA_CONSUMER_TOPIC_PATTERN_SUFFIX;
+        String sourceIdModeKey = prefix + KAFKA_CONSUMER_SOURCE_ID_MODE_SUFFIX;
+        String sourceIdHeaderKey = prefix + KAFKA_CONSUMER_SOURCE_ID_HEADER_SUFFIX;
+        String commitModeKey = prefix + KAFKA_CONSUMER_COMMIT_MODE_SUFFIX;
+        String autoOffsetResetKey = prefix + KAFKA_CONSUMER_AUTO_OFFSET_RESET_SUFFIX;
+        String maxPollRecordsKey = prefix + KAFKA_CONSUMER_MAX_POLL_RECORDS_SUFFIX;
+        String pollTimeoutMillisKey = prefix + KAFKA_CONSUMER_POLL_TIMEOUT_MILLIS_SUFFIX;
+
+        String bootstrapServers = requiredStringProperty(properties, bootstrapServersKey, errors);
+        String groupId = requiredStringProperty(properties, groupIdKey, errors);
+        List<String> topics = parseOptionalValueList(properties, topicsKey, errors);
+        String topicPattern = property(properties, topicPatternKey, null);
+        KafkaSourceIdMode sourceIdMode = parseKafkaSourceIdMode(
+                sourceIdModeKey,
+                property(properties, sourceIdModeKey, KafkaSourceIdMode.CONFIGURED.name()),
+                errors);
+        String sourceIdHeader = property(properties, sourceIdHeaderKey, null);
+        KafkaCommitMode commitMode = parseKafkaCommitMode(
+                commitModeKey,
+                property(properties, commitModeKey, KafkaCommitMode.MANUAL.name()),
+                errors);
+        String autoOffsetReset = property(properties, autoOffsetResetKey, "latest");
+        int maxPollRecords = intProperty(properties, maxPollRecordsKey, 100, 1, Integer.MAX_VALUE, errors);
+        long pollTimeoutMillis = longProperty(properties, pollTimeoutMillisKey, 1000L, 1L, Long.MAX_VALUE, errors);
+
+        if (hasErrorForPrefix(errors, prefix) || source == null) {
+            return null;
+        }
+        SourceId configuredSourceId = sourceIdMode == KafkaSourceIdMode.CONFIGURED ? source.sourceId() : null;
+        try {
+            return new KafkaIngressConsumerConfig(
+                    consumerName,
+                    bootstrapServers,
+                    groupId,
+                    topics,
+                    topicPattern,
+                    sourceIdMode,
+                    sourceIdHeader,
+                    configuredSourceId,
+                    source.protocol().configValue(),
+                    commitMode,
+                    autoOffsetReset,
+                    maxPollRecords,
+                    pollTimeoutMillis);
+        } catch (IllegalArgumentException ex) {
+            errors.add(prefix + " is invalid: " + ex.getMessage());
+            return null;
+        }
+    }
+
     private static Properties loadProperties(Path path) {
         Properties properties = new Properties();
         try (InputStream input = Files.newInputStream(path)) {
@@ -587,6 +706,24 @@ public record StandaloneCollectorConfig(
         }
     }
 
+    private static KafkaSourceIdMode parseKafkaSourceIdMode(String key, String value, List<String> errors) {
+        try {
+            return KafkaSourceIdMode.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (RuntimeException ex) {
+            errors.add(key + " must be CONFIGURED, HEADER, TOPIC, or KEY");
+            return KafkaSourceIdMode.CONFIGURED;
+        }
+    }
+
+    private static KafkaCommitMode parseKafkaCommitMode(String key, String value, List<String> errors) {
+        try {
+            return KafkaCommitMode.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (RuntimeException ex) {
+            errors.add(key + " must be MANUAL, AFTER_ACCEPT, AFTER_PARSE_SUCCESS, or NEVER");
+            return KafkaCommitMode.MANUAL;
+        }
+    }
+
     private static Path parseSinkFile(Properties properties, SinkType sinkType, List<String> errors) {
         String value = rawProperty(properties, SINK_FILE);
         Path sinkFile = null;
@@ -666,6 +803,14 @@ public record StandaloneCollectorConfig(
             errors.add(key + " must not be empty");
         }
         return names;
+    }
+
+    private static List<String> parseOptionalValueList(Properties properties, String key, List<String> errors) {
+        String value = rawProperty(properties, key);
+        if (value == null) {
+            return List.of();
+        }
+        return parseNameList(key, value, errors);
     }
 
     private static String normalizeName(String key, String value, List<String> errors) {
@@ -773,6 +918,14 @@ public record StandaloneCollectorConfig(
 
     private static String rawProperty(Properties properties, String key) {
         return properties.getProperty(key);
+    }
+
+    private static String requiredStringProperty(Properties properties, String key, List<String> errors) {
+        String value = property(properties, key, null);
+        if (value == null) {
+            errors.add(key + " is required");
+        }
+        return value;
     }
 
     private static int intProperty(

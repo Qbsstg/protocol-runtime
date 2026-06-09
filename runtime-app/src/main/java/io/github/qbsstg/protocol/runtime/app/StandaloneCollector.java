@@ -7,6 +7,11 @@ import io.github.qbsstg.protocol.runtime.iec101.Iec101RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.iec103.Iec103RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.iec104.Iec104RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressServer;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaIngressConsumerConfig;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaIngressModule;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaPollingRecordSource;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaRecordHandler;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaRecordSource;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServer;
 import io.github.qbsstg.protocol.runtime.modbus.ModbusRuntimeBinding;
 
@@ -18,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class StandaloneCollector implements RuntimeLifecycle {
@@ -26,6 +32,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     private final RuntimeSinks sinks;
     private final List<TcpListenerRuntime> tcpListeners;
     private final List<HttpListenerRuntime> httpListeners;
+    private final List<KafkaConsumerRuntime<?>> kafkaConsumers;
     private final List<RuntimeListener> listeners;
     private final Clock clock;
     private final CountDownLatch stopped = new CountDownLatch(1);
@@ -40,18 +47,34 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     }
 
     private StandaloneCollector(StandaloneCollectorAppConfig appConfig, RuntimeSinks sinks, Clock clock) {
+        this(appConfig, sinks, clock, config -> new KafkaPollingRecordSource(config.kafka()));
+    }
+
+    StandaloneCollector(
+            StandaloneCollectorAppConfig appConfig,
+            RuntimeSinks sinks,
+            Clock clock,
+            Function<KafkaConsumerConfig, KafkaRecordSource> kafkaRecordSourceFactory) {
         this.appConfig = Objects.requireNonNull(appConfig, "appConfig must not be null");
         this.sinks = Objects.requireNonNull(sinks, "sinks must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        Objects.requireNonNull(kafkaRecordSourceFactory, "kafkaRecordSourceFactory must not be null");
         this.tcpListeners = appConfig.tcpListeners().stream()
                 .map(listener -> new TcpListenerRuntime(listener, createTcpServer(listener)))
                 .toList();
         this.httpListeners = appConfig.httpListeners().stream()
                 .map(listener -> new HttpListenerRuntime(listener, createHttpServer(listener)))
                 .toList();
-        List<RuntimeListener> runtimeListeners = new ArrayList<>(tcpListeners.size() + httpListeners.size());
+        List<KafkaConsumerRuntime<?>> kafkaConsumerRuntimes = new ArrayList<>();
+        for (KafkaConsumerConfig consumer : appConfig.kafkaConsumers()) {
+            kafkaConsumerRuntimes.add(createKafkaConsumer(consumer, kafkaRecordSourceFactory.apply(consumer)));
+        }
+        this.kafkaConsumers = List.copyOf(kafkaConsumerRuntimes);
+        List<RuntimeListener> runtimeListeners =
+                new ArrayList<>(tcpListeners.size() + httpListeners.size() + kafkaConsumers.size());
         runtimeListeners.addAll(tcpListeners);
         runtimeListeners.addAll(httpListeners);
+        runtimeListeners.addAll(kafkaConsumers);
         this.listeners = List.copyOf(runtimeListeners);
     }
 
@@ -92,6 +115,9 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         List<HttpListenerStatus> httpListenerStatuses = httpListeners.stream()
                 .map(this::httpListenerStatus)
                 .toList();
+        List<KafkaConsumerStatus> kafkaConsumerStatuses = kafkaConsumers.stream()
+                .map(this::kafkaConsumerStatus)
+                .toList();
         return new CollectorStatusSnapshot(
                 state,
                 startedAt,
@@ -102,6 +128,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 sourceStatuses,
                 tcpListenerStatuses,
                 httpListenerStatuses,
+                kafkaConsumerStatuses,
                 tcpListenerStatuses.stream().mapToInt(TcpListenerStatus::activeConnectionCount).sum(),
                 sinks.metricsSnapshot(),
                 appConfig.sinkType(),
@@ -116,7 +143,8 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         return state == CollectorLifecycleState.RUNNING
                 && !listeners.isEmpty()
                 && tcpListeners.stream().allMatch(listener -> listener.server().isRunning())
-                && httpListeners.stream().allMatch(listener -> listener.server().isRunning());
+                && httpListeners.stream().allMatch(listener -> listener.server().isRunning())
+                && kafkaConsumers.stream().allMatch(KafkaConsumerRuntime::isRunning);
     }
 
     public synchronized InetSocketAddress localAddress() {
@@ -244,7 +272,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     }
 
     private TcpNettyServer<?> singleServer() {
-        if (tcpListeners.size() != 1 || !httpListeners.isEmpty()) {
+        if (tcpListeners.size() != 1 || !httpListeners.isEmpty() || !kafkaConsumers.isEmpty()) {
             throw new IllegalStateException("single listener API requires exactly one TCP listener");
         }
         return tcpListeners.get(0).server();
@@ -304,6 +332,27 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 running);
     }
 
+    private KafkaConsumerStatus kafkaConsumerStatus(KafkaConsumerRuntime<?> runtime) {
+        KafkaConsumerConfig config = runtime.config();
+        KafkaIngressConsumerConfig kafka = config.kafka();
+        return new KafkaConsumerStatus(
+                config.name(),
+                config.sourceName(),
+                config.sourceId().qualifiedValue(),
+                config.protocol().configValue(),
+                kafka.bootstrapServers(),
+                kafka.groupId(),
+                kafka.topics(),
+                kafka.topicPattern(),
+                kafka.sourceIdMode(),
+                kafka.sourceIdHeader(),
+                kafka.commitMode(),
+                kafka.autoOffsetReset(),
+                kafka.maxPollRecords(),
+                kafka.pollTimeoutMillis(),
+                runtime.isRunning());
+    }
+
     private void recordStartupFailure(RuntimeListener failedListener, Exception failure) {
         String listenerName = failedListener == null ? "unknown" : failedListener.name();
         String transport = failedListener == null ? "listener" : failedListener.transport();
@@ -360,6 +409,20 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         };
     }
 
+    private KafkaConsumerRuntime<?> createKafkaConsumer(
+            KafkaConsumerConfig consumer,
+            KafkaRecordSource source) {
+        return switch (consumer.protocol()) {
+            case IEC104 -> createTypedKafkaConsumer(
+                    consumer,
+                    source,
+                    () -> new Iec104RuntimeBinding(appConfig.strictAsduParsing()));
+            case IEC101 -> createTypedKafkaConsumer(consumer, source, Iec101RuntimeBinding::new);
+            case IEC103 -> createTypedKafkaConsumer(consumer, source, Iec103RuntimeBinding::new);
+            case MODBUS -> createTypedKafkaConsumer(consumer, source, ModbusRuntimeBinding::tcpStream);
+        };
+    }
+
     private <T> TcpNettyServer<T> createTypedServer(
             TcpListenerConfig listener,
             Supplier<RuntimeParserBinding<T>> parserFactory) {
@@ -385,6 +448,22 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                         sinks.runnerFailureSink(),
                         sinks.backpressureStrategy(appConfig)),
                 clock);
+    }
+
+    private <T> KafkaConsumerRuntime<T> createTypedKafkaConsumer(
+            KafkaConsumerConfig consumer,
+            KafkaRecordSource source,
+            Supplier<RuntimeParserBinding<T>> parserFactory) {
+        RuntimePipelineRunner<T> runner = new RuntimePipelineRunner<>(
+                parserFactory.get(),
+                sinks.runnerRecordSink(),
+                sinks.runnerFailureSink(),
+                sinks.backpressureStrategy(appConfig));
+        return new KafkaConsumerRuntime<>(
+                consumer,
+                source,
+                runner,
+                KafkaIngressModule.handler(consumer.kafka(), runner));
     }
 
     private interface RuntimeListener {
@@ -433,6 +512,65 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         @Override
         public RuntimeLifecycle lifecycle() {
             return server;
+        }
+    }
+
+    private record KafkaConsumerRuntime<T>(
+            KafkaConsumerConfig config,
+            KafkaRecordSource source,
+            RuntimePipelineRunner<T> runner,
+            KafkaRecordHandler<T> handler) implements RuntimeListener, RuntimeLifecycle {
+
+        @Override
+        public String transport() {
+            return "Kafka consumer";
+        }
+
+        @Override
+        public String name() {
+            return config.name();
+        }
+
+        @Override
+        public RuntimeLifecycle lifecycle() {
+            return this;
+        }
+
+        @Override
+        public void start() {
+            runner.start();
+            try {
+                source.start(handler::accept);
+            } catch (RuntimeException ex) {
+                runner.stop();
+                throw ex;
+            }
+        }
+
+        @Override
+        public void stop() {
+            RuntimeException failure = null;
+            try {
+                source.stop();
+            } catch (RuntimeException ex) {
+                failure = ex;
+            }
+            try {
+                runner.stop();
+            } catch (RuntimeException ex) {
+                if (failure == null) {
+                    failure = ex;
+                } else {
+                    failure.addSuppressed(ex);
+                }
+            }
+            if (failure != null) {
+                throw failure;
+            }
+        }
+
+        boolean isRunning() {
+            return source.isRunning() && runner.isRunning();
         }
     }
 }

@@ -15,6 +15,7 @@ public record CollectorStatusSnapshot(
         List<CollectorSourceStatus> sources,
         List<TcpListenerStatus> tcpListeners,
         List<HttpListenerStatus> httpListeners,
+        List<KafkaConsumerStatus> kafkaConsumers,
         int activeConnectionCount,
         CollectorRuntimeMetrics metrics,
         SinkType sinkType,
@@ -28,6 +29,7 @@ public record CollectorStatusSnapshot(
         sources = List.copyOf(sources);
         tcpListeners = List.copyOf(tcpListeners);
         httpListeners = List.copyOf(httpListeners);
+        kafkaConsumers = List.copyOf(kafkaConsumers);
         if (metrics == null) {
             throw new IllegalArgumentException("metrics must not be null");
         }

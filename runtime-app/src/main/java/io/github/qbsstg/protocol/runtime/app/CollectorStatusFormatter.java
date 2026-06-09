@@ -10,7 +10,9 @@ final class CollectorStatusFormatter {
         return "Protocol Runtime collector status"
                 + " state=" + snapshot.state()
                 + " sources=" + snapshot.sources().size()
-                + " listeners=" + (snapshot.tcpListeners().size() + snapshot.httpListeners().size())
+                + " listeners=" + (snapshot.tcpListeners().size()
+                        + snapshot.httpListeners().size()
+                        + snapshot.kafkaConsumers().size())
                 + " activeConnections=" + snapshot.activeConnectionCount()
                 + " parsedRecords=" + metrics.parsedRecordCount()
                 + " parseFailures=" + metrics.parseFailureCount()
@@ -22,7 +24,8 @@ final class CollectorStatusFormatter {
                 + " oversizedPayloadDecision=" + snapshot.oversizedPayloadDecision()
                 + " strictAsdu=" + snapshot.strictAsduParsing()
                 + " tcpListeners=" + tcpListeners(snapshot)
-                + " httpListeners=" + httpListeners(snapshot);
+                + " httpListeners=" + httpListeners(snapshot)
+                + " kafkaConsumers=" + kafkaConsumers(snapshot);
     }
 
     private static String tcpListeners(CollectorStatusSnapshot snapshot) {
@@ -81,6 +84,30 @@ final class CollectorStatusFormatter {
                     .append(listener.sourceIdMode())
                     .append("/protocol=")
                     .append(listener.protocol());
+        }
+        value.append(']');
+        return value.toString();
+    }
+
+    private static String kafkaConsumers(CollectorStatusSnapshot snapshot) {
+        StringBuilder value = new StringBuilder("[");
+        boolean first = true;
+        for (KafkaConsumerStatus consumer : snapshot.kafkaConsumers()) {
+            if (!first) {
+                value.append(',');
+            }
+            first = false;
+            value.append(consumer.name())
+                    .append('@')
+                    .append(consumer.bootstrapServers())
+                    .append("/group=")
+                    .append(consumer.groupId())
+                    .append("/running=")
+                    .append(consumer.running())
+                    .append("/sourceIdMode=")
+                    .append(consumer.sourceIdMode())
+                    .append("/protocol=")
+                    .append(consumer.protocol());
         }
         value.append(']');
         return value.toString();

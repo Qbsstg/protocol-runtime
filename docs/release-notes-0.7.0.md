@@ -15,15 +15,18 @@ Draft release notes for the `0.7.0` runtime release line.
   timestamp, key, headers, protocol, and source attributes.
 - Dispatch Kafka records through `RuntimePipelineRunner` without adding Kafka
   APIs to `runtime-core`.
-- Keep runtime-app Kafka collector assembly as follow-up work after the adapter
-  record boundary is stable.
+- Add runtime-app Kafka consumer configuration, standalone collector assembly,
+  status output, and fake-source tests for end-to-end parser dispatch without a
+  live broker.
 
 ## Scope
 
-`0.7.0` focuses on the Kafka ingress adapter boundary. The first baseline is
-record-oriented and does not require a live Kafka broker in normal `mvn verify`.
-It should prove the data mapping, source selection, and backpressure semantics
-that app-level Kafka consumer assembly can build on.
+`0.7.0` focuses on the Kafka ingress adapter and standalone app assembly
+boundary. The first baseline is record-oriented and does not require a live
+Kafka broker in normal `mvn verify`; runtime-app uses fake source tests to prove
+that Kafka records can flow through `RuntimePipelineRunner`,
+`runtime-protocol-*`, and the configured sink. Broker-backed operational smoke
+tests remain follow-up work.
 
 ## Dependency Policy
 
@@ -34,6 +37,10 @@ object storage, and observability exporter dependencies.
 must not depend on protocol SDK modules, runtime protocol bindings, HTTP/MQTT
 adapters, or downstream sink modules.
 
+`runtime-app` may depend on `runtime-ingress-kafka` because it is the deployable
+assembly boundary. Kafka dependencies still must not enter `runtime-core` or
+`runtime-protocol-*`.
+
 ## Verification Target
 
 Before release branch work, the readiness branch should pass:
@@ -41,6 +48,9 @@ Before release branch work, the readiness branch should pass:
 - `git diff --check`
 - `mvn -q verify`
 - dependency boundary checks proving Kafka is isolated to
-  `runtime-ingress-kafka`
+  `runtime-ingress-kafka` and app assembly, not `runtime-core` or
+  `runtime-protocol-*`
 - Kafka ingress unit tests for source resolution, envelope attributes,
   invalid source handling, backpressure result mapping, and commit decisions
+- runtime-app Kafka tests for Kafka-only config parsing, status formatting,
+  fake-source dispatch, parse failure routing, and backpressure behavior

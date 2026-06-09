@@ -18,6 +18,12 @@ import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
 import io.github.qbsstg.protocol.runtime.core.SourceId;
 import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressResponseMode;
 import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressSourceIdMode;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaCommitMode;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaIngressResult;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaIngressStatus;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaRecordReceiver;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaRecordSource;
+import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpConnectionAttributes;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
@@ -29,8 +35,10 @@ import java.net.Socket;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +46,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -440,6 +449,163 @@ class StandaloneCollectorTest {
     }
 
     @Test
+    void parsesKafkaOnlyAppConfigurationWithoutDefaultTcpOrHttpListener() {
+        Properties properties = kafkaProperties("in-memory");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertTrue(validation.isValid());
+        assertEquals(1, appConfig.sources().size());
+        assertTrue(appConfig.tcpListeners().isEmpty());
+        assertTrue(appConfig.httpListeners().isEmpty());
+        assertEquals(1, appConfig.kafkaConsumers().size());
+        KafkaConsumerConfig consumer = appConfig.kafkaConsumers().get(0);
+        assertEquals("kafka-main", consumer.name());
+        assertEquals("default", consumer.sourceName());
+        assertEquals("iec104:station-1", consumer.sourceId().qualifiedValue());
+        assertEquals(RuntimeProtocol.IEC104, consumer.protocol());
+        assertEquals("localhost:9092", consumer.kafka().bootstrapServers());
+        assertEquals("protocol-runtime", consumer.kafka().groupId());
+        assertEquals(List.of("iec104-raw"), consumer.kafka().topics());
+        assertNull(consumer.kafka().topicPattern());
+        assertEquals(KafkaSourceIdMode.CONFIGURED, consumer.kafka().sourceIdMode());
+        assertEquals(KafkaCommitMode.MANUAL, consumer.kafka().commitMode());
+        assertEquals("latest", consumer.kafka().autoOffsetReset());
+        assertEquals(100, consumer.kafka().maxPollRecords());
+        assertEquals(1000, consumer.kafka().pollTimeoutMillis());
+        assertThrows(IllegalArgumentException.class, appConfig::singleCollectorConfig);
+    }
+
+    @Test
+    void startsKafkaCollectorAndRoutesIec104RecordsToInMemorySink() throws Exception {
+        FakeKafkaRecordSource source = new FakeKafkaRecordSource();
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(
+                kafkaProperties("in-memory"));
+
+        try (StandaloneCollector collector = kafkaCollector(appConfig, source)) {
+            CollectorStatusSnapshot configured = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.CONFIGURED, configured.state());
+            assertTrue(configured.tcpListeners().isEmpty());
+            assertTrue(configured.httpListeners().isEmpty());
+            assertEquals(1, configured.kafkaConsumers().size());
+            assertFalse(configured.kafkaConsumers().get(0).running());
+
+            collector.start();
+
+            KafkaIngressResult result = source.emit(kafkaRecord(SINGLE_POINT_FRAME));
+
+            assertEquals(KafkaIngressStatus.ACCEPTED, result.status());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParsedRecord<Object>> records = awaitRecords(sink, 1);
+            assertTrue(collector.isRunning());
+            assertEquals("iec104:station-1", records.get(0).sourceId().qualifiedValue());
+            assertEquals("iec104", records.get(0).protocol());
+            assertEquals("I_FORMAT", records.get(0).recordType());
+            assertArrayEquals(SINGLE_POINT_FRAME, records.get(0).rawPayload());
+            assertTrue(sink.failures().isEmpty());
+
+            CollectorStatusSnapshot running = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.RUNNING, running.state());
+            assertEquals(1, running.kafkaConsumers().size());
+            KafkaConsumerStatus status = running.kafkaConsumers().get(0);
+            assertEquals("kafka-main", status.name());
+            assertEquals("protocol-runtime", status.groupId());
+            assertEquals(List.of("iec104-raw"), status.topics());
+            assertEquals(KafkaSourceIdMode.CONFIGURED, status.sourceIdMode());
+            assertTrue(status.running());
+            assertEquals(0, running.activeConnectionCount());
+            assertEquals(1, running.metrics().parsedRecordCount());
+            assertEquals(0, running.metrics().parseFailureCount());
+
+            String formatted = CollectorStatusFormatter.format(running);
+            assertTrue(formatted.contains("listeners=1"));
+            assertTrue(formatted.contains("tcpListeners=[]"));
+            assertTrue(formatted.contains("httpListeners=[]"));
+            assertTrue(formatted.contains("kafkaConsumers=[kafka-main@localhost:9092/group=protocol-runtime"));
+            assertTrue(formatted.contains("/sourceIdMode=CONFIGURED/protocol=iec104"));
+        }
+    }
+
+    @Test
+    void routesMalformedKafkaPayloadsToFailureSink() throws Exception {
+        FakeKafkaRecordSource source = new FakeKafkaRecordSource();
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(
+                kafkaProperties("in-memory"));
+
+        try (StandaloneCollector collector = kafkaCollector(appConfig, source)) {
+            collector.start();
+
+            byte[] malformed = bytes(0x68, 0x03, 0x00, 0x00, 0x00);
+            KafkaIngressResult result = source.emit(kafkaRecord(malformed));
+
+            assertEquals(KafkaIngressStatus.ACCEPTED, result.status());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParseFailure> failures = awaitFailures(sink, 1);
+            assertTrue(sink.records().isEmpty());
+            assertEquals("iec104:station-1", failures.get(0).sourceId().qualifiedValue());
+            assertTrue(failures.get(0).message().contains("Invalid IEC104 APDU length"));
+            assertEquals("iec104-raw", failures.get(0).attributes().get("kafka.topic"));
+            assertEquals(1, collector.statusSnapshot().metrics().parseFailureCount());
+        }
+    }
+
+    @Test
+    void retryLaterKafkaBackpressurePreventsParsing() throws Exception {
+        FakeKafkaRecordSource source = new FakeKafkaRecordSource();
+        Properties properties = kafkaProperties("in-memory");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, "RETRY_LATER");
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        try (StandaloneCollector collector = kafkaCollector(appConfig, source)) {
+            collector.start();
+
+            KafkaIngressResult result = source.emit(kafkaRecord(SINGLE_POINT_FRAME));
+
+            assertEquals(KafkaIngressStatus.RETRY_LATER, result.status());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            assertTrue(sink.records().isEmpty());
+            assertTrue(sink.failures().isEmpty());
+            CollectorRuntimeMetrics metrics = awaitRetryLaterBackpressure(collector, 1);
+            assertEquals(0, metrics.parsedRecordCount());
+            assertEquals(0, metrics.parseFailureCount());
+            assertEquals("iec104:station-1", metrics.lastBackpressureSourceId());
+            assertEquals(SINGLE_POINT_FRAME.length, metrics.lastBackpressurePayloadSize());
+        }
+    }
+
+    @Test
+    void validatesKafkaConsumerConfiguration() {
+        Properties properties = kafkaProperties("in-memory");
+        String prefix = StandaloneCollectorConfig.KAFKA_CONSUMER_PREFIX + "kafka-main";
+        properties.setProperty(StandaloneCollectorConfig.KAFKA_CONSUMERS, "kafka-main,kafka-main");
+        properties.remove(prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_BOOTSTRAP_SERVERS_SUFFIX);
+        properties.setProperty(prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_SOURCE_SUFFIX, "missing");
+        properties.setProperty(prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_SOURCE_ID_MODE_SUFFIX, "cookie");
+        properties.setProperty(prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_COMMIT_MODE_SUFFIX, "after-coffee");
+        properties.setProperty(prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_MAX_POLL_RECORDS_SUFFIX, "0");
+        properties.setProperty(prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_POLL_TIMEOUT_MILLIS_SUFFIX, "0");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.KAFKA_CONSUMERS
+                + " contains duplicate name: kafka-main");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_BOOTSTRAP_SERVERS_SUFFIX
+                + " is required");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_SOURCE_SUFFIX
+                + " references unknown source: missing");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_SOURCE_ID_MODE_SUFFIX
+                + " must be CONFIGURED, HEADER, TOPIC, or KEY");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_COMMIT_MODE_SUFFIX
+                + " must be MANUAL, AFTER_ACCEPT, AFTER_PARSE_SUCCESS, or NEVER");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_MAX_POLL_RECORDS_SUFFIX
+                + " must be positive");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_POLL_TIMEOUT_MILLIS_SUFFIX
+                + " must be positive");
+    }
+
+    @Test
     void httpPortConflictFailsFast() throws Exception {
         try (StandaloneCollector bound = StandaloneCollector.create(
                 StandaloneCollectorConfig.appConfigFromProperties(httpProperties(0, "in-memory")))) {
@@ -831,6 +997,16 @@ class StandaloneCollectorTest {
         return properties;
     }
 
+    private static Properties kafkaProperties(String sinkType) {
+        Properties properties = new Properties();
+        properties.setProperty(StandaloneCollectorConfig.SOURCE_ID, "iec104:station-1");
+        properties.setProperty(StandaloneCollectorConfig.SINK_TYPE, sinkType);
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, BackpressureDecision.ACCEPT.name());
+        properties.setProperty(StandaloneCollectorConfig.KAFKA_CONSUMERS, "kafka-main");
+        setKafkaConsumer(properties, "kafka-main", "default");
+        return properties;
+    }
+
     private static Properties protocolProperties(RuntimeProtocol protocol, String sourceId) {
         Properties properties = baseProperties(0, "in-memory");
         properties.setProperty(StandaloneCollectorConfig.PROTOCOL, protocol.configValue());
@@ -871,6 +1047,8 @@ class StandaloneCollectorTest {
                                 new TcpNettyServerConfig("127.0.0.1", port, 1, 1),
                                 "station-b",
                                 SourceId.of("iec104", "station-b"))),
+                List.of(),
+                List.of(),
                 BackpressureDecision.ACCEPT,
                 0,
                 BackpressureDecision.DROP,
@@ -893,6 +1071,32 @@ class StandaloneCollectorTest {
         properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_PORT_SUFFIX, Integer.toString(port));
         properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_PATH_SUFFIX, "/ingress");
         properties.setProperty(prefix + StandaloneCollectorConfig.HTTP_LISTENER_SOURCE_SUFFIX, sourceName);
+    }
+
+    private static void setKafkaConsumer(Properties properties, String name, String sourceName) {
+        String prefix = StandaloneCollectorConfig.KAFKA_CONSUMER_PREFIX + name;
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_BOOTSTRAP_SERVERS_SUFFIX,
+                "localhost:9092");
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_GROUP_ID_SUFFIX,
+                "protocol-runtime");
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_TOPICS_SUFFIX,
+                "iec104-raw");
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.KAFKA_CONSUMER_SOURCE_SUFFIX,
+                sourceName);
+    }
+
+    private static StandaloneCollector kafkaCollector(
+            StandaloneCollectorAppConfig appConfig,
+            FakeKafkaRecordSource source) {
+        return new StandaloneCollector(
+                appConfig,
+                RuntimeSinks.from(appConfig),
+                Clock.systemUTC(),
+                ignored -> source);
     }
 
     private static void writeFrame(StandaloneCollector collector, byte[] frame) throws IOException {
@@ -926,6 +1130,15 @@ class StandaloneCollectorTest {
                 .POST(HttpRequest.BodyPublishers.ofByteArray(payload));
         headers.forEach(request::header);
         return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private static ConsumerRecord<byte[], byte[]> kafkaRecord(byte[] value) {
+        return new ConsumerRecord<>(
+                "iec104-raw",
+                0,
+                42,
+                "device-key".getBytes(StandardCharsets.UTF_8),
+                value);
     }
 
     private static List<ParsedRecord<Object>> awaitRecords(
@@ -1123,5 +1336,34 @@ class StandaloneCollectorTest {
             bytes[i] = (byte) (values[i] & 0xFF);
         }
         return bytes;
+    }
+
+    private static final class FakeKafkaRecordSource implements KafkaRecordSource {
+
+        private KafkaRecordReceiver receiver;
+        private boolean running;
+
+        @Override
+        public void start(KafkaRecordReceiver receiver) {
+            this.receiver = receiver;
+            this.running = true;
+        }
+
+        @Override
+        public void stop() {
+            running = false;
+        }
+
+        @Override
+        public boolean isRunning() {
+            return running;
+        }
+
+        private KafkaIngressResult emit(ConsumerRecord<byte[], byte[]> record) {
+            if (!running || receiver == null) {
+                throw new IllegalStateException("fake Kafka source is not running");
+            }
+            return receiver.accept(record);
+        }
     }
 }

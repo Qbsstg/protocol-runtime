@@ -228,7 +228,11 @@ Allowed:
   release
 - `runtime-ingress-kafka` owns Kafka client dependencies, consumer
   configuration, source id resolution, record-to-envelope mapping, Kafka
-  attributes, backpressure result mapping, and commit-mode decisions
+  attributes, polling source lifecycle, backpressure result mapping, and
+  commit-mode decisions
+- `runtime-app` may depend on `runtime-ingress-kafka` for Kafka consumer
+  configuration, source/protocol binding, status reporting, and standalone
+  collector assembly
 - Kafka attributes stay in `IngressEnvelope.attributes()` and do not become
   `runtime-core` fields
 - tests may construct Kafka `ConsumerRecord` fixtures without requiring a live
@@ -239,8 +243,8 @@ Not allowed:
 - adding Kafka, MQTT, Spring, database, Redis, or observability exporter
   dependencies to `runtime-core`
 - adding Kafka ingress dependencies to `runtime-protocol-*`
-- adding runtime-app Kafka collector assembly before the adapter record
-  boundary is stable
+- moving runtime-app Kafka collector assembly concerns into `runtime-core` or
+  `runtime-protocol-*`
 - mixing downstream Kafka producer/sink behavior into the ingress adapter
 - moving Kafka offset, poll, partition pause/resume, or replay policy into
   `runtime-core`
