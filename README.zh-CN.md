@@ -21,14 +21,17 @@ IEC103 和 Modbus runtime protocol binding，并在 app 层支持协议选择，
 保留现有 IEC104 app 路径。`0.5.0` 已发布第一个 adapter 边界版本，包含
 JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档，
 同时仍不把 Kafka/MQTT client 依赖引入 runtime。`0.6.0` 已发布 HTTP ingress
-生产化路线和 runtime-app HTTP collector 装配。
+生产化路线和 runtime-app HTTP collector 装配。`0.7.0` 已发布 Kafka ingress
+baseline 和 runtime-app Kafka collector 装配。
 
-当前 release branch 已固定为 `0.7.0`，重点是在 dedicated adapter module 中
-补充 Kafka ingress baseline，并完成 runtime-app Kafka collector 装配。
+当前开发线是 `0.8.0-SNAPSHOT`，重点是在 dedicated adapter module 中补充
+MQTT ingress baseline，并完成 runtime-app MQTT collector 装配。
 
-`0.7.0` 开发范围记录在
-[`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)，草案 release notes 记录在
-[`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)。`0.7.0`
+`0.8.0` 开发范围记录在
+[`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)，草案 release notes 记录在
+[`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)。已发布的 `0.7.0`
+范围记录在 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)，release notes
+记录在 [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)，
 release-readiness audit 记录在
 [`docs/release-readiness-0.7.0.md`](docs/release-readiness-0.7.0.md)。已发布的
 `0.6.0` 范围记录在
@@ -43,14 +46,14 @@ release notes 记录在
 
 ## Maven 坐标
 
-最新运行时发布版本是 `0.6.0`。Runtime 模块是 JDK 21 artifact。应用侧应
+最新运行时发布版本是 `0.7.0`。Runtime 模块是 JDK 21 artifact。应用侧应
 按需直接依赖具体模块：
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -58,7 +61,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -66,7 +69,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -74,7 +77,15 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-ingress-kafka</artifactId>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -82,7 +93,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
 ```
 
@@ -101,15 +112,32 @@ release notes 记录在
 | `runtime-ingress-tcp-netty` | Baseline | 最小 TCP/Netty 接入处理器和 server bootstrap：监听 TCP 端口、为每个连接创建一个 `RuntimePipelineRunner`、把 `ByteBuf` 转为 `IngressEnvelope`、处理背压并投递到 sink。 |
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
-| `runtime-app` | 0.6.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP listener 装配、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
+| `runtime-app` | 0.7.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka 装配、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
-未来可能补充 MQTT、Kafka、pipeline、更多 sink 和更完整的可部署运行时应用。
+未来可能补充 MQTT、pipeline、更多 sink 和更完整的可部署运行时应用。
 这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
 
-## `0.7.0` Kafka Ingress 规划
+## `0.8.0` MQTT Ingress 规划
 
-`0.7.0` 打开第一条 Kafka ingress 实现线：
+`0.8.0` 打开第一条 MQTT ingress 实现线：
+
+- `runtime-core` 继续不引入 MQTT、Kafka、HTTP、Spring、数据库、Redis 和
+  observability exporter 依赖。
+- `runtime-ingress-mqtt` 负责 MQTT client 依赖、topic/source 映射、
+  payload-to-envelope 映射、QoS ack 策略、retained message 处理、duplicate
+  delivery 策略、reconnect/session 归属和背压结果映射。
+- MQTT topic、QoS、retained 标记、duplicate 标记、packet id、source id mode
+  和选定协议应继续作为 envelope attributes。
+- `runtime-protocol-*` 继续只解析协议 payload，不引入 MQTT 依赖。
+- `runtime-app` 负责 MQTT client 配置和 standalone collector 装配，同时保持
+  MQTT API 不进入 `runtime-core`。
+
+详细规划维护在 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)。
+
+## `0.7.0` Kafka Ingress 发布
+
+`0.7.0` 已发布第一条 Kafka ingress 实现线：
 
 - `runtime-core` 继续不引入 Kafka、MQTT、HTTP、Spring、数据库、Redis 和
   observability exporter 依赖。
@@ -240,11 +268,12 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。`0.6.0`
-开发线可以把 TCP/Netty 或 JDK HTTP ingress 接到同一个 app-owned pipeline：
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。已发布的 `0.7.0`
+开发线可以把 TCP/Netty、JDK HTTP 或 Kafka ingress 接到同一个 app-owned
+pipeline：
 
 ```text
-TcpNettyServer or HttpIngressServer
+TcpNettyServer, HttpIngressServer, or KafkaRecordSource
   -> RuntimePipelineRunner
   -> selected RuntimeParserBinding
   -> configured RecordSink / FailureSink
@@ -259,7 +288,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.6.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -321,7 +350,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.5.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -561,12 +590,15 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)
 - [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)
 - [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)
+- [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-readiness-0.3.0.md`](docs/release-readiness-0.3.0.md)
 - [`docs/release-readiness-0.4.0.md`](docs/release-readiness-0.4.0.md)
 - [`docs/release-readiness-0.5.0.md`](docs/release-readiness-0.5.0.md)
+- [`docs/release-readiness-0.6.0.md`](docs/release-readiness-0.6.0.md)
+- [`docs/release-readiness-0.7.0.md`](docs/release-readiness-0.7.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
@@ -574,3 +606,4 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)
 - [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)
 - [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)
+- [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)
