@@ -22,7 +22,14 @@ IEC103 和 Modbus runtime protocol binding，并在 app 层支持协议选择，
 JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档，
 同时仍不把 Kafka/MQTT client 依赖引入 runtime。
 
-最新 `0.5.0` 发布范围记录在 [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)，
+当前开发线是 `0.6.0-SNAPSHOT`。这一阶段聚焦 HTTP ingress 生产化和
+runtime-app HTTP collector 装配，在 Kafka/MQTT client 依赖进入 dedicated
+module 之前先把 HTTP 运行链路打实。
+
+`0.6.0` 发布范围记录在 [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)，
+草案 release notes 记录在
+[`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)。已发布的
+`0.5.0` 范围记录在 [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)，
 release notes 记录在
 [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)。上一个已发布的
 `0.4.0` 范围记录在 [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)，
@@ -93,6 +100,22 @@ release notes 记录在
 
 未来可能补充 MQTT、Kafka、pipeline、更多 sink 和更完整的可部署运行时应用。
 这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+
+## `0.6.0` HTTP Runtime-App 规划
+
+`0.6.0-SNAPSHOT` 开启 HTTP 生产化路线。目标是在保留当前 TCP collector 路径
+的前提下，让 JDK-only HTTP ingress 可以从 standalone runtime app 中使用：
+
+- `runtime-core` 继续不引入 HTTP、Kafka、MQTT、Spring、数据库、Redis 和
+  observability exporter 依赖。
+- `runtime-ingress-http` 负责 HTTP 请求处理、source 映射、响应策略、请求大小
+  限制、生命周期和 adapter 自身测试。
+- `runtime-app` 负责 HTTP listener 配置和应用装配。
+- `runtime-protocol-*` 继续只负责协议 payload 解析，不引入 transport 或 app
+  依赖。
+- Kafka 和 MQTT 在 dedicated implementation module 打开前继续保持 design-only。
+
+详细规划维护在 [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)。
 
 ## `0.5.0` Adapter 边界规划
 
@@ -464,6 +487,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
 - [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)
+- [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
@@ -475,3 +499,4 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
 - [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)
 - [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)
+- [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)

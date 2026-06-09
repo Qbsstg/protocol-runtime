@@ -25,7 +25,14 @@ boundary release with a JDK-only HTTP ingress baseline and HTTP, Kafka, and
 MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
 of the runtime.
 
-The latest `0.5.0` release scope is tracked in
+The current development line is `0.6.0-SNAPSHOT`. Its scope is HTTP ingress
+productionization and runtime-app HTTP collector assembly before Kafka and MQTT
+client dependencies are introduced.
+
+The `0.6.0` release scope is tracked in
+[`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md). Draft release notes are
+tracked in [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md). The
+published `0.5.0` release scope is tracked in
 [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md), and release notes are tracked
 in [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md). The previous
 published `0.4.0` release scope is tracked in
@@ -97,6 +104,25 @@ application dependency even if a historical release is visible in Maven Central.
 Future modules may include MQTT, Kafka, pipelines, additional sinks, and richer
 deployable runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
+
+## `0.6.0` HTTP Runtime-App Plan
+
+`0.6.0-SNAPSHOT` starts the HTTP productionization line. The target is to make
+the JDK-only HTTP ingress usable from the standalone runtime app while
+preserving the current TCP collector path:
+
+- `runtime-core` remains free of HTTP, Kafka, MQTT, Spring, database, Redis,
+  and observability exporter dependencies
+- `runtime-ingress-http` owns HTTP request handling, source mapping, response
+  policy, request limits, lifecycle, and adapter-specific tests
+- `runtime-app` owns HTTP listener configuration and app assembly
+- `runtime-protocol-*` modules continue to parse protocol payloads without
+  transport or app dependencies
+- Kafka and MQTT remain design-only until dedicated implementation modules are
+  opened
+
+The detailed plan is maintained in
+[`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md).
 
 ## `0.5.0` Adapter Boundary Plan
 
@@ -505,6 +531,7 @@ verified.
 - [`docs/roadmap-0.3.0.md`](docs/roadmap-0.3.0.md)
 - [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md)
 - [`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md)
+- [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
@@ -516,3 +543,4 @@ verified.
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
 - [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md)
 - [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md)
+- [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)
