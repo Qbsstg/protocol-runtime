@@ -24,9 +24,8 @@ JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档
 生产化路线和 runtime-app HTTP collector 装配。`0.7.0` 已发布 Kafka ingress
 baseline 和 runtime-app Kafka collector 装配。
 
-当前开发线是 `0.8.0-SNAPSHOT`，已包含 MQTT ingress baseline 和
-runtime-app MQTT collector 装配。`0.8.0` release-readiness 验证已在 release
-branch 前记录。
+当前 release branch 已固定为 `0.8.0`，已包含 MQTT ingress baseline 和
+runtime-app MQTT collector 装配。
 
 `0.8.0` 开发范围记录在
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)，草案 release notes 记录在
@@ -274,7 +273,7 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 `0.8.0-SNAPSHOT`
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 `0.8.0`
 开发线可以把 TCP/Netty、JDK HTTP、Kafka 或 MQTT ingress 接到同一个
 app-owned pipeline：
 
@@ -294,7 +293,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -327,7 +326,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -364,7 +363,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
