@@ -7,7 +7,7 @@ Central Portal.
 
 The latest published runtime release is `0.6.0`.
 
-The current development line is `0.7.0-SNAPSHOT`.
+The current release branch fixes the reactor at `0.7.0`.
 
 The published `0.6.0` release includes:
 

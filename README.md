@@ -26,8 +26,8 @@ MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
 of the runtime. `0.6.0` published the HTTP ingress productionization line and
 runtime-app HTTP collector assembly.
 
-The current development line is `0.7.0-SNAPSHOT`, focused on the Kafka ingress
-baseline and runtime-app Kafka collector assembly.
+The current release branch fixes `0.7.0`, focused on the Kafka ingress baseline
+and runtime-app Kafka collector assembly.
 
 The `0.7.0` development scope is tracked in
 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md), and draft release notes are
