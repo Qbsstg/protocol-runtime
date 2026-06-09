@@ -215,3 +215,15 @@ PR:
 
 No tag was created and no real Maven Central upload was part of the release
 branch PR.
+
+## Published Release Verification On 2026-06-09
+
+`0.6.0` has been tagged, uploaded, manually published, and verified.
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Release tag | Passed | `v0.6.0` points at `3fb6af480f16e9c95d075c6eb6d8c76b78e429dc`. |
+| Central upload | Passed | `mvn -Pcentral-release clean deploy` created deployment `7b908e63-6006-4ecb-9b87-d099d89582be`. |
+| Central publish | Passed | Deployment `7b908e63-6006-4ecb-9b87-d099d89582be` reached `PUBLISHED`. |
+| GitHub Release | Passed | `v0.6.0` GitHub Release was created after Central publish. |
+| Maven Central resolution | Passed | An isolated local Maven repository resolved all published runtime artifacts and the `runtime-app` `standalone` classifier from Maven Central. |
