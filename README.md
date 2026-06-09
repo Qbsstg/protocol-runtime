@@ -28,12 +28,14 @@ runtime-app HTTP collector assembly. `0.7.0` published the Kafka ingress
 baseline and runtime-app Kafka collector assembly.
 
 The current development line is `0.8.0-SNAPSHOT`, which contains the MQTT
-ingress baseline and runtime-app MQTT collector assembly. Remaining work is
-release-readiness verification for `0.8.0`.
+ingress baseline and runtime-app MQTT collector assembly. Release-readiness
+verification for `0.8.0` is now tracked before the release branch.
 
 The `0.8.0` development scope is tracked in
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md), and draft release notes are
 tracked in [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md). The
+release-readiness audit is tracked in
+[`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md). The
 published `0.7.0` release scope is tracked in
 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md), release notes are tracked in
 [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md), and the
@@ -656,6 +658,7 @@ verified.
 - [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)
 - [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-readiness-0.3.0.md`](docs/release-readiness-0.3.0.md)

@@ -25,11 +25,14 @@ JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档
 baseline 和 runtime-app Kafka collector 装配。
 
 当前开发线是 `0.8.0-SNAPSHOT`，已包含 MQTT ingress baseline 和
-runtime-app MQTT collector 装配。剩余工作是 `0.8.0` release-readiness 验证。
+runtime-app MQTT collector 装配。`0.8.0` release-readiness 验证已在 release
+branch 前记录。
 
 `0.8.0` 开发范围记录在
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)，草案 release notes 记录在
-[`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)。已发布的 `0.7.0`
+[`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)，
+release-readiness audit 记录在
+[`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)。已发布的 `0.7.0`
 范围记录在 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)，release notes
 记录在 [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)，
 release-readiness audit 记录在
@@ -603,6 +606,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)
 - [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)
 - [`docs/release-readiness-0.3.0.md`](docs/release-readiness-0.3.0.md)
