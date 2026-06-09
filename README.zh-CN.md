@@ -22,7 +22,7 @@ IEC103 和 Modbus runtime protocol binding，并在 app 层支持协议选择，
 JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档，
 同时仍不把 Kafka/MQTT client 依赖引入 runtime。
 
-当前开发线是 `0.6.0-SNAPSHOT`。这一阶段聚焦 HTTP ingress 生产化和
+当前 release 分支是 `0.6.0`。这一阶段聚焦 HTTP ingress 生产化和
 runtime-app HTTP collector 装配，在 Kafka/MQTT client 依赖进入 dedicated
 module 之前先把 HTTP 运行链路打实。
 
@@ -103,7 +103,7 @@ release notes 记录在
 
 ## `0.6.0` HTTP Runtime-App 规划
 
-`0.6.0-SNAPSHOT` 开启 HTTP 生产化路线。目标是在保留当前 TCP collector 路径
+`0.6.0` 开启 HTTP 生产化路线。目标是在保留当前 TCP collector 路径
 的前提下，让 JDK-only HTTP ingress 可以从 standalone runtime app 中使用：
 
 - `runtime-core` 继续不引入 HTTP、Kafka、MQTT、Spring、数据库、Redis 和
@@ -216,7 +216,7 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。`0.6.0-SNAPSHOT`
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。`0.6.0`
 开发线可以把 TCP/Netty 或 JDK HTTP ingress 接到同一个 app-owned pipeline：
 
 ```text
@@ -235,7 +235,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.6.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.6.0-standalone.jar \
   --config examples/collector.properties
 ```
 

@@ -1,10 +1,10 @@
 # Protocol Runtime 0.6.0 Release Notes
 
-Draft release notes for the `0.6.0` runtime release-candidate line.
+Draft release notes for the `0.6.0` runtime release line.
 
 ## Planned Highlights
 
-- Open the Maven reactor at `0.6.0-SNAPSHOT` after the published `0.5.0`
+- Open the Maven reactor at `0.6.0` after the published `0.5.0`
   adapter-boundary release.
 - Productionize the JDK `HttpServer` based `runtime-ingress-http` baseline from
   the standalone app boundary.
@@ -30,7 +30,7 @@ not just a library-level adapter. The release should keep the dependency shape
 established in `0.5.0`: `runtime-core` remains adapter-free, protocol bindings
 remain parser-only, and app assembly owns transport composition.
 
-The current `0.6.0-SNAPSHOT` line supports named HTTP listeners with host,
+The current `0.6.0` line supports named HTTP listeners with host,
 port, path, source reference, configured/header/path source id mapping, payload
 limit, response mode, backlog, and worker thread settings.
 

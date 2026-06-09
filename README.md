@@ -25,7 +25,7 @@ boundary release with a JDK-only HTTP ingress baseline and HTTP, Kafka, and
 MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
 of the runtime.
 
-The current development line is `0.6.0-SNAPSHOT`. Its scope is HTTP ingress
+The current release branch is `0.6.0`. Its scope is HTTP ingress
 productionization and runtime-app HTTP collector assembly before Kafka and MQTT
 client dependencies are introduced.
 
@@ -107,7 +107,7 @@ deployable runtime applications. Those dependencies belong here, not in
 
 ## `0.6.0` HTTP Runtime-App Plan
 
-`0.6.0-SNAPSHOT` starts the HTTP productionization line. The target is to make
+`0.6.0` starts the HTTP productionization line. The target is to make
 the JDK-only HTTP ingress usable from the standalone runtime app while
 preserving the current TCP collector path:
 
@@ -249,7 +249,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The `0.6.0-SNAPSHOT` line can run TCP/Netty or JDK HTTP ingress through the
+The `0.6.0` line can run TCP/Netty or JDK HTTP ingress through the
 same app-owned pipeline:
 
 ```text
@@ -268,7 +268,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.6.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.6.0-standalone.jar \
   --config examples/collector.properties
 ```
 
