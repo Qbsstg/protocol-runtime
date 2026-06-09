@@ -5,11 +5,11 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.4.0`.
+The latest published runtime release is `0.5.0`.
 
-The current release-candidate line is `0.5.0`.
+The next release-candidate line has not been opened yet.
 
-The published `0.4.0` release includes:
+The published `0.5.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -18,18 +18,19 @@ The published `0.4.0` release includes:
 - `io.github.qbsstg:runtime-protocol-iec103`
 - `io.github.qbsstg:runtime-protocol-modbus`
 - `io.github.qbsstg:runtime-ingress-tcp-netty`
+- `io.github.qbsstg:runtime-ingress-http`
 - `io.github.qbsstg:runtime-app`
 
 `runtime-smoke-tests` is test-only and remains unsupported as an application
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The current `0.5.0` roadmap is maintained in
-[`roadmap-0.5.0.md`](roadmap-0.5.0.md), and draft release notes are maintained
-in [`release-notes-0.5.0.md`](release-notes-0.5.0.md). The `0.5.0`
+The published `0.5.0` roadmap is maintained in
+[`roadmap-0.5.0.md`](roadmap-0.5.0.md), release notes are maintained in
+[`release-notes-0.5.0.md`](release-notes-0.5.0.md), and the `0.5.0`
 release-readiness audit is tracked in
-[`release-readiness-0.5.0.md`](release-readiness-0.5.0.md). The published
-`0.4.0` roadmap is maintained in
+[`release-readiness-0.5.0.md`](release-readiness-0.5.0.md). The previous
+published `0.4.0` roadmap is maintained in
 [`roadmap-0.4.0.md`](roadmap-0.4.0.md), release notes are maintained in
 [`release-notes-0.4.0.md`](release-notes-0.4.0.md), and the
 `0.4.0` release-readiness audit is tracked in
@@ -38,6 +39,10 @@ release-readiness audit is tracked in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.5.0` was tagged as `v0.5.0`, uploaded in Central deployment
+`7de75e6d-21a3-4fdb-aaef-2a9660ded7d7`, published, and verified from Maven
+Central with an isolated local Maven repository.
 
 `0.4.0` was tagged as `v0.4.0`, uploaded in Central deployment
 `921e97e5-e002-4498-865f-a3106ed06042`, published, and verified from Maven
