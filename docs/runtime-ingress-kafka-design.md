@@ -71,19 +71,22 @@ documented failure or skip policy.
 The Kafka adapter should follow the named-adapter pattern planned for `0.5.0`:
 
 ```properties
+collector.sources=station-1
+collector.source.station-1.id=iec104:station-1
+collector.source.station-1.protocol=iec104
+
 collector.kafka.consumers=kafka-main
 collector.kafka.consumer.kafka-main.bootstrapServers=localhost:9092
 collector.kafka.consumer.kafka-main.groupId=protocol-runtime
 collector.kafka.consumer.kafka-main.topics=iec104-raw
-collector.kafka.consumer.kafka-main.sourceIdMode=HEADER
-collector.kafka.consumer.kafka-main.sourceIdHeader=protocol-source
-collector.kafka.consumer.kafka-main.configuredSourceId=iec104:station-1
-collector.kafka.consumer.kafka-main.protocol=iec104
-collector.kafka.consumer.kafka-main.backpressure=ACCEPT
+collector.kafka.consumer.kafka-main.source=station-1
+collector.kafka.consumer.kafka-main.sourceIdMode=CONFIGURED
 collector.kafka.consumer.kafka-main.autoOffsetReset=latest
 collector.kafka.consumer.kafka-main.commitMode=AFTER_ACCEPT
 collector.kafka.consumer.kafka-main.maxPollRecords=100
 collector.kafka.consumer.kafka-main.pollTimeoutMillis=1000
+
+collector.backpressure=ACCEPT
 ```
 
 Baseline validation rules:
@@ -91,10 +94,11 @@ Baseline validation rules:
 - `bootstrapServers` must be non-empty
 - `groupId` must be non-empty unless explicit assignment mode is added later
 - either `topics` or `topicPattern` must be configured, but not both
+- runtime-app configuration must bind each consumer to a known `source`
 - `sourceIdMode` must be `HEADER`, `TOPIC`, `KEY`, or `CONFIGURED`
 - `sourceIdHeader` is required when `sourceIdMode=HEADER`
-- configured source id is required when `sourceIdMode=CONFIGURED`
-- protocol must map to an existing runtime parser binding
+- the referenced source id is used when `sourceIdMode=CONFIGURED`
+- the referenced source protocol must map to an existing runtime parser binding
 - `maxPollRecords` must be positive
 - `pollTimeoutMillis` must be positive
 - commit mode must be one of the supported adapter policies

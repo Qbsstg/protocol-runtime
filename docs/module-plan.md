@@ -63,16 +63,17 @@ dependencies are introduced:
 | Module | 0.7.0 goal |
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add no Kafka, MQTT, HTTP, Spring, database, Redis, or observability exporter dependencies. |
-| `runtime-ingress-kafka` | Add Kafka client dependency in this module only; map `ConsumerRecord<byte[], byte[]>` to `IngressEnvelope`; cover configured/header/topic/key source resolution, attributes, backpressure results, and commit-mode decisions. |
-| `runtime-app` | Stay free of Kafka dependencies until app-level Kafka collector assembly is explicitly added after the adapter record boundary is stable. |
+| `runtime-ingress-kafka` | Add Kafka client dependency in this module only; map `ConsumerRecord<byte[], byte[]>` to `IngressEnvelope`; provide polling source lifecycle; cover configured/header/topic/key source resolution, attributes, backpressure results, and commit-mode decisions. |
+| `runtime-app` | Add Kafka consumer properties, app-owned source/protocol binding, status snapshot, and standalone collector assembly through `runtime-ingress-kafka` without moving Kafka APIs into `runtime-core`. |
 | `runtime-protocol-*` | Reuse parser bindings for Kafka payloads without transport or app dependencies. |
 | `runtime-ingress-http` | Preserve the published HTTP path and avoid coupling it to Kafka work. |
 | `runtime-ingress-mqtt` | Remain design-only until the `0.8.0` implementation line opens. |
-| `runtime-smoke-tests` | Add Kafka end-to-end smoke coverage only after app-level Kafka assembly lands. |
+| `runtime-smoke-tests` | Keep live-broker Kafka smoke coverage as follow-up; app-level fake-source tests cover normal verification. |
 
 `0.7.0` should not introduce Spring, MQTT, database, Redis, observability
 exporter, serial-port, or UDP dependencies into `runtime-core`. Kafka
-dependencies are allowed only in `runtime-ingress-kafka` and test scopes.
+dependencies are allowed only in `runtime-ingress-kafka`, runtime-app assembly,
+and test scopes.
 
 ## `0.6.0` Development Posture
 

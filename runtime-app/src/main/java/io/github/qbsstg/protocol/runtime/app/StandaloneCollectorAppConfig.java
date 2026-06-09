@@ -10,6 +10,7 @@ public record StandaloneCollectorAppConfig(
         List<CollectorSourceConfig> sources,
         List<TcpListenerConfig> tcpListeners,
         List<HttpListenerConfig> httpListeners,
+        List<KafkaConsumerConfig> kafkaConsumers,
         BackpressureDecision backpressureDecision,
         long backpressureMaxPayloadBytes,
         BackpressureDecision oversizedPayloadDecision,
@@ -22,6 +23,7 @@ public record StandaloneCollectorAppConfig(
         sources = List.copyOf(Objects.requireNonNull(sources, "sources must not be null"));
         tcpListeners = List.copyOf(Objects.requireNonNull(tcpListeners, "tcpListeners must not be null"));
         httpListeners = List.copyOf(Objects.requireNonNull(httpListeners, "httpListeners must not be null"));
+        kafkaConsumers = List.copyOf(Objects.requireNonNull(kafkaConsumers, "kafkaConsumers must not be null"));
         Objects.requireNonNull(backpressureDecision, "backpressureDecision must not be null");
         Objects.requireNonNull(oversizedPayloadDecision, "oversizedPayloadDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
@@ -35,8 +37,8 @@ public record StandaloneCollectorAppConfig(
         if (sources.isEmpty()) {
             throw new IllegalArgumentException("sources must not be empty");
         }
-        if (tcpListeners.isEmpty() && httpListeners.isEmpty()) {
-            throw new IllegalArgumentException("at least one TCP or HTTP listener is required");
+        if (tcpListeners.isEmpty() && httpListeners.isEmpty() && kafkaConsumers.isEmpty()) {
+            throw new IllegalArgumentException("at least one TCP listener, HTTP listener, or Kafka consumer is required");
         }
         if (sinkType == SinkType.FILE && sinkFile == null) {
             throw new IllegalArgumentException("collector.sink.file is required when collector.sink.type=file");
@@ -56,6 +58,7 @@ public record StandaloneCollectorAppConfig(
         this(
                 sources,
                 tcpListeners,
+                List.of(),
                 List.of(),
                 backpressureDecision,
                 backpressureMaxPayloadBytes,
@@ -79,6 +82,7 @@ public record StandaloneCollectorAppConfig(
                 List.of(source),
                 List.of(listener),
                 List.of(),
+                List.of(),
                 config.backpressureDecision(),
                 config.backpressureMaxPayloadBytes(),
                 config.oversizedPayloadDecision(),
@@ -89,9 +93,9 @@ public record StandaloneCollectorAppConfig(
     }
 
     public StandaloneCollectorConfig singleCollectorConfig() {
-        if (sources.size() != 1 || tcpListeners.size() != 1 || !httpListeners.isEmpty()) {
+        if (sources.size() != 1 || tcpListeners.size() != 1 || !httpListeners.isEmpty() || !kafkaConsumers.isEmpty()) {
             throw new IllegalArgumentException(
-                    "StandaloneCollectorConfig requires exactly one source, one TCP listener, and no HTTP listeners");
+                    "StandaloneCollectorConfig requires exactly one source, one TCP listener, and no HTTP listeners or Kafka consumers");
         }
         TcpListenerConfig listener = tcpListeners.get(0);
         return new StandaloneCollectorConfig(

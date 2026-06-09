@@ -122,8 +122,10 @@ deployable runtime applications. Those dependencies belong here, not in
   selected protocol remain envelope attributes
 - `runtime-protocol-*` modules continue to parse protocol payloads without
   Kafka dependencies
-- runtime-app Kafka collector assembly stays as follow-up work after the
-  adapter record boundary is stable
+- `runtime-app` owns Kafka consumer configuration and standalone collector
+  assembly while keeping Kafka APIs out of `runtime-core`
+- [`examples/collector-kafka.properties`](examples/collector-kafka.properties)
+  shows the minimal IEC104-over-Kafka collector configuration
 
 The detailed plan is maintained in
 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md).
