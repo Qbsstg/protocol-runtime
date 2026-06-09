@@ -27,11 +27,13 @@ of the runtime. `0.6.0` published the HTTP ingress productionization line and
 runtime-app HTTP collector assembly.
 
 The current development line is `0.7.0-SNAPSHOT`, focused on the Kafka ingress
-baseline in a dedicated adapter module.
+baseline and runtime-app Kafka collector assembly.
 
 The `0.7.0` development scope is tracked in
 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md), and draft release notes are
 tracked in [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md). The
+`0.7.0` release-readiness audit is tracked in
+[`docs/release-readiness-0.7.0.md`](docs/release-readiness-0.7.0.md). The
 published `0.6.0` release scope is tracked in
 [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md), and release notes are tracked
 in [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md). The previous
