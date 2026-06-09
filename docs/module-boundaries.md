@@ -199,6 +199,11 @@ Allowed:
   limits, source mapping, and adapter lifecycle
 - `runtime-app` owns HTTP listener configuration and combines HTTP ingress,
   runtime protocol bindings, and app sinks
+- HTTP app configuration supports named listeners with host, port, path,
+  source reference, source id mode, source id header, payload limit, response
+  mode, backlog, and worker threads
+- HTTP listener status belongs to the app status snapshot and formatter, not
+  to `runtime-core`
 - tests may verify HTTP end-to-end behavior in app or smoke-test modules
 
 Not allowed:

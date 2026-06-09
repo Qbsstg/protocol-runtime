@@ -64,7 +64,7 @@ assembly before Kafka and MQTT client dependencies are introduced:
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add no HTTP, Kafka, MQTT, Spring, database, Redis, or observability exporter dependencies. |
 | `runtime-ingress-http` | Harden the JDK `HttpServer` adapter baseline for lifecycle, source mapping, request limits, response policy, parse failure routing, and backpressure behavior. |
-| `runtime-app` | Add HTTP listener configuration and app-owned assembly while preserving TCP collector defaults. |
+| `runtime-app` | Add HTTP listener configuration and app-owned assembly while preserving TCP collector defaults; HTTP-only configs do not open the legacy TCP listener. |
 | `runtime-protocol-*` | Reuse parser bindings for HTTP payloads without transport or app dependencies. |
 | `runtime-ingress-tcp-netty` | Preserve the TCP path and avoid coupling it to HTTP work. |
 | `runtime-ingress-kafka` | Remain design-only until a dedicated implementation release opens. |
@@ -74,7 +74,9 @@ assembly before Kafka and MQTT client dependencies are introduced:
 `0.6.0` should not introduce Spring, Kafka, MQTT, database, Redis,
 observability exporter, serial-port, or UDP dependencies into `runtime-core`.
 HTTP dependencies should remain JDK-only in `runtime-ingress-http` and
-app-owned assembly code for this line.
+app-owned assembly code for this line. The app-level HTTP configuration covers
+host, port, path, source reference, source id mode/header, payload limit,
+response mode, backlog, and worker threads.
 
 ## `0.5.0` Development Posture
 

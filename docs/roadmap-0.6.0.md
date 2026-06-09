@@ -29,7 +29,7 @@ path proves the shared app and test boundaries.
 | --- | --- |
 | `runtime-core` | No dependency or API expansion unless HTTP app assembly exposes a protocol-neutral gap. |
 | `runtime-ingress-http` | Productionize the JDK HTTP adapter baseline: lifecycle, response contract, payload limits, source mapping, parse failure routing, and test fixtures. |
-| `runtime-app` | Add HTTP listener configuration and app assembly around `runtime-ingress-http` while preserving TCP defaults. |
+| `runtime-app` | Add HTTP listener configuration and app assembly around `runtime-ingress-http` while preserving TCP defaults. HTTP-only configurations no longer open the legacy default TCP listener. |
 | `runtime-protocol-*` | Reuse existing parser bindings for HTTP payloads without transport-specific code. |
 | `runtime-smoke-tests` | Add HTTP end-to-end smoke coverage for at least IEC104 and malformed payload routing. |
 | `runtime-ingress-kafka` | Remain design-only. No Kafka client dependency in `0.6.0` unless a later release decision changes scope. |
@@ -40,16 +40,22 @@ path proves the shared app and test boundaries.
 1. Open the `0.6.0-SNAPSHOT` Maven line and document the HTTP productionization
    scope.
 2. Add runtime-app HTTP listener configuration keys with validation for host,
-   port, path, source mapping mode, max payload bytes, and response mode.
+   port, path, source mapping mode, max payload bytes, response mode, backlog,
+   worker threads, source references, duplicate names, and duplicate endpoints.
+   Status: implemented in `runtime-app`.
 3. Add an app-owned HTTP collector assembly that creates one or more
    `HttpIngressServer` instances and routes payloads through the selected
-   `RuntimePipelineRunner`.
+   `RuntimePipelineRunner`. Status: implemented in `runtime-app`.
 4. Add HTTP end-to-end tests for successful IEC104 payloads, malformed payload
    failure routing, retry/drop backpressure responses, payload-size rejection,
-   lifecycle start/stop, and port conflict rollback.
+   lifecycle start/stop, and port conflict rollback. Status: implemented in
+   `runtime-app` unit/integration tests.
 5. Update README and Chinese README with HTTP collector configuration examples
-   after implementation lands.
-6. Add release-readiness notes before the `0.6.0` release branch.
+   after implementation lands. Status: implemented, with
+   `examples/collector-http.properties` and
+   `examples/smoke-standalone-http.sh`.
+6. Add release-readiness notes before the `0.6.0` release branch. Status:
+   pending for the release-readiness branch.
 
 ## Non-Goals
 
@@ -81,7 +87,8 @@ Before `0.6.0` release readiness:
 - `docs/module-plan.md` and `docs/module-boundaries.md` describe the HTTP app
   assembly boundary.
 - HTTP collector behavior is covered by unit or smoke tests.
+- HTTP standalone smoke is available through `examples/smoke-standalone-http.sh`.
+- HTTP listener status appears in app status snapshots and formatter output.
 - `git diff --check` passes.
 - `mvn -q verify` passes.
 - dependency boundary checks prove `runtime-core` remains adapter-free.
-

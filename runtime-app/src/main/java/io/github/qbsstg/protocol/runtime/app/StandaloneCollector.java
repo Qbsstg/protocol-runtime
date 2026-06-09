@@ -6,12 +6,14 @@ import io.github.qbsstg.protocol.runtime.core.RuntimePipelineRunner;
 import io.github.qbsstg.protocol.runtime.iec101.Iec101RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.iec103.Iec103RuntimeBinding;
 import io.github.qbsstg.protocol.runtime.iec104.Iec104RuntimeBinding;
+import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressServer;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServer;
 import io.github.qbsstg.protocol.runtime.modbus.ModbusRuntimeBinding;
 
 import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,7 +24,9 @@ public final class StandaloneCollector implements RuntimeLifecycle {
 
     private final StandaloneCollectorAppConfig appConfig;
     private final RuntimeSinks sinks;
-    private final List<ListenerRuntime> listeners;
+    private final List<TcpListenerRuntime> tcpListeners;
+    private final List<HttpListenerRuntime> httpListeners;
+    private final List<RuntimeListener> listeners;
     private final Clock clock;
     private final CountDownLatch stopped = new CountDownLatch(1);
     private CollectorLifecycleState state = CollectorLifecycleState.CONFIGURED;
@@ -39,9 +43,16 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         this.appConfig = Objects.requireNonNull(appConfig, "appConfig must not be null");
         this.sinks = Objects.requireNonNull(sinks, "sinks must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
-        this.listeners = appConfig.tcpListeners().stream()
-                .map(listener -> new ListenerRuntime(listener, createServer(listener)))
+        this.tcpListeners = appConfig.tcpListeners().stream()
+                .map(listener -> new TcpListenerRuntime(listener, createTcpServer(listener)))
                 .toList();
+        this.httpListeners = appConfig.httpListeners().stream()
+                .map(listener -> new HttpListenerRuntime(listener, createHttpServer(listener)))
+                .toList();
+        List<RuntimeListener> runtimeListeners = new ArrayList<>(tcpListeners.size() + httpListeners.size());
+        runtimeListeners.addAll(tcpListeners);
+        runtimeListeners.addAll(httpListeners);
+        this.listeners = List.copyOf(runtimeListeners);
     }
 
     public static StandaloneCollector create(StandaloneCollectorConfig config) {
@@ -75,8 +86,11 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                         source.sourceId().qualifiedValue(),
                         source.protocol().configValue()))
                 .toList();
-        List<TcpListenerStatus> listenerStatuses = listeners.stream()
-                .map(this::listenerStatus)
+        List<TcpListenerStatus> tcpListenerStatuses = tcpListeners.stream()
+                .map(this::tcpListenerStatus)
+                .toList();
+        List<HttpListenerStatus> httpListenerStatuses = httpListeners.stream()
+                .map(this::httpListenerStatus)
                 .toList();
         return new CollectorStatusSnapshot(
                 state,
@@ -86,8 +100,9 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 lastException == null ? null : lastException.getClass().getName(),
                 lastException == null ? null : lastException.getMessage(),
                 sourceStatuses,
-                listenerStatuses,
-                listenerStatuses.stream().mapToInt(TcpListenerStatus::activeConnectionCount).sum(),
+                tcpListenerStatuses,
+                httpListenerStatuses,
+                tcpListenerStatuses.stream().mapToInt(TcpListenerStatus::activeConnectionCount).sum(),
                 sinks.metricsSnapshot(),
                 appConfig.sinkType(),
                 appConfig.fileSinkRotation(),
@@ -100,7 +115,8 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     public synchronized boolean isRunning() {
         return state == CollectorLifecycleState.RUNNING
                 && !listeners.isEmpty()
-                && listeners.stream().allMatch(listener -> listener.server().isRunning());
+                && tcpListeners.stream().allMatch(listener -> listener.server().isRunning())
+                && httpListeners.stream().allMatch(listener -> listener.server().isRunning());
     }
 
     public synchronized InetSocketAddress localAddress() {
@@ -108,7 +124,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     }
 
     public synchronized List<InetSocketAddress> localAddresses() {
-        return listeners.stream().map(listener -> listener.server().localAddress()).toList();
+        return tcpListeners.stream().map(listener -> listener.server().localAddress()).toList();
     }
 
     public synchronized int port() {
@@ -116,11 +132,19 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     }
 
     public synchronized List<Integer> ports() {
-        return listeners.stream().map(listener -> listener.server().port()).toList();
+        return tcpListeners.stream().map(listener -> listener.server().port()).toList();
+    }
+
+    public synchronized List<InetSocketAddress> httpLocalAddresses() {
+        return httpListeners.stream().map(listener -> listener.server().localAddress()).toList();
+    }
+
+    public synchronized List<Integer> httpPorts() {
+        return httpListeners.stream().map(listener -> listener.server().port()).toList();
     }
 
     public synchronized int activeConnectionCount() {
-        return listeners.stream().mapToInt(listener -> listener.server().activeConnectionCount()).sum();
+        return tcpListeners.stream().mapToInt(listener -> listener.server().activeConnectionCount()).sum();
     }
 
     @Override
@@ -143,10 +167,10 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         startupFailureReason = null;
         lastException = null;
         Exception failure = null;
-        ListenerRuntime failedListener = null;
-        for (ListenerRuntime listener : listeners) {
+        RuntimeListener failedListener = null;
+        for (RuntimeListener listener : listeners) {
             try {
-                listener.server().start();
+                listener.lifecycle().start();
             } catch (Exception ex) {
                 failure = ex;
                 failedListener = listener;
@@ -179,9 +203,9 @@ public final class StandaloneCollector implements RuntimeLifecycle {
             state = CollectorLifecycleState.STOPPING;
         }
         RuntimeException failure = null;
-        for (ListenerRuntime listener : listeners) {
+        for (RuntimeListener listener : listeners) {
             try {
-                listener.server().stop();
+                listener.lifecycle().stop();
             } catch (RuntimeException ex) {
                 if (failure == null) {
                     failure = ex;
@@ -220,13 +244,13 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     }
 
     private TcpNettyServer<?> singleServer() {
-        if (listeners.size() != 1) {
+        if (tcpListeners.size() != 1 || !httpListeners.isEmpty()) {
             throw new IllegalStateException("single listener API requires exactly one TCP listener");
         }
-        return listeners.get(0).server();
+        return tcpListeners.get(0).server();
     }
 
-    private TcpListenerStatus listenerStatus(ListenerRuntime runtime) {
+    private TcpListenerStatus tcpListenerStatus(TcpListenerRuntime runtime) {
         TcpListenerConfig config = runtime.config();
         TcpNettyServer<?> server = runtime.server();
         boolean running = server.isRunning();
@@ -250,17 +274,49 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 server.activeConnectionCount());
     }
 
-    private void recordStartupFailure(ListenerRuntime failedListener, Exception failure) {
-        String listenerName = failedListener == null ? "unknown" : failedListener.config().name();
-        startupFailureReason = "Failed to start TCP listener " + listenerName + ": " + failure.getMessage();
+    private HttpListenerStatus httpListenerStatus(HttpListenerRuntime runtime) {
+        HttpListenerConfig config = runtime.config();
+        HttpIngressServer<?> server = runtime.server();
+        boolean running = server.isRunning();
+        String boundHost = null;
+        Integer boundPort = null;
+        if (running) {
+            InetSocketAddress localAddress = server.localAddress();
+            boundHost = localAddress.getHostString();
+            boundPort = localAddress.getPort();
+        }
+        return new HttpListenerStatus(
+                config.name(),
+                config.sourceName(),
+                config.sourceId().qualifiedValue(),
+                config.protocol().configValue(),
+                config.http().host(),
+                config.http().port(),
+                config.http().path(),
+                config.http().sourceIdMode(),
+                config.http().sourceIdHeader(),
+                config.http().maxPayloadBytes(),
+                config.http().responseMode(),
+                config.http().backlog(),
+                config.http().workerThreads(),
+                boundHost,
+                boundPort,
+                running);
+    }
+
+    private void recordStartupFailure(RuntimeListener failedListener, Exception failure) {
+        String listenerName = failedListener == null ? "unknown" : failedListener.name();
+        String transport = failedListener == null ? "listener" : failedListener.transport();
+        startupFailureReason = "Failed to start " + transport + " listener " + listenerName + ": "
+                + failure.getMessage();
         lastException = failure;
         state = CollectorLifecycleState.FAILED;
     }
 
     private void rollbackAfterStartFailure(Exception failure) {
-        for (ListenerRuntime listener : listeners) {
+        for (RuntimeListener listener : listeners) {
             try {
-                listener.server().stop();
+                listener.lifecycle().stop();
             } catch (RuntimeException ex) {
                 failure.addSuppressed(ex);
             }
@@ -282,7 +338,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         return new IllegalStateException("collector start failed", failure);
     }
 
-    private TcpNettyServer<?> createServer(TcpListenerConfig listener) {
+    private TcpNettyServer<?> createTcpServer(TcpListenerConfig listener) {
         return switch (listener.protocol()) {
             case IEC104 -> createTypedServer(
                     listener,
@@ -290,6 +346,17 @@ public final class StandaloneCollector implements RuntimeLifecycle {
             case IEC101 -> createTypedServer(listener, Iec101RuntimeBinding::new);
             case IEC103 -> createTypedServer(listener, Iec103RuntimeBinding::new);
             case MODBUS -> createTypedServer(listener, ModbusRuntimeBinding::tcpStream);
+        };
+    }
+
+    private HttpIngressServer<?> createHttpServer(HttpListenerConfig listener) {
+        return switch (listener.protocol()) {
+            case IEC104 -> createTypedHttpServer(
+                    listener,
+                    () -> new Iec104RuntimeBinding(appConfig.strictAsduParsing()));
+            case IEC101 -> createTypedHttpServer(listener, Iec101RuntimeBinding::new);
+            case IEC103 -> createTypedHttpServer(listener, Iec103RuntimeBinding::new);
+            case MODBUS -> createTypedHttpServer(listener, ModbusRuntimeBinding::tcpStream);
         };
     }
 
@@ -307,8 +374,65 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 clock);
     }
 
-    private record ListenerRuntime(
+    private <T> HttpIngressServer<T> createTypedHttpServer(
+            HttpListenerConfig listener,
+            Supplier<RuntimeParserBinding<T>> parserFactory) {
+        return new HttpIngressServer<>(
+                listener.http(),
+                new RuntimePipelineRunner<>(
+                        parserFactory.get(),
+                        sinks.runnerRecordSink(),
+                        sinks.runnerFailureSink(),
+                        sinks.backpressureStrategy(appConfig)),
+                clock);
+    }
+
+    private interface RuntimeListener {
+
+        String transport();
+
+        String name();
+
+        RuntimeLifecycle lifecycle();
+    }
+
+    private record TcpListenerRuntime(
             TcpListenerConfig config,
-            TcpNettyServer<?> server) {
+            TcpNettyServer<?> server) implements RuntimeListener {
+
+        @Override
+        public String transport() {
+            return "TCP";
+        }
+
+        @Override
+        public String name() {
+            return config.name();
+        }
+
+        @Override
+        public RuntimeLifecycle lifecycle() {
+            return server;
+        }
+    }
+
+    private record HttpListenerRuntime(
+            HttpListenerConfig config,
+            HttpIngressServer<?> server) implements RuntimeListener {
+
+        @Override
+        public String transport() {
+            return "HTTP";
+        }
+
+        @Override
+        public String name() {
+            return config.name();
+        }
+
+        @Override
+        public RuntimeLifecycle lifecycle() {
+            return server;
+        }
     }
 }

@@ -66,16 +66,23 @@ configuration or an explicitly configured header.
 The HTTP adapter should follow the named-adapter pattern planned for `0.5.0`:
 
 ```properties
+collector.sources=station-a
+collector.source.station-a.id=iec104:station-a
+collector.source.station-a.protocol=iec104
+
 collector.http.listeners=http-main
-collector.http.listener.http-main.host=0.0.0.0
+collector.http.listener.http-main.host=127.0.0.1
 collector.http.listener.http-main.port=8080
 collector.http.listener.http-main.path=/ingress/{sourceId}
+collector.http.listener.http-main.source=station-a
 collector.http.listener.http-main.sourceIdMode=PATH
 collector.http.listener.http-main.sourceIdHeader=X-Protocol-Source
 collector.http.listener.http-main.maxPayloadBytes=65536
-collector.http.listener.http-main.protocol=iec104
-collector.http.listener.http-main.backpressure=ACCEPT
 collector.http.listener.http-main.responseMode=ACK_ON_ACCEPT
+collector.http.listener.http-main.backlog=0
+collector.http.listener.http-main.workerThreads=2
+
+collector.backpressure=ACCEPT
 ```
 
 Baseline validation rules:
@@ -87,7 +94,8 @@ Baseline validation rules:
 - `sourceIdHeader` is required when `sourceIdMode=HEADER`
 - configured source id is required when `sourceIdMode=CONFIGURED`
 - `maxPayloadBytes` must be `0` or positive
-- protocol must map to an existing runtime parser binding
+- `source` must reference a configured app source
+- the referenced source protocol must map to an existing runtime parser binding
 - response mode must be a supported adapter response policy
 
 ## Envelope Mapping
