@@ -124,4 +124,6 @@ Before `0.5.0` release readiness:
 branch keeps the reactor at `0.5.0-SNAPSHOT`, validates the new HTTP ingress
 baseline and adapter design boundaries, and does not create a tag or perform a
 real Maven Central upload. The release branch fixes the reactor at `0.5.0` and
-also avoids tag creation or real Maven Central upload.
+also avoids tag creation or real Maven Central upload. `0.5.0` has since been
+tagged as `v0.5.0`, published to Maven Central, verified with an isolated local
+Maven repository, and published as a GitHub Release.

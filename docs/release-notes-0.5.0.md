@@ -1,12 +1,12 @@
 # Protocol Runtime 0.5.0 Release Notes
 
-Draft release notes for the `0.5.0` runtime release-candidate line.
+`0.5.0` has been tagged as `v0.5.0` and published to Maven Central.
 
-## Planned Highlights
+## Highlights
 
-- Open the Maven reactor at `0.5.0-SNAPSHOT` after the published `0.4.0`
-  multi-protocol runtime release.
-- Plan HTTP, Kafka, and MQTT ingestion adapter boundaries without moving those
+- Starts the adapter productionization line after the published `0.4.0`
+  multi-protocol runtime baseline.
+- Plans HTTP, Kafka, and MQTT ingestion adapter boundaries without moving those
   dependencies into `runtime-core` or `protocol-sdk`.
 - Add the first HTTP ingress design note covering endpoint shape,
   configuration, envelope mapping, response policy, backpressure behavior,
@@ -49,22 +49,41 @@ belong in dedicated adapter modules, sink modules, or app assembly.
 `runtime-protocol-*` modules continue to depend only on `runtime-core`, their
 published SDK parser module, and tests.
 
-## Verification Target
+## Published Artifacts
 
-Before release branch work, the readiness branch passed:
+- `io.github.qbsstg:protocol-runtime:0.5.0`
+- `io.github.qbsstg:runtime-core:0.5.0`
+- `io.github.qbsstg:runtime-protocol-iec104:0.5.0`
+- `io.github.qbsstg:runtime-protocol-iec101:0.5.0`
+- `io.github.qbsstg:runtime-protocol-iec103:0.5.0`
+- `io.github.qbsstg:runtime-protocol-modbus:0.5.0`
+- `io.github.qbsstg:runtime-ingress-tcp-netty:0.5.0`
+- `io.github.qbsstg:runtime-ingress-http:0.5.0`
+- `io.github.qbsstg:runtime-app:0.5.0`
+- `io.github.qbsstg:runtime-app:0.5.0:standalone`
+
+`runtime-smoke-tests` remains a test-only repository module and is
+intentionally skipped for Central publishing.
+
+## Verification
+
+Before publishing, the release flow passed:
 
 - `git diff --check`
 - `mvn -q verify`
-- `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy`
+- `mvn -Pcentral-release -Dcentral.skipPublishing=true clean deploy`
 - standalone collector smoke through `examples/smoke-standalone.sh`
 - dependency boundary checks for `runtime-core`, `runtime-protocol-*`,
   `runtime-ingress-http`, `runtime-app`, and `runtime-smoke-tests`
+- Maven Central deployment `7de75e6d-21a3-4fdb-aaef-2a9660ded7d7` reached
+  `PUBLISHED`
+- Maven Central resolution was verified with an isolated local Maven repository
+  for all published artifacts and the `runtime-app` `standalone` classifier
 
 ## Release Readiness Status
 
 The `0.5.0` readiness audit is tracked in
-[`release-readiness-0.5.0.md`](release-readiness-0.5.0.md). No tag or real
-Maven Central upload is part of readiness work.
+[`release-readiness-0.5.0.md`](release-readiness-0.5.0.md).
 
 HTTP ingress design is tracked in
 [`runtime-ingress-http-design.md`](runtime-ingress-http-design.md).

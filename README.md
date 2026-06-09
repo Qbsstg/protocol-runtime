@@ -20,29 +20,28 @@ output, counters, file sink rotation, parse failure isolation, and payload-size
 backpressure policy. `0.4.0` published multi-protocol runtime expansion with
 IEC101, IEC103, and Modbus runtime protocol bindings around the published
 `protocol-sdk:0.7.0` parser artifacts, plus app-level protocol selection while
-preserving the existing IEC104 app path.
+preserving the existing IEC104 app path. `0.5.0` published the first adapter
+boundary release with a JDK-only HTTP ingress baseline and HTTP, Kafka, and
+MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
+of the runtime.
 
-The current release branch is `0.5.0`. Its scope is adapter boundary design for
-HTTP, Kafka, and MQTT ingestion before those dependencies are introduced into
-dedicated modules.
-
-The `0.5.0` release scope is tracked in
-[`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md). Draft release notes are
-tracked in [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md). The
+The latest `0.5.0` release scope is tracked in
+[`docs/roadmap-0.5.0.md`](docs/roadmap-0.5.0.md), and release notes are tracked
+in [`docs/release-notes-0.5.0.md`](docs/release-notes-0.5.0.md). The previous
 published `0.4.0` release scope is tracked in
 [`docs/roadmap-0.4.0.md`](docs/roadmap-0.4.0.md), and release notes are
 tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.4.0`. Runtime modules are
+The latest published runtime release version is `0.5.0`. Runtime modules are
 JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -50,7 +49,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -58,7 +57,15 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
+</dependency>
+```
+
+```xml
+<dependency>
+    <groupId>io.github.qbsstg</groupId>
+    <artifactId>runtime-ingress-http</artifactId>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -66,7 +73,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
 </dependency>
 ```
 
@@ -216,8 +223,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The published `0.4.0` build and the current `0.5.0` release branch use
-app-level protocol selection:
+The published `0.5.0` build uses app-level protocol selection:
 
 ```text
 TcpNettyServer
