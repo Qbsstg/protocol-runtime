@@ -27,7 +27,9 @@ onward.
 
 The `0.7.0` roadmap is maintained in
 [`roadmap-0.7.0.md`](roadmap-0.7.0.md), and draft release notes are maintained
-in [`release-notes-0.7.0.md`](release-notes-0.7.0.md). The published
+in [`release-notes-0.7.0.md`](release-notes-0.7.0.md). The `0.7.0`
+release-readiness audit is tracked in
+[`release-readiness-0.7.0.md`](release-readiness-0.7.0.md). The published
 `0.6.0` roadmap is maintained in
 [`roadmap-0.6.0.md`](roadmap-0.6.0.md), release notes are maintained in
 [`release-notes-0.6.0.md`](release-notes-0.6.0.md), and the `0.6.0`

@@ -24,11 +24,13 @@ JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档
 生产化路线和 runtime-app HTTP collector 装配。
 
 当前开发线是 `0.7.0-SNAPSHOT`，重点是在 dedicated adapter module 中补充
-Kafka ingress baseline。
+Kafka ingress baseline，并完成 runtime-app Kafka collector 装配。
 
 `0.7.0` 开发范围记录在
 [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)，草案 release notes 记录在
-[`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)。已发布的
+[`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)。`0.7.0`
+release-readiness audit 记录在
+[`docs/release-readiness-0.7.0.md`](docs/release-readiness-0.7.0.md)。已发布的
 `0.6.0` 范围记录在
 [`docs/roadmap-0.6.0.md`](docs/roadmap-0.6.0.md)，release notes 记录在
 [`docs/release-notes-0.6.0.md`](docs/release-notes-0.6.0.md)。上一个已发布的
