@@ -64,3 +64,9 @@ Before release branch work, the readiness branch passed:
 
 The readiness audit is tracked in
 [`release-readiness-0.8.0.md`](release-readiness-0.8.0.md).
+
+## Release Branch Status
+
+The `0.8.0` release branch fixes the Maven reactor at `0.8.0`. The release PR
+does not create a tag and does not perform a real Maven Central upload; those
+remain final publication steps after the release PR merges to `main`.

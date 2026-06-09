@@ -27,9 +27,8 @@ of the runtime. `0.6.0` published the HTTP ingress productionization line and
 runtime-app HTTP collector assembly. `0.7.0` published the Kafka ingress
 baseline and runtime-app Kafka collector assembly.
 
-The current development line is `0.8.0-SNAPSHOT`, which contains the MQTT
-ingress baseline and runtime-app MQTT collector assembly. Release-readiness
-verification for `0.8.0` is now tracked before the release branch.
+The current release branch fixes `0.8.0`, which contains the MQTT ingress
+baseline and runtime-app MQTT collector assembly.
 
 The `0.8.0` development scope is tracked in
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md), and draft release notes are
@@ -314,7 +313,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current `0.8.0-SNAPSHOT` line can run TCP/Netty, JDK HTTP, Kafka, or MQTT
+The current `0.8.0` line can run TCP/Netty, JDK HTTP, Kafka, or MQTT
 ingress through the same app-owned pipeline:
 
 ```text
@@ -333,7 +332,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -366,7 +365,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -404,7 +403,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.8.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
