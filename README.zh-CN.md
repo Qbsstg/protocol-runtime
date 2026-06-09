@@ -24,8 +24,8 @@ JDK-only HTTP ingress baseline，以及 HTTP、Kafka、MQTT adapter 设计文档
 生产化路线和 runtime-app HTTP collector 装配。`0.7.0` 已发布 Kafka ingress
 baseline 和 runtime-app Kafka collector 装配。
 
-当前开发线是 `0.8.0-SNAPSHOT`，重点是在 dedicated adapter module 中补充
-MQTT ingress baseline，并完成 runtime-app MQTT collector 装配。
+当前开发线是 `0.8.0-SNAPSHOT`，已包含 MQTT ingress baseline 和
+runtime-app MQTT collector 装配。剩余工作是 `0.8.0` release-readiness 验证。
 
 `0.8.0` 开发范围记录在
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)，草案 release notes 记录在
@@ -113,11 +113,11 @@ release notes 记录在
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | 基于 Paho MQTT 的 ingress adapter，把 MQTT payload 和 message metadata 映射为 runtime envelope，同时保持 MQTT 依赖不进入 `runtime-core`。 |
-| `runtime-app` | 0.7.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka 装配、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
+| `runtime-app` | 0.8.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
-未来可能补充 MQTT、pipeline、更多 sink 和更完整的可部署运行时应用。
-这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+未来可能补充 pipeline、更多 sink 和更完整的可部署运行时应用。这些依赖都属于
+runtime 仓库，不应反向进入 `protocol-sdk`。
 
 ## `0.8.0` MQTT Ingress 规划
 
@@ -131,8 +131,10 @@ release notes 记录在
 - MQTT topic、QoS、retained 标记、duplicate 标记、packet id、source id mode
   和选定协议应继续作为 envelope attributes。
 - `runtime-protocol-*` 继续只解析协议 payload，不引入 MQTT 依赖。
-- `runtime-app` 后续负责 MQTT client 配置和 standalone collector 装配，同时保持
+- `runtime-app` 负责 MQTT client 配置和 standalone collector 装配，同时保持
   MQTT API 不进入 `runtime-core`。
+- [`examples/collector-mqtt.properties`](examples/collector-mqtt.properties)
+  提供最小 IEC104 over MQTT collector 配置示例。
 
 详细规划维护在 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)。
 
@@ -269,12 +271,12 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。已发布的 `0.7.0`
-开发线可以把 TCP/Netty、JDK HTTP 或 Kafka ingress 接到同一个 app-owned
-pipeline：
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前 `0.8.0-SNAPSHOT`
+开发线可以把 TCP/Netty、JDK HTTP、Kafka 或 MQTT ingress 接到同一个
+app-owned pipeline：
 
 ```text
-TcpNettyServer, HttpIngressServer, or KafkaRecordSource
+TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
   -> RuntimePipelineRunner
   -> selected RuntimeParserBinding
   -> configured RecordSink / FailureSink
@@ -316,6 +318,14 @@ APDU，并验证 file sink 输出：
 
 ```bash
 sh examples/smoke-standalone-http.sh
+```
+
+MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
+`tcp://localhost:1883` 的 broker：
+
+```bash
+java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+  --config examples/collector-mqtt.properties
 ```
 
 如果默认 `java` 低于 JDK 21，运行 smoke 前设置 `JAVA_BIN`：

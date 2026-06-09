@@ -73,9 +73,15 @@ scopes. They must not enter `runtime-core`, `runtime-protocol-*`, or
 - Unit tests cover configured/topic source id resolution, MQTT envelope
   attributes, invalid source handling, backpressure result mapping, and module
   factory exposure without requiring a live broker.
+- `runtime-app` now parses named MQTT clients, assembles `MqttMessageSource`
+  through `RuntimePipelineRunner`, exposes MQTT client status, and covers
+  fake-source dispatch, malformed payload routing, topic source mode, and
+  backpressure behavior without requiring a live broker.
+- [`examples/collector-mqtt.properties`](../examples/collector-mqtt.properties)
+  documents the minimal IEC104-over-MQTT standalone collector shape.
 
-Remaining `0.8.0` work includes runtime-app MQTT collector assembly,
-configuration examples, status output, and release-readiness verification.
+Remaining `0.8.0` work is release-readiness verification and final release
+branch preparation.
 
 ## Dependency Boundaries
 

@@ -8,6 +8,8 @@ import io.github.qbsstg.protocol.runtime.ingress.http.HttpIngressSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaCommitMode;
 import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaIngressConsumerConfig;
 import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaSourceIdMode;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttIngressClientConfig;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
 import java.io.IOException;
@@ -74,6 +76,18 @@ public record StandaloneCollectorConfig(
     public static final String KAFKA_CONSUMER_AUTO_OFFSET_RESET_SUFFIX = ".autoOffsetReset";
     public static final String KAFKA_CONSUMER_MAX_POLL_RECORDS_SUFFIX = ".maxPollRecords";
     public static final String KAFKA_CONSUMER_POLL_TIMEOUT_MILLIS_SUFFIX = ".pollTimeoutMillis";
+    public static final String MQTT_CLIENTS = "collector.mqtt.clients";
+    public static final String MQTT_CLIENT_PREFIX = "collector.mqtt.client.";
+    public static final String MQTT_CLIENT_BROKER_URI_SUFFIX = ".brokerUri";
+    public static final String MQTT_CLIENT_CLIENT_ID_SUFFIX = ".clientId";
+    public static final String MQTT_CLIENT_TOPIC_FILTERS_SUFFIX = ".topicFilters";
+    public static final String MQTT_CLIENT_QOS_SUFFIX = ".qos";
+    public static final String MQTT_CLIENT_SOURCE_SUFFIX = ".source";
+    public static final String MQTT_CLIENT_SOURCE_ID_MODE_SUFFIX = ".sourceIdMode";
+    public static final String MQTT_CLIENT_CLEAN_SESSION_SUFFIX = ".cleanSession";
+    public static final String MQTT_CLIENT_AUTOMATIC_RECONNECT_SUFFIX = ".automaticReconnect";
+    public static final String MQTT_CLIENT_CONNECTION_TIMEOUT_SECONDS_SUFFIX = ".connectionTimeoutSeconds";
+    public static final String MQTT_CLIENT_KEEP_ALIVE_SECONDS_SUFFIX = ".keepAliveSeconds";
     public static final String SOURCES = "collector.sources";
     public static final String SOURCE_ID = "collector.source.id";
     public static final String SOURCE_PREFIX = "collector.source.";
@@ -211,20 +225,22 @@ public record StandaloneCollectorConfig(
         SourceParseResult sourceResult = parseSources(properties, defaults, protocol, errors);
         boolean httpListenersDeclared = rawProperty(properties, HTTP_LISTENERS) != null;
         boolean kafkaConsumersDeclared = rawProperty(properties, KAFKA_CONSUMERS) != null;
+        boolean mqttClientsDeclared = rawProperty(properties, MQTT_CLIENTS) != null;
         List<TcpListenerConfig> tcpListeners = parseTcpListeners(
                 properties,
                 defaults,
                 sourceResult,
-                httpListenersDeclared || kafkaConsumersDeclared,
+                httpListenersDeclared || kafkaConsumersDeclared || mqttClientsDeclared,
                 errors);
         List<HttpListenerConfig> httpListeners = parseHttpListeners(properties, sourceResult, errors);
         List<KafkaConsumerConfig> kafkaConsumers = parseKafkaConsumers(properties, sourceResult, errors);
+        List<MqttClientConfig> mqttClients = parseMqttClients(properties, sourceResult, errors);
         addDuplicateSourceIdErrors(sourceResult.sources(), errors);
         addDuplicateTcpListenerEndpointErrors(tcpListeners, errors);
         addDuplicateHttpListenerEndpointErrors(httpListeners, errors);
         addDuplicateNetworkListenerEndpointErrors(tcpListeners, httpListeners, errors);
-        if (tcpListeners.isEmpty() && httpListeners.isEmpty() && kafkaConsumers.isEmpty()) {
-            errors.add("at least one TCP listener, HTTP listener, or Kafka consumer is required");
+        if (tcpListeners.isEmpty() && httpListeners.isEmpty() && kafkaConsumers.isEmpty() && mqttClients.isEmpty()) {
+            errors.add("at least one TCP listener, HTTP listener, Kafka consumer, or MQTT client is required");
         }
 
         if (!errors.isEmpty()) {
@@ -237,6 +253,7 @@ public record StandaloneCollectorConfig(
                         tcpListeners,
                         httpListeners,
                         kafkaConsumers,
+                        mqttClients,
                         backpressure,
                         backpressureMaxPayloadBytes,
                         oversizedPayloadDecision,
@@ -420,6 +437,47 @@ public record StandaloneCollectorConfig(
             }
         }
         return consumers;
+    }
+
+    private static List<MqttClientConfig> parseMqttClients(
+            Properties properties,
+            SourceParseResult sourceResult,
+            List<String> errors) {
+        String rawNames = rawProperty(properties, MQTT_CLIENTS);
+        if (rawNames == null) {
+            return List.of();
+        }
+        if (rawNames.isBlank()) {
+            errors.add(MQTT_CLIENTS + " must not be blank");
+            return List.of();
+        }
+
+        List<String> names = parseNameList(MQTT_CLIENTS, rawNames, errors);
+        addDuplicateNameErrors(MQTT_CLIENTS, names, errors);
+        List<MqttClientConfig> clients = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (String name : names) {
+            if (!seen.add(name)) {
+                continue;
+            }
+            String prefix = MQTT_CLIENT_PREFIX + name;
+            String sourceName = property(properties, prefix + MQTT_CLIENT_SOURCE_SUFFIX, null);
+            if (sourceName == null) {
+                errors.add(prefix + MQTT_CLIENT_SOURCE_SUFFIX + " is required");
+                continue;
+            }
+            sourceName = normalizeName(prefix + MQTT_CLIENT_SOURCE_SUFFIX, sourceName, errors);
+            CollectorSourceConfig source = sourceResult.sourceByName().get(sourceName);
+            if (sourceName != null && source == null) {
+                errors.add(prefix + MQTT_CLIENT_SOURCE_SUFFIX + " references unknown source: " + sourceName);
+            }
+
+            MqttIngressClientConfig mqtt = parseNamedMqttConfig(properties, prefix, source, name, errors);
+            if (sourceName != null && source != null && mqtt != null) {
+                clients.add(new MqttClientConfig(name, mqtt, sourceName, source.sourceId(), source.protocol()));
+            }
+        }
+        return clients;
     }
 
     private static List<TcpListenerConfig> parseDefaultTcpListener(
@@ -621,6 +679,65 @@ public record StandaloneCollectorConfig(
         }
     }
 
+    private static MqttIngressClientConfig parseNamedMqttConfig(
+            Properties properties,
+            String prefix,
+            CollectorSourceConfig source,
+            String clientName,
+            List<String> errors) {
+        String brokerUriKey = prefix + MQTT_CLIENT_BROKER_URI_SUFFIX;
+        String clientIdKey = prefix + MQTT_CLIENT_CLIENT_ID_SUFFIX;
+        String topicFiltersKey = prefix + MQTT_CLIENT_TOPIC_FILTERS_SUFFIX;
+        String qosKey = prefix + MQTT_CLIENT_QOS_SUFFIX;
+        String sourceIdModeKey = prefix + MQTT_CLIENT_SOURCE_ID_MODE_SUFFIX;
+        String cleanSessionKey = prefix + MQTT_CLIENT_CLEAN_SESSION_SUFFIX;
+        String automaticReconnectKey = prefix + MQTT_CLIENT_AUTOMATIC_RECONNECT_SUFFIX;
+        String connectionTimeoutSecondsKey = prefix + MQTT_CLIENT_CONNECTION_TIMEOUT_SECONDS_SUFFIX;
+        String keepAliveSecondsKey = prefix + MQTT_CLIENT_KEEP_ALIVE_SECONDS_SUFFIX;
+
+        String brokerUri = requiredStringProperty(properties, brokerUriKey, errors);
+        String clientId = requiredStringProperty(properties, clientIdKey, errors);
+        List<String> topicFilters = parseOptionalValueList(properties, topicFiltersKey, errors);
+        int qos = intProperty(properties, qosKey, 0, 0, 2, errors);
+        MqttSourceIdMode sourceIdMode = parseMqttSourceIdMode(
+                sourceIdModeKey,
+                property(properties, sourceIdModeKey, MqttSourceIdMode.CONFIGURED.name()),
+                errors);
+        boolean cleanSession = parseBoolean(properties, cleanSessionKey, true, errors);
+        boolean automaticReconnect = parseBoolean(properties, automaticReconnectKey, true, errors);
+        int connectionTimeoutSeconds = intProperty(
+                properties,
+                connectionTimeoutSecondsKey,
+                30,
+                1,
+                Integer.MAX_VALUE,
+                errors);
+        int keepAliveSeconds = intProperty(properties, keepAliveSecondsKey, 60, 1, Integer.MAX_VALUE, errors);
+
+        if (hasErrorForPrefix(errors, prefix) || source == null) {
+            return null;
+        }
+        SourceId configuredSourceId = sourceIdMode == MqttSourceIdMode.CONFIGURED ? source.sourceId() : null;
+        try {
+            return new MqttIngressClientConfig(
+                    clientName,
+                    brokerUri,
+                    clientId,
+                    topicFilters,
+                    qos,
+                    sourceIdMode,
+                    configuredSourceId,
+                    source.protocol().configValue(),
+                    cleanSession,
+                    automaticReconnect,
+                    connectionTimeoutSeconds,
+                    keepAliveSeconds);
+        } catch (IllegalArgumentException ex) {
+            errors.add(prefix + " is invalid: " + ex.getMessage());
+            return null;
+        }
+    }
+
     private static Properties loadProperties(Path path) {
         Properties properties = new Properties();
         try (InputStream input = Files.newInputStream(path)) {
@@ -712,6 +829,15 @@ public record StandaloneCollectorConfig(
         } catch (RuntimeException ex) {
             errors.add(key + " must be CONFIGURED, HEADER, TOPIC, or KEY");
             return KafkaSourceIdMode.CONFIGURED;
+        }
+    }
+
+    private static MqttSourceIdMode parseMqttSourceIdMode(String key, String value, List<String> errors) {
+        try {
+            return MqttSourceIdMode.valueOf(value.toUpperCase(Locale.ROOT).replace('-', '_'));
+        } catch (RuntimeException ex) {
+            errors.add(key + " must be CONFIGURED or TOPIC");
+            return MqttSourceIdMode.CONFIGURED;
         }
     }
 

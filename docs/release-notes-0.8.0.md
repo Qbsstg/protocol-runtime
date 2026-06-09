@@ -19,6 +19,8 @@ Draft release notes for the `0.8.0` runtime release line.
 - Add runtime-app MQTT client configuration, standalone collector assembly,
   status output, and fake-source tests for end-to-end parser dispatch without a
   live broker.
+- Add [`examples/collector-mqtt.properties`](../examples/collector-mqtt.properties)
+  as the minimal IEC104-over-MQTT standalone collector configuration.
 
 ## Scope
 
@@ -55,3 +57,5 @@ Before release branch work, the readiness branch should pass:
   invalid source handling, backpressure result mapping, and lifecycle decisions
 - runtime-app MQTT tests for MQTT-only config parsing, status formatting,
   fake-source dispatch, parse failure routing, and backpressure behavior
+- an example MQTT collector configuration for manual broker-backed runs outside
+  normal `mvn verify`

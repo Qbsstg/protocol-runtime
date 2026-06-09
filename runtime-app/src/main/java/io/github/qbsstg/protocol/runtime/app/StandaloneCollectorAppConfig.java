@@ -11,6 +11,7 @@ public record StandaloneCollectorAppConfig(
         List<TcpListenerConfig> tcpListeners,
         List<HttpListenerConfig> httpListeners,
         List<KafkaConsumerConfig> kafkaConsumers,
+        List<MqttClientConfig> mqttClients,
         BackpressureDecision backpressureDecision,
         long backpressureMaxPayloadBytes,
         BackpressureDecision oversizedPayloadDecision,
@@ -24,6 +25,7 @@ public record StandaloneCollectorAppConfig(
         tcpListeners = List.copyOf(Objects.requireNonNull(tcpListeners, "tcpListeners must not be null"));
         httpListeners = List.copyOf(Objects.requireNonNull(httpListeners, "httpListeners must not be null"));
         kafkaConsumers = List.copyOf(Objects.requireNonNull(kafkaConsumers, "kafkaConsumers must not be null"));
+        mqttClients = List.copyOf(Objects.requireNonNull(mqttClients, "mqttClients must not be null"));
         Objects.requireNonNull(backpressureDecision, "backpressureDecision must not be null");
         Objects.requireNonNull(oversizedPayloadDecision, "oversizedPayloadDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
@@ -37,8 +39,9 @@ public record StandaloneCollectorAppConfig(
         if (sources.isEmpty()) {
             throw new IllegalArgumentException("sources must not be empty");
         }
-        if (tcpListeners.isEmpty() && httpListeners.isEmpty() && kafkaConsumers.isEmpty()) {
-            throw new IllegalArgumentException("at least one TCP listener, HTTP listener, or Kafka consumer is required");
+        if (tcpListeners.isEmpty() && httpListeners.isEmpty() && kafkaConsumers.isEmpty() && mqttClients.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "at least one TCP listener, HTTP listener, Kafka consumer, or MQTT client is required");
         }
         if (sinkType == SinkType.FILE && sinkFile == null) {
             throw new IllegalArgumentException("collector.sink.file is required when collector.sink.type=file");
@@ -59,6 +62,34 @@ public record StandaloneCollectorAppConfig(
                 sources,
                 tcpListeners,
                 List.of(),
+                List.of(),
+                List.of(),
+                backpressureDecision,
+                backpressureMaxPayloadBytes,
+                oversizedPayloadDecision,
+                sinkType,
+                sinkFile,
+                fileSinkRotation,
+                strictAsduParsing);
+    }
+
+    public StandaloneCollectorAppConfig(
+            List<CollectorSourceConfig> sources,
+            List<TcpListenerConfig> tcpListeners,
+            List<HttpListenerConfig> httpListeners,
+            List<KafkaConsumerConfig> kafkaConsumers,
+            BackpressureDecision backpressureDecision,
+            long backpressureMaxPayloadBytes,
+            BackpressureDecision oversizedPayloadDecision,
+            SinkType sinkType,
+            Path sinkFile,
+            FileSinkRotationConfig fileSinkRotation,
+            boolean strictAsduParsing) {
+        this(
+                sources,
+                tcpListeners,
+                httpListeners,
+                kafkaConsumers,
                 List.of(),
                 backpressureDecision,
                 backpressureMaxPayloadBytes,
@@ -83,6 +114,7 @@ public record StandaloneCollectorAppConfig(
                 List.of(listener),
                 List.of(),
                 List.of(),
+                List.of(),
                 config.backpressureDecision(),
                 config.backpressureMaxPayloadBytes(),
                 config.oversizedPayloadDecision(),
@@ -93,9 +125,13 @@ public record StandaloneCollectorAppConfig(
     }
 
     public StandaloneCollectorConfig singleCollectorConfig() {
-        if (sources.size() != 1 || tcpListeners.size() != 1 || !httpListeners.isEmpty() || !kafkaConsumers.isEmpty()) {
+        if (sources.size() != 1
+                || tcpListeners.size() != 1
+                || !httpListeners.isEmpty()
+                || !kafkaConsumers.isEmpty()
+                || !mqttClients.isEmpty()) {
             throw new IllegalArgumentException(
-                    "StandaloneCollectorConfig requires exactly one source, one TCP listener, and no HTTP listeners or Kafka consumers");
+                    "StandaloneCollectorConfig requires exactly one source, one TCP listener, and no HTTP listeners, Kafka consumers, or MQTT clients");
         }
         TcpListenerConfig listener = tcpListeners.get(0);
         return new StandaloneCollectorConfig(

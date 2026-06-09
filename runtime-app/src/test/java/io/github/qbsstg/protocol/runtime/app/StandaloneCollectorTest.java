@@ -24,6 +24,12 @@ import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaIngressStatus;
 import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaRecordReceiver;
 import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaRecordSource;
 import io.github.qbsstg.protocol.runtime.ingress.kafka.KafkaSourceIdMode;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttIngressAttributes;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttIngressResult;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttIngressStatus;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttMessageReceiver;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttMessageSource;
+import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpConnectionAttributes;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
@@ -47,6 +53,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -606,6 +613,201 @@ class StandaloneCollectorTest {
     }
 
     @Test
+    void parsesMqttOnlyAppConfigurationWithoutDefaultTcpHttpOrKafkaListener() {
+        Properties properties = mqttProperties("in-memory");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertTrue(validation.isValid());
+        assertEquals(1, appConfig.sources().size());
+        assertTrue(appConfig.tcpListeners().isEmpty());
+        assertTrue(appConfig.httpListeners().isEmpty());
+        assertTrue(appConfig.kafkaConsumers().isEmpty());
+        assertEquals(1, appConfig.mqttClients().size());
+        MqttClientConfig client = appConfig.mqttClients().get(0);
+        assertEquals("mqtt-main", client.name());
+        assertEquals("default", client.sourceName());
+        assertEquals("iec104:station-1", client.sourceId().qualifiedValue());
+        assertEquals(RuntimeProtocol.IEC104, client.protocol());
+        assertEquals("tcp://localhost:1883", client.mqtt().brokerUri());
+        assertEquals("protocol-runtime-station-1", client.mqtt().clientId());
+        assertEquals(List.of("iec104/station-1/raw"), client.mqtt().topicFilters());
+        assertEquals(0, client.mqtt().qos());
+        assertEquals(MqttSourceIdMode.CONFIGURED, client.mqtt().sourceIdMode());
+        assertTrue(client.mqtt().cleanSession());
+        assertTrue(client.mqtt().automaticReconnect());
+        assertEquals(30, client.mqtt().connectionTimeoutSeconds());
+        assertEquals(60, client.mqtt().keepAliveSeconds());
+        assertThrows(IllegalArgumentException.class, appConfig::singleCollectorConfig);
+    }
+
+    @Test
+    void startsMqttCollectorAndRoutesIec104MessagesToInMemorySink() throws Exception {
+        FakeMqttMessageSource source = new FakeMqttMessageSource();
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(
+                mqttProperties("in-memory"));
+
+        try (StandaloneCollector collector = mqttCollector(appConfig, source)) {
+            CollectorStatusSnapshot configured = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.CONFIGURED, configured.state());
+            assertTrue(configured.tcpListeners().isEmpty());
+            assertTrue(configured.httpListeners().isEmpty());
+            assertTrue(configured.kafkaConsumers().isEmpty());
+            assertEquals(1, configured.mqttClients().size());
+            assertFalse(configured.mqttClients().get(0).running());
+
+            collector.start();
+
+            MqttIngressResult result = source.emit("iec104/station-1/raw", mqttMessage(SINGLE_POINT_FRAME));
+
+            assertEquals(MqttIngressStatus.ACCEPTED, result.status());
+            assertTrue(result.acknowledgeAllowed());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParsedRecord<Object>> records = awaitRecords(sink, 1);
+            assertTrue(collector.isRunning());
+            assertEquals("iec104:station-1", records.get(0).sourceId().qualifiedValue());
+            assertEquals("iec104", records.get(0).protocol());
+            assertEquals("I_FORMAT", records.get(0).recordType());
+            assertArrayEquals(SINGLE_POINT_FRAME, records.get(0).rawPayload());
+            assertEquals("iec104/station-1/raw", records.get(0).attributes().get(MqttIngressAttributes.TOPIC));
+            assertTrue(sink.failures().isEmpty());
+
+            CollectorStatusSnapshot running = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.RUNNING, running.state());
+            assertEquals(1, running.mqttClients().size());
+            MqttClientStatus status = running.mqttClients().get(0);
+            assertEquals("mqtt-main", status.name());
+            assertEquals("tcp://localhost:1883", status.brokerUri());
+            assertEquals("protocol-runtime-station-1", status.clientId());
+            assertEquals(List.of("iec104/station-1/raw"), status.topicFilters());
+            assertEquals(MqttSourceIdMode.CONFIGURED, status.sourceIdMode());
+            assertTrue(status.running());
+            assertEquals(0, running.activeConnectionCount());
+            assertEquals(1, running.metrics().parsedRecordCount());
+            assertEquals(0, running.metrics().parseFailureCount());
+
+            String formatted = CollectorStatusFormatter.format(running);
+            assertTrue(formatted.contains("listeners=1"));
+            assertTrue(formatted.contains("tcpListeners=[]"));
+            assertTrue(formatted.contains("httpListeners=[]"));
+            assertTrue(formatted.contains("kafkaConsumers=[]"));
+            assertTrue(formatted.contains("mqttClients=[mqtt-main@tcp://localhost:1883/clientId=protocol-runtime-station-1"));
+            assertTrue(formatted.contains("/sourceIdMode=CONFIGURED/protocol=iec104"));
+        }
+    }
+
+    @Test
+    void routesTopicSourceMqttMessagesWithConfiguredProtocol() throws Exception {
+        FakeMqttMessageSource source = new FakeMqttMessageSource();
+        Properties properties = mqttProperties("in-memory");
+        String prefix = StandaloneCollectorConfig.MQTT_CLIENT_PREFIX + "mqtt-main";
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.MQTT_CLIENT_SOURCE_ID_MODE_SUFFIX,
+                "topic");
+
+        try (StandaloneCollector collector = mqttCollector(
+                StandaloneCollectorConfig.appConfigFromProperties(properties),
+                source)) {
+            collector.start();
+
+            MqttIngressResult result = source.emit("iec104:station-topic", mqttMessage(SINGLE_POINT_FRAME));
+
+            assertEquals(MqttIngressStatus.ACCEPTED, result.status());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            ParsedRecord<Object> record = awaitRecords(sink, 1).get(0);
+            assertEquals("iec104:station-topic", record.sourceId().qualifiedValue());
+            assertEquals("iec104", record.protocol());
+            assertEquals(MqttSourceIdMode.TOPIC, collector.statusSnapshot().mqttClients().get(0).sourceIdMode());
+        }
+    }
+
+    @Test
+    void routesMalformedMqttPayloadsToFailureSink() throws Exception {
+        FakeMqttMessageSource source = new FakeMqttMessageSource();
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(
+                mqttProperties("in-memory"));
+
+        try (StandaloneCollector collector = mqttCollector(appConfig, source)) {
+            collector.start();
+
+            byte[] malformed = bytes(0x68, 0x03, 0x00, 0x00, 0x00);
+            MqttIngressResult result = source.emit("iec104/station-1/raw", mqttMessage(malformed));
+
+            assertEquals(MqttIngressStatus.ACCEPTED, result.status());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            List<ParseFailure> failures = awaitFailures(sink, 1);
+            assertTrue(sink.records().isEmpty());
+            assertEquals("iec104:station-1", failures.get(0).sourceId().qualifiedValue());
+            assertTrue(failures.get(0).message().contains("Invalid IEC104 APDU length"));
+            assertEquals("iec104/station-1/raw", failures.get(0).attributes().get(MqttIngressAttributes.TOPIC));
+            assertEquals(1, collector.statusSnapshot().metrics().parseFailureCount());
+        }
+    }
+
+    @Test
+    void retryLaterMqttBackpressurePreventsParsingAndDisallowsAcknowledge() throws Exception {
+        FakeMqttMessageSource source = new FakeMqttMessageSource();
+        Properties properties = mqttProperties("in-memory");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, "RETRY_LATER");
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        try (StandaloneCollector collector = mqttCollector(appConfig, source)) {
+            collector.start();
+
+            MqttIngressResult result = source.emit("iec104/station-1/raw", mqttMessage(SINGLE_POINT_FRAME));
+
+            assertEquals(MqttIngressStatus.RETRY_LATER, result.status());
+            assertFalse(result.acknowledgeAllowed());
+            InMemoryRuntimeSink<Object> sink = collector.inMemorySink().orElseThrow();
+            assertTrue(sink.records().isEmpty());
+            assertTrue(sink.failures().isEmpty());
+            CollectorRuntimeMetrics metrics = awaitRetryLaterBackpressure(collector, 1);
+            assertEquals(0, metrics.parsedRecordCount());
+            assertEquals(0, metrics.parseFailureCount());
+            assertEquals("iec104:station-1", metrics.lastBackpressureSourceId());
+            assertEquals(SINGLE_POINT_FRAME.length, metrics.lastBackpressurePayloadSize());
+        }
+    }
+
+    @Test
+    void validatesMqttClientConfiguration() {
+        Properties properties = mqttProperties("in-memory");
+        String prefix = StandaloneCollectorConfig.MQTT_CLIENT_PREFIX + "mqtt-main";
+        properties.setProperty(StandaloneCollectorConfig.MQTT_CLIENTS, "mqtt-main,mqtt-main");
+        properties.remove(prefix + StandaloneCollectorConfig.MQTT_CLIENT_BROKER_URI_SUFFIX);
+        properties.setProperty(prefix + StandaloneCollectorConfig.MQTT_CLIENT_SOURCE_SUFFIX, "missing");
+        properties.setProperty(prefix + StandaloneCollectorConfig.MQTT_CLIENT_TOPIC_FILTERS_SUFFIX, " ");
+        properties.setProperty(prefix + StandaloneCollectorConfig.MQTT_CLIENT_QOS_SUFFIX, "3");
+        properties.setProperty(prefix + StandaloneCollectorConfig.MQTT_CLIENT_SOURCE_ID_MODE_SUFFIX, "header");
+        properties.setProperty(prefix + StandaloneCollectorConfig.MQTT_CLIENT_CLEAN_SESSION_SUFFIX, "sometimes");
+        properties.setProperty(prefix + StandaloneCollectorConfig.MQTT_CLIENT_CONNECTION_TIMEOUT_SECONDS_SUFFIX, "0");
+        properties.setProperty(prefix + StandaloneCollectorConfig.MQTT_CLIENT_KEEP_ALIVE_SECONDS_SUFFIX, "0");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.MQTT_CLIENTS
+                + " contains duplicate name: mqtt-main");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_BROKER_URI_SUFFIX
+                + " is required");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_SOURCE_SUFFIX
+                + " references unknown source: missing");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_TOPIC_FILTERS_SUFFIX
+                + " must not contain blank names");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_QOS_SUFFIX
+                + " must be between 0 and 2");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_SOURCE_ID_MODE_SUFFIX
+                + " must be CONFIGURED or TOPIC");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_CLEAN_SESSION_SUFFIX
+                + " must be true or false");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_CONNECTION_TIMEOUT_SECONDS_SUFFIX
+                + " must be positive");
+        assertContainsError(validation, prefix + StandaloneCollectorConfig.MQTT_CLIENT_KEEP_ALIVE_SECONDS_SUFFIX
+                + " must be positive");
+    }
+
+    @Test
     void httpPortConflictFailsFast() throws Exception {
         try (StandaloneCollector bound = StandaloneCollector.create(
                 StandaloneCollectorConfig.appConfigFromProperties(httpProperties(0, "in-memory")))) {
@@ -1007,6 +1209,16 @@ class StandaloneCollectorTest {
         return properties;
     }
 
+    private static Properties mqttProperties(String sinkType) {
+        Properties properties = new Properties();
+        properties.setProperty(StandaloneCollectorConfig.SOURCE_ID, "iec104:station-1");
+        properties.setProperty(StandaloneCollectorConfig.SINK_TYPE, sinkType);
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, BackpressureDecision.ACCEPT.name());
+        properties.setProperty(StandaloneCollectorConfig.MQTT_CLIENTS, "mqtt-main");
+        setMqttClient(properties, "mqtt-main", "default");
+        return properties;
+    }
+
     private static Properties protocolProperties(RuntimeProtocol protocol, String sourceId) {
         Properties properties = baseProperties(0, "in-memory");
         properties.setProperty(StandaloneCollectorConfig.PROTOCOL, protocol.configValue());
@@ -1089,6 +1301,22 @@ class StandaloneCollectorTest {
                 sourceName);
     }
 
+    private static void setMqttClient(Properties properties, String name, String sourceName) {
+        String prefix = StandaloneCollectorConfig.MQTT_CLIENT_PREFIX + name;
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.MQTT_CLIENT_BROKER_URI_SUFFIX,
+                "tcp://localhost:1883");
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.MQTT_CLIENT_CLIENT_ID_SUFFIX,
+                "protocol-runtime-station-1");
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.MQTT_CLIENT_TOPIC_FILTERS_SUFFIX,
+                "iec104/station-1/raw");
+        properties.setProperty(
+                prefix + StandaloneCollectorConfig.MQTT_CLIENT_SOURCE_SUFFIX,
+                sourceName);
+    }
+
     private static StandaloneCollector kafkaCollector(
             StandaloneCollectorAppConfig appConfig,
             FakeKafkaRecordSource source) {
@@ -1096,6 +1324,19 @@ class StandaloneCollectorTest {
                 appConfig,
                 RuntimeSinks.from(appConfig),
                 Clock.systemUTC(),
+                ignored -> source);
+    }
+
+    private static StandaloneCollector mqttCollector(
+            StandaloneCollectorAppConfig appConfig,
+            FakeMqttMessageSource source) {
+        return new StandaloneCollector(
+                appConfig,
+                RuntimeSinks.from(appConfig),
+                Clock.systemUTC(),
+                ignored -> {
+                    throw new IllegalStateException("unexpected Kafka source");
+                },
                 ignored -> source);
     }
 
@@ -1139,6 +1380,14 @@ class StandaloneCollectorTest {
                 42,
                 "device-key".getBytes(StandardCharsets.UTF_8),
                 value);
+    }
+
+    private static MqttMessage mqttMessage(byte[] payload) {
+        MqttMessage message = new MqttMessage(payload);
+        message.setQos(0);
+        message.setRetained(false);
+        message.setId(42);
+        return message;
     }
 
     private static List<ParsedRecord<Object>> awaitRecords(
@@ -1364,6 +1613,35 @@ class StandaloneCollectorTest {
                 throw new IllegalStateException("fake Kafka source is not running");
             }
             return receiver.accept(record);
+        }
+    }
+
+    private static final class FakeMqttMessageSource implements MqttMessageSource {
+
+        private MqttMessageReceiver receiver;
+        private boolean running;
+
+        @Override
+        public void start(MqttMessageReceiver receiver) {
+            this.receiver = receiver;
+            this.running = true;
+        }
+
+        @Override
+        public void stop() {
+            running = false;
+        }
+
+        @Override
+        public boolean isRunning() {
+            return running;
+        }
+
+        private MqttIngressResult emit(String topic, MqttMessage message) {
+            if (!running || receiver == null) {
+                throw new IllegalStateException("fake MQTT source is not running");
+            }
+            return receiver.accept(topic, message);
         }
     }
 }

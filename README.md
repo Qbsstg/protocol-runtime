@@ -27,8 +27,9 @@ of the runtime. `0.6.0` published the HTTP ingress productionization line and
 runtime-app HTTP collector assembly. `0.7.0` published the Kafka ingress
 baseline and runtime-app Kafka collector assembly.
 
-The current development line is `0.8.0-SNAPSHOT`, focused on the MQTT ingress
-baseline and runtime-app MQTT collector assembly.
+The current development line is `0.8.0-SNAPSHOT`, which contains the MQTT
+ingress baseline and runtime-app MQTT collector assembly. Remaining work is
+release-readiness verification for `0.8.0`.
 
 The `0.8.0` development scope is tracked in
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md), and draft release notes are
@@ -117,11 +118,11 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.7.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.8.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
-Future modules may include MQTT, pipelines, additional sinks, and richer
-deployable runtime applications. Those dependencies belong here, not in
+Future modules may include pipelines, additional sinks, and richer deployable
+runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
 
 ## `0.8.0` MQTT Ingress Plan
@@ -138,8 +139,10 @@ deployable runtime applications. Those dependencies belong here, not in
   selected protocol should remain envelope attributes
 - `runtime-protocol-*` modules continue to parse protocol payloads without
   MQTT dependencies
-- `runtime-app` will own MQTT client configuration and standalone collector
+- `runtime-app` owns MQTT client configuration and standalone collector
   assembly while keeping MQTT APIs out of `runtime-core`
+- [`examples/collector-mqtt.properties`](examples/collector-mqtt.properties)
+  shows the minimal IEC104-over-MQTT collector configuration
 
 The detailed plan is maintained in
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md).
@@ -309,11 +312,11 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The published `0.7.0` line can run TCP/Netty, JDK HTTP, or Kafka ingress
-through the same app-owned pipeline:
+The current `0.8.0-SNAPSHOT` line can run TCP/Netty, JDK HTTP, Kafka, or MQTT
+ingress through the same app-owned pipeline:
 
 ```text
-TcpNettyServer, HttpIngressServer, or KafkaRecordSource
+TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
   -> RuntimePipelineRunner
   -> selected RuntimeParserBinding
   -> configured RecordSink / FailureSink
@@ -355,6 +358,14 @@ The HTTP collector smoke starts an HTTP-only app, posts a raw IEC104 APDU with
 
 ```bash
 sh examples/smoke-standalone-http.sh
+```
+
+MQTT app assembly uses the same runtime pipeline. The example configuration
+expects a broker at `tcp://localhost:1883`:
+
+```bash
+java -jar runtime-app/target/runtime-app-0.8.0-SNAPSHOT-standalone.jar \
+  --config examples/collector-mqtt.properties
 ```
 
 If your default `java` is older than JDK 21, set `JAVA_BIN` before running the
