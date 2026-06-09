@@ -55,6 +55,7 @@
         <module>runtime-ingress-tcp-netty</module>
         <module>runtime-ingress-http</module>
         <module>runtime-ingress-kafka</module>
+        <module>runtime-ingress-mqtt</module>
         <module>runtime-app</module>
         <module>runtime-smoke-tests</module>
     </modules>
@@ -64,6 +65,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protocol-sdk.version>0.7.0</protocol-sdk.version>
         <kafka.clients.version>4.3.0</kafka.clients.version>
+        <paho.mqtt.version>1.2.5</paho.mqtt.version>
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <maven.source.plugin.version>3.3.1</maven.source.plugin.version>

@@ -37,6 +37,7 @@ deployment concerns.
 | `runtime-ingress-tcp-netty` | `runtime-core`, Netty transport, tests. | Protocol SDK modules, Spring, Kafka, MQTT, HTTP, database, Redis. |
 | `runtime-ingress-http` | `runtime-core`, JDK `HttpServer`, tests. | Protocol SDK modules, Spring, Netty, Kafka, MQTT, database, Redis, changes to `runtime-core` for HTTP-specific policy. |
 | `runtime-ingress-kafka` | `runtime-core`, Kafka client libraries, tests. | Protocol SDK modules, HTTP/MQTT adapter dependencies, database, Redis, changes to `runtime-core` for offset policy. |
+| `runtime-ingress-mqtt` | `runtime-core`, MQTT client libraries, tests. | Protocol SDK modules, HTTP/Kafka adapter dependencies, database, Redis, changes to `runtime-core` for topic/session policy. |
 | `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring framework, database, Redis, moving adapter dependencies into core or protocol bindings. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
 
@@ -47,7 +48,6 @@ where future dependencies may live once adapter implementation starts.
 
 | Module | Allowed dependencies | Not allowed |
 | --- | --- | --- |
-| `runtime-ingress-mqtt` | `runtime-core`, MQTT client libraries, tests. | Protocol SDK modules, HTTP/Kafka adapter dependencies, database, Redis, changes to `runtime-core` for topic/session policy. |
 | `runtime-sink-kafka` | `runtime-core`, Kafka client libraries, tests. | Ingress ownership, protocol SDK modules, HTTP/MQTT adapter dependencies, changes to parser bindings. |
 | `runtime-adapter-testkit` | Test fixtures, fake sinks, fake runner wiring, and adapter boundary assertions. | Production runtime dependencies or application dependency use. |
 

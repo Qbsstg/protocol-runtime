@@ -9,7 +9,8 @@ Draft release notes for the `0.8.0` runtime release line.
 - Add the first `runtime-ingress-mqtt` module with MQTT client dependencies
   isolated to that adapter module.
 - Add MQTT client configuration and validation for broker URI, client id,
-  topic subscriptions, source id mode, QoS posture, and protocol selection.
+  topic subscriptions, configured/topic source id mode, QoS posture, and
+  protocol selection.
 - Map MQTT payloads into runtime `IngressEnvelope` objects while preserving
   topic, QoS, retained flag, duplicate flag, packet id, protocol, source, and
   client attributes.
