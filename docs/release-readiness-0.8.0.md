@@ -4,9 +4,9 @@ This note records the release-readiness decision for the `0.8.0`
 `protocol-runtime` release target.
 
 The readiness branch keeps the Maven reactor version at `0.8.0-SNAPSHOT`.
-The release branch fixes the Maven reactor version at `0.8.0`. No tag is
-created and no real Maven Central upload is part of readiness or release branch
-PR work.
+The release branch fixes the Maven reactor version at `0.8.0`. Readiness and
+release branch PR work did not create a tag or perform a real Maven Central
+upload; final publication happened after the release PR merged to `main`.
 
 ## Release Scope
 
@@ -212,5 +212,20 @@ PR:
 | `JAVA_BIN=/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/bin/java sh examples/smoke-standalone-http.sh` | Passed | Standalone HTTP collector built `runtime-app-0.8.0-standalone.jar`, started on an ephemeral localhost HTTP port, accepted an IEC104 POST payload, and wrote a parsed record to the file sink. |
 | Dependency boundary checks | Passed | `runtime-core` has no compile dependencies; `runtime-protocol-*` modules depend only on `runtime-core` and protocol SDK artifacts; `runtime-ingress-mqtt` depends only on `runtime-core` and Paho; MQTT also appears in `runtime-app` assembly only; TCP/HTTP/Kafka dependencies remain isolated to their adapter modules and app assembly. |
 
-No tag is created and no real Maven Central upload is part of this readiness
-work.
+No tag was created and no real Maven Central upload was part of the release
+branch PR.
+
+## Final Publication On 2026-06-10
+
+`0.8.0` has been tagged, uploaded, manually published, and verified.
+
+| Gate | Result | Note |
+| --- | --- | --- |
+| Release tag | Passed | `v0.8.0` points to `aa3d8da2761ad4d833a501629d9a3b1b8b30a1a2`. |
+| Signed dry run | Passed | `mvn -Pcentral-release -Dcentral.skipPublishing=true clean deploy` signed artifacts and completed without upload. |
+| Central upload | Passed | `mvn -Pcentral-release clean deploy` created deployment `f2b54d7a-924f-44f2-bbd9-6199fa1514a3`. |
+| Central publish | Passed | Deployment `f2b54d7a-924f-44f2-bbd9-6199fa1514a3` reached `PUBLISHED`. |
+| GitHub Release | Passed | `v0.8.0` GitHub Release was created after Central publish. |
+| Maven Central resolution | Passed | `runtime-core`, `runtime-ingress-mqtt`, `runtime-app`, and the `runtime-app` `standalone` classifier resolved from Maven Central with isolated local Maven repositories. |
+
+The next development line is `0.9.0-SNAPSHOT`.
