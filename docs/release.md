@@ -7,9 +7,10 @@ Central Portal.
 
 The latest published runtime release is `0.8.0`.
 
-The current development line is `0.9.0-SNAPSHOT`; its roadmap is maintained in
-[`roadmap-0.9.0.md`](roadmap-0.9.0.md), and draft release notes are maintained
-in [`release-notes-0.9.0.md`](release-notes-0.9.0.md).
+The current release branch is `0.9.0`; its roadmap is maintained in
+[`roadmap-0.9.0.md`](roadmap-0.9.0.md), release notes are maintained in
+[`release-notes-0.9.0.md`](release-notes-0.9.0.md), and release-readiness audit
+is tracked in [`release-readiness-0.9.0.md`](release-readiness-0.9.0.md).
 
 The published `0.8.0` release includes:
 

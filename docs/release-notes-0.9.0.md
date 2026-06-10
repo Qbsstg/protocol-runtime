@@ -1,11 +1,13 @@
 # Protocol Runtime 0.9.0 Release Notes
 
-Draft release notes for the `0.9.0` runtime release line.
+Release notes for the `0.9.0` runtime release line.
 
 ## Planned Highlights
 
 - Open the Maven reactor at `0.9.0-SNAPSHOT` after the published `0.8.0` MQTT
   runtime-app release.
+- Fix the Maven reactor at `0.9.0` on the release branch after readiness
+  checks pass.
 - Harden downstream sink boundaries after TCP, HTTP, Kafka, and MQTT ingress
   baselines are available.
 - Improve standalone collector sink configuration, sink failure isolation,
