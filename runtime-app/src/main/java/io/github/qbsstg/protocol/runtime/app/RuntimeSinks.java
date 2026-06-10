@@ -48,8 +48,16 @@ record RuntimeSinks(
         return new RecordSink<>() {
             @Override
             public void accept(ParsedRecord<T> record) {
-                recordSink.accept(widen(record));
-                counters.recordParsedRecord(record);
+                try {
+                    recordSink.accept(widen(record));
+                    counters.recordParsedRecord(record);
+                } catch (RuntimeException ex) {
+                    counters.recordSinkFailure(
+                            "record",
+                            record.sourceId().qualifiedValue(),
+                            record.observedAt(),
+                            ex);
+                }
             }
         };
     }
@@ -58,8 +66,16 @@ record RuntimeSinks(
         return new FailureSink() {
             @Override
             public void accept(ParseFailure failure) {
-                failureSink.accept(failure);
-                counters.recordParseFailure(failure);
+                try {
+                    failureSink.accept(failure);
+                    counters.recordParseFailure(failure);
+                } catch (RuntimeException ex) {
+                    counters.recordSinkFailure(
+                            "failure",
+                            failure.sourceId().qualifiedValue(),
+                            failure.observedAt(),
+                            ex);
+                }
             }
         };
     }

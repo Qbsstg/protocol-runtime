@@ -20,7 +20,13 @@ public record CollectorRuntimeMetrics(
         String lastBackpressureSourceId,
         BackpressureDecision lastBackpressureDecision,
         Instant lastBackpressureAt,
-        int lastBackpressurePayloadSize) {
+        int lastBackpressurePayloadSize,
+        long sinkFailureCount,
+        String lastSinkFailureTarget,
+        String lastSinkFailureSourceId,
+        Instant lastSinkFailureAt,
+        String lastSinkFailureType,
+        String lastSinkFailureMessage) {
 
     public CollectorRuntimeMetrics {
         lastParseFailureAttributes = lastParseFailureAttributes == null
@@ -29,6 +35,27 @@ public record CollectorRuntimeMetrics(
     }
 
     public static CollectorRuntimeMetrics empty() {
-        return new CollectorRuntimeMetrics(0, 0, null, null, null, null, 0, "", Map.of(), 0, 0, null, null, null, 0);
+        return new CollectorRuntimeMetrics(
+                0,
+                0,
+                null,
+                null,
+                null,
+                null,
+                0,
+                "",
+                Map.of(),
+                0,
+                0,
+                null,
+                null,
+                null,
+                0,
+                0,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 }

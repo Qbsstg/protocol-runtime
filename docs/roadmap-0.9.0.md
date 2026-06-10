@@ -36,15 +36,26 @@ protocol-neutral contract is proven necessary.
 ## Candidate Work Items
 
 1. Audit existing logging/file/in-memory sink behavior and failure routing.
-2. Define the first explicit sink lifecycle/status contract if app-local
-   behavior is no longer enough.
+2. Add app-level sink failure isolation and status output without changing
+   `runtime-core`.
 3. Harden file sink rotation and output format documentation.
-4. Add sink failure isolation so bad downstream delivery does not collapse
-   parsing or ingress lifecycle.
+4. Define the first explicit sink lifecycle/status contract if app-local
+   behavior is no longer enough.
 5. Add status output for sink state, failure counters, and recent sink errors.
 6. Re-check backpressure behavior when the record sink is slow or failing.
 7. Add cross-ingress examples for TCP, HTTP, Kafka, and MQTT collectors.
 8. Add release-readiness notes before the `0.9.0` release branch.
+
+## Progress
+
+- runtime-app now isolates record/failure sink write exceptions at the app
+  assembly boundary.
+- `CollectorRuntimeMetrics` exposes sink failure count, last target, last source
+  id, timestamp, exception type, and message.
+- status formatter output includes sink failure counters and the latest sink
+  failure summary.
+- focused tests cover record sink and failure sink exceptions without adding
+  dependencies to `runtime-core`.
 
 ## Non-Goals
 

@@ -10,6 +10,8 @@ Draft release notes for the `0.9.0` runtime release line.
   baselines are available.
 - Improve standalone collector sink configuration, sink failure isolation,
   status output, and operator-facing examples.
+- Add app-level sink failure counters and last-error status output so bad
+  downstream delivery does not collapse ingress or parsing.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability
   exporter dependencies.

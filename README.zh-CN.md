@@ -510,6 +510,7 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
 - 最后一次 parse failure 的 source id、消息、发生时间、cause 类型、payload
   大小、payload hex 预览和 TCP/session 属性
 - backpressure retry/drop 计数和最后一次 backpressure 决策详情
+- sink failure 计数，以及最后一次 sink failure 的目标、source id、异常类型和消息
 - sink 类型、file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
 
 ### File Sink 输出格式
@@ -534,6 +535,10 @@ file sink 每行输出一条类似 JSON 的记录。当前输出文件超过
 解析失败使用 `kind=failure`，并包含 `message`、`rawPayloadHex`、TCP/session
 `attributes` 和可选 `cause`。当前 app 的 parse failure 策略是 continue：
 异常帧会进入配置的 failure sink，但不会停止 collector，也不会阻止后续健康帧解析。
+
+runtime-app 还会在应用装配边界隔离 sink 写入异常。如果 record sink 或 failure
+sink 在处理解析结果时抛出异常，该异常会记录到 collector metrics 和 status 输出，
+不会反向传播进 `runtime-core` 或 ingress adapter。
 
 ### 常见问题
 
