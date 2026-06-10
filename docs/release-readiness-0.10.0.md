@@ -1,13 +1,11 @@
 # Runtime 0.10.0 Release Readiness Audit
 
-This note records the release-readiness decision for the `0.10.0`
-`protocol-runtime` release target.
+This note records the release-readiness and final publication decision for the
+published `0.10.0` `protocol-runtime` release.
 
-The readiness branch keeps the Maven reactor version at `0.10.0-SNAPSHOT`.
-The release branch will fix the Maven reactor version at `0.10.0`. Readiness
-and release branch PR work must not create a tag or perform a real Maven
-Central upload; final publication happens only after the release PR merges to
-`main`.
+The readiness branch kept the Maven reactor version at `0.10.0-SNAPSHOT`.
+The release branch fixed the Maven reactor version at `0.10.0`. Final
+publication happened only after the release PR merged to `main`.
 
 ## Release Scope
 
@@ -216,3 +214,19 @@ PR:
 
 No tag was created and no real Maven Central upload was part of the release
 branch PR.
+
+## Final Publication On 2026-06-10
+
+`0.10.0` has been tagged, uploaded, manually published, and verified.
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Final release commit | Passed | `v0.10.0` points to `9c0a2c471f2574f16ccef86afc0931d19352c91e`. |
+| Signed dry run | Passed | `mvn -Pcentral-release -Dcentral.skipPublishing=true clean deploy` signed artifacts and completed without upload before the real release. |
+| Central upload | Passed | `mvn -Pcentral-release clean deploy` created deployment `976f18d2-4067-4163-8bf4-2f37425e3507`. |
+| Central publish | Passed | Deployment `976f18d2-4067-4163-8bf4-2f37425e3507` reached `PUBLISHED`. |
+| Maven Central resolution | Passed | Isolated local Maven repositories resolved `runtime-core`, `runtime-ingress-kafka`, `runtime-ingress-mqtt`, `runtime-app`, and the `runtime-app` `standalone` classifier at `0.10.0`. |
+| GitHub Release | Passed | `v0.10.0` GitHub Release was created after Central publish. |
+
+`0.10.0` is now the latest published runtime release. The next development line
+is `0.11.0-SNAPSHOT`.

@@ -1,27 +1,30 @@
 # Protocol Runtime 0.10.0 Release Notes
 
-Release notes for the `0.10.0` runtime release line.
+Release notes for the published `0.10.0` runtime release.
 
-## Planned Highlights
+`0.10.0` has been tagged as `v0.10.0`, published to Maven Central, verified
+from isolated local Maven repositories, and published as a GitHub Release.
 
-- Finalize the Maven reactor at `0.10.0` after the published `0.9.0` sink and
+## Highlights
+
+- Published the Maven reactor at `0.10.0` after the published `0.9.0` sink and
   operations hardening release.
-- Formalize runtime-app health and readiness state for standalone collector
+- Formalized runtime-app health and readiness state for standalone collector
   operation.
-- Improve status output so operators can distinguish listener, source, parser,
+- Improved status output so operators can distinguish listener, source, parser,
   sink, failure, and backpressure posture.
-- Add app-local `CollectorHealthSnapshot` derivation with `HEALTHY`,
+- Added app-local `CollectorHealthSnapshot` derivation with `HEALTHY`,
   `DEGRADED`, `FAILED`, lifecycle-aligned non-running states, `READY` /
   `NOT_READY`, and explainable health reasons.
-- Add examples and troubleshooting guidance for healthy, degraded, failed, and
+- Added examples and troubleshooting guidance for healthy, degraded, failed, and
   stopped collector states.
-- Add English and Chinese status guides with a health/readiness matrix,
+- Added English and Chinese status guides with a health/readiness matrix,
   trimmed status-line examples, reason catalog, and operator triage order.
-- Add repository smoke coverage proving standalone TCP/IEC104 collector health
+- Added repository smoke coverage proving standalone TCP/IEC104 collector health
   status across healthy/ready and degraded/ready parser-failure states.
-- Add a `0.10.0` release-readiness audit covering release scope, module policy,
+- Added a `0.10.0` release-readiness audit covering release scope, module policy,
   health/status gates, verification commands, and readiness evidence.
-- Preserve `runtime-core` as a dependency-light contract module with no Spring,
+- Preserved `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability
   exporter dependencies.
 
@@ -40,15 +43,29 @@ Dedicated app or adapter modules may own external dependencies only after their
 boundary is explicit. `runtime-protocol-*` modules continue to depend only on
 `runtime-core`, published `protocol-sdk` parser artifacts, and tests.
 
-## Verification Target
+## Verification
 
-Before final publication, the release branch should pass:
+The release passed:
 
 - `git diff --check`
 - `mvn -q verify`
 - `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy`
+- signed Central dry run with publishing disabled
 - standalone smoke coverage for supported collector examples
 - dependency boundary checks proving new dependencies do not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
+- Maven Central deployment `976f18d2-4067-4163-8bf4-2f37425e3507` reached
+  `PUBLISHED`
+- public Maven Central resolution passed for `runtime-core`,
+  `runtime-ingress-kafka`, `runtime-ingress-mqtt`, `runtime-app`, and the
+  `runtime-app` `standalone` classifier at `0.10.0`
 
 The detailed plan is tracked in [`roadmap-0.10.0.md`](roadmap-0.10.0.md).
+
+## Publication
+
+- Tag: `v0.10.0`
+- Central deployment: `976f18d2-4067-4163-8bf4-2f37425e3507`
+- Central state: `PUBLISHED`
+- GitHub Release:
+  <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.10.0>

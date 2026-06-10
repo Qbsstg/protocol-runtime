@@ -5,15 +5,12 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.9.0`.
+The latest published runtime release is `0.10.0`.
 
-The current release branch fixes `0.10.0`; its roadmap is maintained in
-[`roadmap-0.10.0.md`](roadmap-0.10.0.md), and release notes are maintained in
-[`release-notes-0.10.0.md`](release-notes-0.10.0.md). Its release-readiness
-audit is tracked in
-[`release-readiness-0.10.0.md`](release-readiness-0.10.0.md).
+The current development line is `0.11.0-SNAPSHOT` after the published
+`0.10.0` health and status release.
 
-The published `0.9.0` release includes:
+The published `0.10.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -31,7 +28,12 @@ The published `0.9.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.9.0` roadmap is maintained in
+The `0.10.0` roadmap is maintained in
+[`roadmap-0.10.0.md`](roadmap-0.10.0.md), release notes are maintained in
+[`release-notes-0.10.0.md`](release-notes-0.10.0.md), and the `0.10.0`
+release-readiness audit is tracked in
+[`release-readiness-0.10.0.md`](release-readiness-0.10.0.md). The published
+`0.9.0` roadmap is maintained in
 [`roadmap-0.9.0.md`](roadmap-0.9.0.md), release notes are maintained in
 [`release-notes-0.9.0.md`](release-notes-0.9.0.md), and the `0.9.0`
 release-readiness audit is tracked in
@@ -64,6 +66,12 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.10.0` was tagged as `v0.10.0`, uploaded in Central deployment
+`976f18d2-4067-4163-8bf4-2f37425e3507`, published, and verified from Maven
+Central with isolated local Maven repositories. GitHub release notes are
+published at
+<https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.10.0>.
 
 `0.9.0` was tagged as `v0.9.0`, uploaded in Central deployment
 `f3a7448f-c79d-4a5b-a73c-a251bfb1ad8f`, published, and verified from Maven
