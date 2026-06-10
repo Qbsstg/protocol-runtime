@@ -28,9 +28,9 @@ runtime-app HTTP collector assembly. `0.7.0` published the Kafka ingress
 baseline and runtime-app Kafka collector assembly. `0.8.0` published the MQTT
 ingress baseline and runtime-app MQTT collector assembly.
 
-The current development line is `0.9.0-SNAPSHOT`, focused on downstream sink
-boundaries and operational hardening after the TCP, HTTP, Kafka, and MQTT
-ingress baselines. The `0.9.0` release-readiness audit is tracked in
+The current release branch is `0.9.0`, focused on downstream sink boundaries
+and operational hardening after the TCP, HTTP, Kafka, and MQTT ingress
+baselines. The `0.9.0` release-readiness audit is tracked in
 [`docs/release-readiness-0.9.0.md`](docs/release-readiness-0.9.0.md).
 
 The published `0.8.0` release scope is tracked in
@@ -131,7 +131,7 @@ runtime applications. Those dependencies belong here, not in
 
 ## `0.9.0` Sink And Operations Plan
 
-`0.9.0-SNAPSHOT` opens the next production-hardening line:
+`0.9.0` finalizes the production-hardening line opened after `0.8.0`:
 
 - keep `runtime-core` free of Spring, Netty, Kafka, MQTT, HTTP, database,
   Redis, and observability exporter dependencies
@@ -331,7 +331,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current `0.9.0-SNAPSHOT` line can run TCP/Netty, JDK HTTP, Kafka, or MQTT
+The current `0.9.0` line can run TCP/Netty, JDK HTTP, Kafka, or MQTT
 ingress through the same app-owned pipeline:
 
 ```text
@@ -350,7 +350,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.9.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.9.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -383,7 +383,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.9.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.9.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -423,7 +423,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.9.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.9.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
