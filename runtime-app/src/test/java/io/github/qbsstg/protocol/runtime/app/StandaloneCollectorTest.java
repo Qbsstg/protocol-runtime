@@ -74,6 +74,7 @@ class StandaloneCollectorTest {
             assertEquals(CollectorLifecycleState.CONFIGURED, configured.state());
             assertNull(configured.startedAt());
             assertEquals(SinkType.IN_MEMORY, configured.sinkType());
+            assertNull(configured.fileSinkStatus());
             assertEquals(FileSinkRotationConfig.defaults(), configured.fileSinkRotation());
             assertEquals(CollectorRuntimeMetrics.empty(), configured.metrics());
             assertEquals(BackpressureDecision.ACCEPT, configured.backpressureDecision());
@@ -128,10 +129,29 @@ class StandaloneCollectorTest {
         StandaloneCollectorConfig config = config(0, "file", output);
 
         try (StandaloneCollector collector = StandaloneCollector.create(config)) {
+            CollectorStatusSnapshot configured = collector.statusSnapshot();
+            assertEquals(SinkType.FILE, configured.sinkType());
+            assertNotNull(configured.fileSinkStatus());
+            assertEquals(output, configured.fileSinkStatus().output());
+            assertFalse(configured.fileSinkStatus().open());
+            assertEquals(0, configured.fileSinkStatus().activeBytes());
+            assertEquals(0, configured.fileSinkStatus().retainedHistoryCount());
+            assertEquals(0, configured.fileSinkStatus().rotationCount());
+
             collector.start();
 
             writeFrame(collector, SINGLE_POINT_FRAME);
             awaitFileLines(output, 1);
+
+            CollectorStatusSnapshot running = collector.statusSnapshot();
+            assertNotNull(running.fileSinkStatus());
+            assertTrue(running.fileSinkStatus().open());
+            assertTrue(running.fileSinkStatus().activeBytes() > 0);
+            assertEquals(FileSinkRotationConfig.defaults(), running.fileSinkStatus().rotation());
+            String status = CollectorStatusFormatter.format(running);
+            assertTrue(status.contains("fileSink=" + output));
+            assertTrue(status.contains("/open=true"));
+            assertTrue(status.contains("/activeBytes="));
         }
 
         String line = Files.readString(output);
@@ -149,8 +169,20 @@ class StandaloneCollectorTest {
         sink.accept(record("record-2"));
         sink.accept(record("record-3"));
         sink.accept(record("record-4"));
+
+        FileSinkStatus openStatus = sink.status();
+        assertTrue(openStatus.open());
+        assertTrue(openStatus.activeBytes() > 0);
+        assertEquals(2, openStatus.retainedHistoryCount());
+        assertEquals(3, openStatus.rotationCount());
+        assertEquals(new FileSinkRotationConfig(1, 2), openStatus.rotation());
+
         sink.stop();
 
+        FileSinkStatus stoppedStatus = sink.status();
+        assertFalse(stoppedStatus.open());
+        assertEquals(2, stoppedStatus.retainedHistoryCount());
+        assertEquals(3, stoppedStatus.rotationCount());
         assertFileContains(output, "record-4");
         assertFileContains(rotatedPath(output, 1), "record-3");
         assertFileContains(rotatedPath(output, 2), "record-2");
@@ -158,6 +190,20 @@ class StandaloneCollectorTest {
         assertFalse(Files.readString(output).contains("record-1"));
         assertFalse(Files.readString(rotatedPath(output, 1)).contains("record-1"));
         assertFalse(Files.readString(rotatedPath(output, 2)).contains("record-1"));
+    }
+
+    @Test
+    void reportsExistingFileSinkBytesBeforeSinkIsOpened() throws Exception {
+        Path output = tempDir.resolve("existing-records.ndjson");
+        Files.writeString(output, "existing\n");
+        FileRuntimeSink<String> sink = new FileRuntimeSink<>(output, new FileSinkRotationConfig(1024, 2));
+
+        FileSinkStatus status = sink.status();
+
+        assertFalse(status.open());
+        assertEquals(Files.size(output), status.activeBytes());
+        assertEquals(0, status.retainedHistoryCount());
+        assertEquals(0, status.rotationCount());
     }
 
     @Test

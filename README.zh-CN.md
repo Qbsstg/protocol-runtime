@@ -511,7 +511,8 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
   大小、payload hex 预览和 TCP/session 属性
 - backpressure retry/drop 计数和最后一次 backpressure 决策详情
 - sink failure 计数，以及最后一次 sink failure 的目标、source id、异常类型和消息
-- sink 类型、file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
+- sink 类型、file sink 输出路径/open 状态/当前活跃文件字节数/历史文件数、
+  file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
 
 ### File Sink 输出格式
 
@@ -520,6 +521,8 @@ file sink 每行输出一条类似 JSON 的记录。当前输出文件超过
 `collector.sink.file.maxHistory` 个历史文件。比如输出路径是
 `target/runtime-records.ndjson` 时，历史文件命名为
 `runtime-records.ndjson.1`、`runtime-records.ndjson.2`，依次类推。
+collector status 输出会展示当前输出文件路径、file sink 是否 open、当前活跃文件
+字节数、保留的历史文件数量、进程内累计轮转次数，以及配置的轮转限制。
 
 成功解析记录包含：
 

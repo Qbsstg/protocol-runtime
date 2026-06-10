@@ -119,6 +119,7 @@ class RuntimeSinksTest {
                 0,
                 metrics,
                 SinkType.FILE,
+                null,
                 FileSinkRotationConfig.defaults(),
                 BackpressureDecision.ACCEPT,
                 0,

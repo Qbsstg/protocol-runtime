@@ -560,8 +560,9 @@ The snapshot includes:
 - backpressure retry/drop counters and last backpressure decision details
 - sink failure counters and the latest sink failure target, source id,
   exception type, and message
-- sink type, file rotation policy, backpressure mode, payload threshold policy,
-  and strict ASDU setting
+- sink type, file sink output path/open state/active byte count/history count,
+  file rotation policy, backpressure mode, payload threshold policy, and strict
+  ASDU setting
 
 ### File Sink Format
 
@@ -570,6 +571,9 @@ rotates before the active file grows beyond `collector.sink.file.maxBytes` and
 keeps `collector.sink.file.maxHistory` history files. For an output path such
 as `target/runtime-records.ndjson`, rotated files are named
 `runtime-records.ndjson.1`, `runtime-records.ndjson.2`, and so on.
+Collector status output reports the active file path, whether the file sink is
+currently open, active file bytes, retained history file count, cumulative
+in-process rotation count, and configured rotation limits.
 
 A successful record includes:
 

@@ -288,6 +288,8 @@ Allowed:
   release
 - `runtime-app` owns app-level sink configuration, status output, lifecycle
   reporting, and operator-facing examples
+- app-local file sink status may report output path, open state, active byte
+  count, retained history count, in-process rotation count, and rotation limits
 - dedicated `runtime-sink-*` modules may own downstream delivery dependencies
   after their contracts are explicit
 - ingress adapters route accepted records through runtime sinks rather than
