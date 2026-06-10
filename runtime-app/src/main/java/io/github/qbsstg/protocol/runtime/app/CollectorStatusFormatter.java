@@ -19,6 +19,8 @@ final class CollectorStatusFormatter {
                 + " parseFailures=" + metrics.parseFailureCount()
                 + " backpressureRetryLater=" + metrics.backpressureRetryLaterCount()
                 + " backpressureDrop=" + metrics.backpressureDropCount()
+                + " sinkFailures=" + metrics.sinkFailureCount()
+                + " lastSinkFailure=" + lastSinkFailure(metrics)
                 + " sink=" + snapshot.sinkType().configValue()
                 + " backpressure=" + snapshot.backpressureDecision()
                 + " maxPayloadBytes=" + snapshot.backpressureMaxPayloadBytes()
@@ -58,6 +60,19 @@ final class CollectorStatusFormatter {
         }
         value.append(']');
         return value.toString();
+    }
+
+    private static String lastSinkFailure(CollectorRuntimeMetrics metrics) {
+        if (metrics.lastSinkFailureTarget() == null) {
+            return "none";
+        }
+        return metrics.lastSinkFailureTarget()
+                + '@'
+                + metrics.lastSinkFailureSourceId()
+                + '/'
+                + metrics.lastSinkFailureType()
+                + ':'
+                + metrics.lastSinkFailureMessage();
     }
 
     private static String httpListeners(CollectorStatusSnapshot snapshot) {

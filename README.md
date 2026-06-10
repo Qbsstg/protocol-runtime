@@ -558,6 +558,8 @@ The snapshot includes:
 - last parse failure source id, message, observed timestamp, cause type,
   payload size, payload preview hex, and TCP/session attributes
 - backpressure retry/drop counters and last backpressure decision details
+- sink failure counters and the latest sink failure target, source id,
+  exception type, and message
 - sink type, file rotation policy, backpressure mode, payload threshold policy,
   and strict ASDU setting
 
@@ -584,6 +586,11 @@ Parse failures use `kind=failure` and include `message`, `rawPayloadHex`,
 TCP/session `attributes`, and optional `cause`. The app's current parse failure
 policy is continue: malformed frames are routed to the configured failure sink
 and do not stop the collector or prevent later healthy frames from parsing.
+
+The app also isolates runtime sink failures at the app assembly boundary. If a
+record or failure sink throws while handling a parsed result, the exception is
+captured in the collector metrics and status output instead of being propagated
+back into `runtime-core` or the ingress adapter.
 
 ### Troubleshooting
 
