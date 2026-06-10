@@ -5,14 +5,13 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.8.0`.
+The latest published runtime release is `0.9.0`.
 
-The current release branch is `0.9.0`; its roadmap is maintained in
-[`roadmap-0.9.0.md`](roadmap-0.9.0.md), release notes are maintained in
-[`release-notes-0.9.0.md`](release-notes-0.9.0.md), and release-readiness audit
-is tracked in [`release-readiness-0.9.0.md`](release-readiness-0.9.0.md).
+The current development line is `0.10.0-SNAPSHOT`; its roadmap is maintained in
+[`roadmap-0.10.0.md`](roadmap-0.10.0.md), and release notes are maintained in
+[`release-notes-0.10.0.md`](release-notes-0.10.0.md).
 
-The published `0.8.0` release includes:
+The published `0.9.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -30,7 +29,12 @@ The published `0.8.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.8.0` roadmap is maintained in
+The `0.9.0` roadmap is maintained in
+[`roadmap-0.9.0.md`](roadmap-0.9.0.md), release notes are maintained in
+[`release-notes-0.9.0.md`](release-notes-0.9.0.md), and the `0.9.0`
+release-readiness audit is tracked in
+[`release-readiness-0.9.0.md`](release-readiness-0.9.0.md). The published
+`0.8.0` roadmap is maintained in
 [`roadmap-0.8.0.md`](roadmap-0.8.0.md), release notes are maintained
 in [`release-notes-0.8.0.md`](release-notes-0.8.0.md). The `0.8.0`
 release-readiness audit is tracked in
@@ -58,6 +62,12 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.9.0` was tagged as `v0.9.0`, uploaded in Central deployment
+`f3a7448f-c79d-4a5b-a73c-a251bfb1ad8f`, published, and verified from Maven
+Central with isolated local Maven repositories. GitHub release notes are
+published at
+<https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.9.0>.
 
 `0.8.0` was tagged as `v0.8.0`, uploaded in Central deployment
 `f2b54d7a-924f-44f2-bbd9-6199fa1514a3`, published, and verified from Maven

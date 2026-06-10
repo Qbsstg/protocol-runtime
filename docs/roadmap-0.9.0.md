@@ -3,6 +3,9 @@
 `0.9.0` starts after the published `0.8.0` MQTT runtime-app release. The
 development line opens with Maven reactor version `0.9.0-SNAPSHOT`.
 
+`0.9.0` has since been tagged as `v0.9.0`, published to Maven Central, verified
+with isolated local Maven repositories, and published as a GitHub Release.
+
 The release target is downstream sink and operations hardening after the TCP,
 HTTP, Kafka, and MQTT ingress baselines are available. Sink, health, status, and
 delivery dependencies must stay out of `runtime-core` unless a small
@@ -92,3 +95,6 @@ Before `0.9.0` release readiness:
 - `mvn -q verify` passes.
 - dependency boundary checks prove new dependencies stay out of `runtime-core`
   and `protocol-sdk`.
+
+Final publication evidence is maintained in
+[`release-readiness-0.9.0.md`](release-readiness-0.9.0.md).

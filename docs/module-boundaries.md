@@ -282,6 +282,8 @@ The `0.9.0` line starts after the published `0.8.0` MQTT runtime-app release.
 Its boundary is downstream delivery and operational hardening after TCP, HTTP,
 Kafka, and MQTT ingress baselines are available.
 
+`0.9.0` has since been published as the sink and operations hardening release.
+
 Allowed:
 
 - the Maven reactor moves to `0.9.0-SNAPSHOT` after the published `0.8.0`
@@ -308,4 +310,33 @@ Not allowed:
   that adapter is explicitly responsible for the matching external boundary
 - changing `protocol-sdk` to depend on `protocol-runtime`
 - moving sink delivery, broker publishing, or storage retry policy into
+  `runtime-protocol-*`
+
+## `0.10.0` Health And Status Boundary
+
+The `0.10.0` line starts after the published `0.9.0` sink and operations
+hardening release. Its boundary is health checks and runtime status
+productionization for the standalone collector.
+
+Allowed:
+
+- the Maven reactor moves to `0.10.0-SNAPSHOT` after the published `0.9.0`
+  release
+- `runtime-app` owns app-level health/readiness calculation, degraded-state
+  mapping, status formatting, failure summaries, and operator-facing examples
+- ingress adapters may expose app-consumable status evidence needed by
+  runtime-app health calculations without moving management concerns into the
+  adapters
+- tests may prove healthy, degraded, failed, and stopped runtime states without
+  requiring external observability systems
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or
+  observability exporter dependencies to `runtime-core`
+- moving HTTP management endpoints, metrics exporters, dashboards, durable
+  health history, database, Redis, or broker-publishing dependencies into
+  `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- moving health endpoint, management API, or exporter dependencies into
   `runtime-protocol-*`
