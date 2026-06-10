@@ -312,16 +312,34 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
-## `0.10.0` Health And Status Boundary
+## `0.11.0` Development Boundary
 
-The `0.10.0` line starts after the published `0.9.0` sink and operations
-hardening release. Its boundary is health checks and runtime status
-productionization for the standalone collector.
+The Maven reactor is now open at `0.11.0-SNAPSHOT` after the published
+`0.10.0` health and status release. The next release scope is not fixed yet.
 
 Allowed:
 
-- the Maven reactor moves to `0.10.0-SNAPSHOT` after the published `0.9.0`
-  release
+- keep `runtime-core` dependency-light while planning new app or adapter
+  productionization work
+- add documentation, tests, or contracts that preserve the existing dependency
+  direction from `protocol-runtime` to `protocol-sdk`
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or
+  observability exporter dependencies to `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+
+## `0.10.0` Health And Status Boundary
+
+The `0.10.0` line started after the published `0.9.0` sink and operations
+hardening release. It has since been published as the health checks and runtime
+status productionization release for the standalone collector.
+
+Allowed:
+
+- the Maven reactor moved to `0.10.0-SNAPSHOT` after the published `0.9.0`
+  release, then the release branch fixed it at `0.10.0`
 - `runtime-app` owns app-level health/readiness calculation, degraded-state
   mapping, status formatting, failure summaries, and operator-facing examples
 - ingress adapters may expose app-consumable status evidence needed by

@@ -53,13 +53,21 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.10.0` Development Posture
+## `0.11.0` Development Posture
 
-The `0.10.0` runtime line starts from the published `0.9.0` sink and operations
-hardening release and opens the Maven reactor at `0.10.0-SNAPSHOT`.
+The Maven reactor is now open at `0.11.0-SNAPSHOT` after the published
+`0.10.0` health and status release. The next release scope is not fixed yet.
+Any new production dependency must stay in a dedicated app or adapter module
+until its boundary is explicit.
 
-The goal is health checks and runtime status productionization after the TCP,
-HTTP, Kafka, MQTT, and sink-hardening baselines are all published:
+## `0.10.0` Published Posture
+
+The `0.10.0` runtime line started from the published `0.9.0` sink and
+operations hardening release and has since been published as the health and
+status productionization release.
+
+The published scope is health checks and runtime status productionization after
+the TCP, HTTP, Kafka, MQTT, and sink-hardening baselines are all published:
 
 | Module | 0.10.0 goal |
 | --- | --- |

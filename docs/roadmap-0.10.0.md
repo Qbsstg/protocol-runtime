@@ -1,8 +1,12 @@
 # Protocol Runtime 0.10.0 Roadmap
 
-`0.10.0` starts after the published `0.9.0` sink and operations hardening
-release. The development line opens with Maven reactor version
-`0.10.0-SNAPSHOT`.
+`0.10.0` started after the published `0.9.0` sink and operations hardening
+release. The development line opened with Maven reactor version
+`0.10.0-SNAPSHOT`, and the release branch fixed the reactor at `0.10.0`.
+
+`0.10.0` has since been tagged as `v0.10.0`, published to Maven Central,
+verified with isolated local Maven repositories, and published as a GitHub
+Release.
 
 The release target is health checks and runtime status productionization for
 the standalone collector while preserving the published TCP, HTTP, Kafka, MQTT,
@@ -63,6 +67,8 @@ protocol-binding, and sink-hardening boundaries.
 - Added `docs/release-readiness-0.10.0.md` to record release scope, module
   policy, health/status gates, verification commands, and readiness evidence.
 - Fixed the release branch Maven reactor at `0.10.0`.
+- Published Central deployment `976f18d2-4067-4163-8bf4-2f37425e3507` and
+  verified public Maven Central resolution for the selected runtime artifacts.
 
 ## Non-Goals
 
@@ -72,9 +78,10 @@ protocol-binding, and sink-hardening boundaries.
 - Kafka producer, MQTT publisher, or external sink delivery behavior.
 - New parser behavior inside `protocol-sdk`.
 
-## Readiness Criteria
+## Final Readiness Evidence
 
-Before `0.10.0` final publication:
+The `0.10.0` release satisfied these criteria before and after final
+publication:
 
 - README and Chinese README describe the `0.10.0` release line.
 - `docs/module-plan.md` and `docs/module-boundaries.md` describe the health and
@@ -86,3 +93,7 @@ Before `0.10.0` final publication:
 - `mvn -q verify` passes.
 - dependency boundary checks prove new dependencies stay out of `runtime-core`
   and `protocol-sdk`.
+- Central deployment `976f18d2-4067-4163-8bf4-2f37425e3507` reached
+  `PUBLISHED`.
+- GitHub Release `v0.10.0` is available at
+  <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.10.0>.
