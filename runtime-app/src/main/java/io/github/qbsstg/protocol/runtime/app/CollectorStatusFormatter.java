@@ -22,6 +22,7 @@ final class CollectorStatusFormatter {
                 + " sinkFailures=" + metrics.sinkFailureCount()
                 + " lastSinkFailure=" + lastSinkFailure(metrics)
                 + " sink=" + snapshot.sinkType().configValue()
+                + " fileSink=" + fileSink(snapshot.fileSinkStatus())
                 + " backpressure=" + snapshot.backpressureDecision()
                 + " maxPayloadBytes=" + snapshot.backpressureMaxPayloadBytes()
                 + " oversizedPayloadDecision=" + snapshot.oversizedPayloadDecision()
@@ -73,6 +74,19 @@ final class CollectorStatusFormatter {
                 + metrics.lastSinkFailureType()
                 + ':'
                 + metrics.lastSinkFailureMessage();
+    }
+
+    private static String fileSink(FileSinkStatus status) {
+        if (status == null) {
+            return "none";
+        }
+        return status.output()
+                + "/open=" + status.open()
+                + "/activeBytes=" + status.activeBytes()
+                + "/history=" + status.retainedHistoryCount()
+                + "/rotations=" + status.rotationCount()
+                + "/maxBytes=" + status.rotation().maxBytes()
+                + "/maxHistory=" + status.rotation().maxHistory();
     }
 
     private static String httpListeners(CollectorStatusSnapshot snapshot) {

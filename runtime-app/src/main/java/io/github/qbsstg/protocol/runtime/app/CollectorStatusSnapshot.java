@@ -20,6 +20,7 @@ public record CollectorStatusSnapshot(
         int activeConnectionCount,
         CollectorRuntimeMetrics metrics,
         SinkType sinkType,
+        FileSinkStatus fileSinkStatus,
         FileSinkRotationConfig fileSinkRotation,
         BackpressureDecision backpressureDecision,
         long backpressureMaxPayloadBytes,

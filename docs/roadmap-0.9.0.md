@@ -54,8 +54,13 @@ protocol-neutral contract is proven necessary.
   id, timestamp, exception type, and message.
 - status formatter output includes sink failure counters and the latest sink
   failure summary.
+- file sink status is exposed from the app boundary with output path, open
+  state, active byte count, retained history count, in-process rotation count,
+  and rotation limits.
 - focused tests cover record sink and failure sink exceptions without adding
   dependencies to `runtime-core`.
+- focused tests cover file sink rotation status and collector status output
+  without adding dependencies to `runtime-core`.
 
 ## Non-Goals
 

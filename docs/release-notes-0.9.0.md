@@ -12,6 +12,9 @@ Draft release notes for the `0.9.0` runtime release line.
   status output, and operator-facing examples.
 - Add app-level sink failure counters and last-error status output so bad
   downstream delivery does not collapse ingress or parsing.
+- Report file sink operational state, including output path, open state, active
+  byte count, retained history count, in-process rotation count, and rotation
+  limits.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability
   exporter dependencies.

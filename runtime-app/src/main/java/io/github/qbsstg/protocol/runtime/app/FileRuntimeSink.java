@@ -21,6 +21,7 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
     private final FileSinkRotationConfig rotation;
     private BufferedWriter writer;
     private long currentBytes;
+    private long rotationCount;
     private boolean stopped;
 
     public FileRuntimeSink(Path output) {
@@ -81,6 +82,16 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
         }
     }
 
+    public synchronized FileSinkStatus status() {
+        return new FileSinkStatus(
+                output,
+                writer != null,
+                activeBytesSnapshot(),
+                retainedHistoryCount(),
+                rotationCount,
+                rotation);
+    }
+
     private synchronized void write(String line) {
         if (writer == null) {
             start();
@@ -136,6 +147,7 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
             if (Files.exists(output)) {
                 Files.move(output, rotatedPath(1), StandardCopyOption.REPLACE_EXISTING);
             }
+            rotationCount++;
         } catch (IOException ex) {
             throw new UncheckedIOException("Unable to rotate sink file: " + output, ex);
         }
@@ -143,5 +155,26 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
 
     private Path rotatedPath(int index) {
         return output.resolveSibling(output.getFileName() + "." + index);
+    }
+
+    private long activeBytesSnapshot() {
+        if (writer != null) {
+            return currentBytes;
+        }
+        try {
+            return Files.exists(output) ? Files.size(output) : 0;
+        } catch (IOException ex) {
+            return currentBytes;
+        }
+    }
+
+    private int retainedHistoryCount() {
+        int count = 0;
+        for (int i = 1; i <= rotation.maxHistory(); i++) {
+            if (Files.exists(rotatedPath(i))) {
+                count++;
+            }
+        }
+        return count;
     }
 }

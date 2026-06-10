@@ -84,6 +84,13 @@ record RuntimeSinks(
         return counters.snapshot();
     }
 
+    FileSinkStatus fileSinkStatus() {
+        if (recordSink instanceof FileRuntimeSink<?> fileSink) {
+            return fileSink.status();
+        }
+        return null;
+    }
+
     BackpressureStrategy backpressureStrategy(StandaloneCollectorAppConfig config) {
         return new RuntimeAppBackpressureStrategy(
                 config.backpressureDecision(),
