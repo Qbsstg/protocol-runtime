@@ -53,12 +53,12 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.11.0` Development Posture
+## `0.11.0` Release Branch Posture
 
-The Maven reactor is now open at `0.11.0-SNAPSHOT` after the published
-`0.10.0` health and status release.
+The Maven reactor is fixed at `0.11.0` on the release branch after the
+published `0.10.0` health and status release.
 
-The current goal is a minimal app-owned management plane for the standalone
+The release goal is a minimal app-owned management plane for the standalone
 collector:
 
 | Module | 0.11.0 goal |

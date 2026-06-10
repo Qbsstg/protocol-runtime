@@ -1,9 +1,10 @@
 # Protocol Runtime 0.11.0 Release Notes
 
-Draft release notes for the `0.11.0` runtime release.
+Release notes draft for the `0.11.0` runtime release branch.
 
-`0.11.0` is currently under development on the `0.11.0-SNAPSHOT` line. It has
-not been tagged or published yet.
+The `0.11.0` release branch fixes the Maven reactor at `0.11.0`. It has not
+been tagged or published yet, and no real Maven Central upload is part of the
+release branch PR.
 
 ## Highlights
 
@@ -19,6 +20,8 @@ not been tagged or published yet.
 - Adds startup rollback behavior for management port bind failures.
 - Adds tests and standalone smoke coverage for real localhost management
   endpoints and degraded status snapshots.
+- Adds a `0.11.0` release-readiness audit covering management boundary,
+  module policy, verification commands, and release branch evidence.
 - Preserves `runtime-core` as a dependency-light contract module with no
   Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or
   observability exporter dependencies.
@@ -54,6 +57,8 @@ The release must pass before publication:
 - GitHub CI on the release PR
 
 The detailed plan is tracked in [`roadmap-0.11.0.md`](roadmap-0.11.0.md).
+The release-readiness audit is tracked in
+[`release-readiness-0.11.0.md`](release-readiness-0.11.0.md).
 
 ## Publication
 

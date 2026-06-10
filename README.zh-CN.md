@@ -30,14 +30,16 @@ sink-failure-triggered backpressure。
 health/readiness 快照、可解释 health reasons、运维状态指南和 standalone
 health smoke 覆盖。
 
-`0.10.0` 健康检查和状态发布完成后，Maven reactor 已打开到
-`0.11.0-SNAPSHOT` 开发线。当前 `0.11.0` 方向是在 standalone collector 的
+`0.10.0` 健康检查和状态发布完成后，release 分支已将 Maven reactor 固定为
+`0.11.0`。当前 `0.11.0` 方向是在 standalone collector 的
 app 边界内增加 JDK HTTP 管理面，通过独立管理端口暴露 health、readiness 和
 status JSON 查询。
 
 当前 `0.11.0` 范围记录在
 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)，release notes 草案记录在
-[`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)。
+[`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)，
+release-readiness audit 记录在
+[`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)。
 
 已发布的 `0.10.0` 范围记录在
 [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)，release notes 记录在
@@ -138,13 +140,13 @@ release notes 记录在
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | 基于 Paho MQTT 的 ingress adapter，把 MQTT payload 和 message metadata 映射为 runtime envelope，同时保持 MQTT 依赖不进入 `runtime-core`。 |
-| `runtime-app` | 0.11.0 development | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
+| `runtime-app` | 0.11.0 release branch | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 pipeline、更多 sink 和更完整的可部署运行时应用。这些依赖都属于
 runtime 仓库，不应反向进入 `protocol-sdk`。
 
-## `0.11.0` 管理面开发线
+## `0.11.0` 管理面发布线
 
 `0.11.0` 在已发布的 `0.10.0` health/readiness 模型基础上，增加第一版
 standalone collector 管理面：
@@ -367,7 +369,7 @@ server.bind();
 ## Standalone Collector App
 
 `runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前
-`0.11.0-SNAPSHOT` 开发线继续保留已发布的 `0.10.0` TCP/Netty、JDK HTTP、
+`0.11.0` 开发线继续保留已发布的 `0.10.0` TCP/Netty、JDK HTTP、
 Kafka 和 MQTT collector 路径，并接到同一个 app-owned pipeline：
 
 ```text
@@ -386,7 +388,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -419,7 +421,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -458,7 +460,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

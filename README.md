@@ -33,15 +33,17 @@ failure isolation, file sink status, and sink-failure-triggered backpressure.
 including app-local health/readiness snapshots, explainable health reasons,
 operator status guides, and standalone health smoke coverage.
 
-The Maven reactor is now open for `0.11.0-SNAPSHOT` development after the
-published `0.10.0` health and status release. The active `0.11.0` line adds an
+The Maven reactor is fixed at `0.11.0` on the release branch after the
+published `0.10.0` health and status release. The `0.11.0` line adds an
 app-owned JDK HTTP management plane for standalone collectors, with independent
 health, readiness, and status endpoints on a separate management port.
 
-The active `0.11.0` scope is tracked in
+The `0.11.0` scope is tracked in
 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md), and draft release notes
 are tracked in
-[`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md).
+[`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md). The
+release-readiness audit is tracked in
+[`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md).
 
 The published `0.10.0` release scope is tracked in
 [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md), and release notes are
@@ -143,14 +145,14 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.11.0 development | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.11.0 release branch | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, and richer deployable
 runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
 
-## `0.11.0` Management Plane Development
+## `0.11.0` Management Plane Release
 
 `0.11.0` adds the first standalone collector management plane after the
 published `0.10.0` health/readiness model:
@@ -411,7 +413,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current `0.11.0-SNAPSHOT` development line preserves the published
+The current `0.11.0` development line preserves the published
 `0.10.0` TCP/Netty, JDK HTTP, Kafka, and MQTT collector paths through the same
 app-owned pipeline:
 
@@ -431,7 +433,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -464,7 +466,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -504,7 +506,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

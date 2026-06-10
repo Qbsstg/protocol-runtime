@@ -7,8 +7,9 @@ Central Portal.
 
 The latest published runtime release is `0.10.0`.
 
-The current development line is `0.11.0-SNAPSHOT` after the published
-`0.10.0` health and status release.
+The current release branch is `0.11.0` after the published `0.10.0` health and
+status release. No `v0.11.0` tag has been created yet, and no real Maven
+Central upload is part of the release branch PR.
 
 The published `0.10.0` release includes:
 
@@ -28,7 +29,12 @@ The published `0.10.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.10.0` roadmap is maintained in
+The `0.11.0` roadmap is maintained in
+[`roadmap-0.11.0.md`](roadmap-0.11.0.md), release notes are maintained in
+[`release-notes-0.11.0.md`](release-notes-0.11.0.md), and the `0.11.0`
+release-readiness audit is tracked in
+[`release-readiness-0.11.0.md`](release-readiness-0.11.0.md). The published
+`0.10.0` roadmap is maintained in
 [`roadmap-0.10.0.md`](roadmap-0.10.0.md), release notes are maintained in
 [`release-notes-0.10.0.md`](release-notes-0.10.0.md), and the `0.10.0`
 release-readiness audit is tracked in
