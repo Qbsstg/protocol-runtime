@@ -362,6 +362,8 @@ collector.source.id=iec104:station-1
 collector.backpressure=ACCEPT
 collector.backpressure.maxPayloadBytes=0
 collector.backpressure.oversizedPayloadDecision=DROP
+collector.backpressure.sinkFailureThreshold=0
+collector.backpressure.sinkFailureDecision=RETRY_LATER
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
@@ -408,6 +410,8 @@ java -jar runtime-app/target/runtime-app-0.9.0-SNAPSHOT-standalone.jar \
 | `collector.backpressure` | `ACCEPT` | 可选 `ACCEPT`、`RETRY_LATER` 或 `DROP`。 |
 | `collector.backpressure.maxPayloadBytes` | `0` | 解析前 payload 大小阈值。`0` 表示关闭该阈值策略。 |
 | `collector.backpressure.oversizedPayloadDecision` | `DROP` | payload 超过阈值后的决策，可选 `DROP` 或 `RETRY_LATER`。 |
+| `collector.backpressure.sinkFailureThreshold` | `0` | 解析前 sink failure 计数阈值。`0` 表示关闭该阈值策略。 |
+| `collector.backpressure.sinkFailureDecision` | `RETRY_LATER` | sink failure 达到阈值后的决策，可选 `RETRY_LATER` 或 `DROP`。 |
 | `collector.sink.type` | `logging` | 可选 `logging`、`file` 或 `in-memory`。 |
 | `collector.sink.file` | 未设置 | 当 `collector.sink.type=file` 时必须配置。 |
 | `collector.sink.file.maxBytes` | `10485760` | 当前 file sink 输出文件超过该字节数前触发轮转。 |
@@ -513,6 +517,7 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
 - sink failure 计数，以及最后一次 sink failure 的目标、source id、异常类型和消息
 - sink 类型、file sink 输出路径/open 状态/当前活跃文件字节数/历史文件数、
   file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
+- sink failure backpressure 阈值和决策
 
 ### File Sink 输出格式
 
@@ -542,6 +547,10 @@ collector status 输出会展示当前输出文件路径、file sink 是否 open
 runtime-app 还会在应用装配边界隔离 sink 写入异常。如果 record sink 或 failure
 sink 在处理解析结果时抛出异常，该异常会记录到 collector metrics 和 status 输出，
 不会反向传播进 `runtime-core` 或 ingress adapter。
+如果需要在下游 sink 连续失败后保护入口，运维侧可以配置
+`collector.backpressure.sinkFailureThreshold` 和
+`collector.backpressure.sinkFailureDecision`，让后续 ingress payload 在解析前返回
+`RETRY_LATER` 或 `DROP`。
 
 ### 常见问题
 

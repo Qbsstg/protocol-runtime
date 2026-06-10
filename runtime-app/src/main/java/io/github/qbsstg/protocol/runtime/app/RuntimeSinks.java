@@ -96,6 +96,8 @@ record RuntimeSinks(
                 config.backpressureDecision(),
                 config.backpressureMaxPayloadBytes(),
                 config.oversizedPayloadDecision(),
+                config.sinkFailureBackpressureThreshold(),
+                config.sinkFailureBackpressureDecision(),
                 counters);
     }
 

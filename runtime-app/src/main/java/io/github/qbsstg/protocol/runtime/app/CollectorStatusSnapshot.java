@@ -25,6 +25,8 @@ public record CollectorStatusSnapshot(
         BackpressureDecision backpressureDecision,
         long backpressureMaxPayloadBytes,
         BackpressureDecision oversizedPayloadDecision,
+        long sinkFailureBackpressureThreshold,
+        BackpressureDecision sinkFailureBackpressureDecision,
         boolean strictAsduParsing) {
 
     public CollectorStatusSnapshot {
@@ -44,6 +46,12 @@ public record CollectorStatusSnapshot(
         }
         if (oversizedPayloadDecision == null) {
             throw new IllegalArgumentException("oversizedPayloadDecision must not be null");
+        }
+        if (sinkFailureBackpressureThreshold < 0) {
+            throw new IllegalArgumentException("sinkFailureBackpressureThreshold must not be negative");
+        }
+        if (sinkFailureBackpressureDecision == null) {
+            throw new IllegalArgumentException("sinkFailureBackpressureDecision must not be null");
         }
     }
 }

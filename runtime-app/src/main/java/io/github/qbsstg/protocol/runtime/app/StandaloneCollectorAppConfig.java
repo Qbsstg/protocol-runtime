@@ -15,6 +15,8 @@ public record StandaloneCollectorAppConfig(
         BackpressureDecision backpressureDecision,
         long backpressureMaxPayloadBytes,
         BackpressureDecision oversizedPayloadDecision,
+        long sinkFailureBackpressureThreshold,
+        BackpressureDecision sinkFailureBackpressureDecision,
         SinkType sinkType,
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
@@ -28,6 +30,7 @@ public record StandaloneCollectorAppConfig(
         mqttClients = List.copyOf(Objects.requireNonNull(mqttClients, "mqttClients must not be null"));
         Objects.requireNonNull(backpressureDecision, "backpressureDecision must not be null");
         Objects.requireNonNull(oversizedPayloadDecision, "oversizedPayloadDecision must not be null");
+        Objects.requireNonNull(sinkFailureBackpressureDecision, "sinkFailureBackpressureDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
         if (backpressureMaxPayloadBytes < 0) {
@@ -35,6 +38,12 @@ public record StandaloneCollectorAppConfig(
         }
         if (oversizedPayloadDecision == BackpressureDecision.ACCEPT) {
             throw new IllegalArgumentException("oversizedPayloadDecision must be RETRY_LATER or DROP");
+        }
+        if (sinkFailureBackpressureThreshold < 0) {
+            throw new IllegalArgumentException("sinkFailureBackpressureThreshold must not be negative");
+        }
+        if (sinkFailureBackpressureDecision == BackpressureDecision.ACCEPT) {
+            throw new IllegalArgumentException("sinkFailureBackpressureDecision must be RETRY_LATER or DROP");
         }
         if (sources.isEmpty()) {
             throw new IllegalArgumentException("sources must not be empty");
@@ -54,6 +63,8 @@ public record StandaloneCollectorAppConfig(
             BackpressureDecision backpressureDecision,
             long backpressureMaxPayloadBytes,
             BackpressureDecision oversizedPayloadDecision,
+            long sinkFailureBackpressureThreshold,
+            BackpressureDecision sinkFailureBackpressureDecision,
             SinkType sinkType,
             Path sinkFile,
             FileSinkRotationConfig fileSinkRotation,
@@ -67,6 +78,8 @@ public record StandaloneCollectorAppConfig(
                 backpressureDecision,
                 backpressureMaxPayloadBytes,
                 oversizedPayloadDecision,
+                sinkFailureBackpressureThreshold,
+                sinkFailureBackpressureDecision,
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
@@ -81,6 +94,8 @@ public record StandaloneCollectorAppConfig(
             BackpressureDecision backpressureDecision,
             long backpressureMaxPayloadBytes,
             BackpressureDecision oversizedPayloadDecision,
+            long sinkFailureBackpressureThreshold,
+            BackpressureDecision sinkFailureBackpressureDecision,
             SinkType sinkType,
             Path sinkFile,
             FileSinkRotationConfig fileSinkRotation,
@@ -94,6 +109,8 @@ public record StandaloneCollectorAppConfig(
                 backpressureDecision,
                 backpressureMaxPayloadBytes,
                 oversizedPayloadDecision,
+                sinkFailureBackpressureThreshold,
+                sinkFailureBackpressureDecision,
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
@@ -118,6 +135,8 @@ public record StandaloneCollectorAppConfig(
                 config.backpressureDecision(),
                 config.backpressureMaxPayloadBytes(),
                 config.oversizedPayloadDecision(),
+                config.sinkFailureBackpressureThreshold(),
+                config.sinkFailureBackpressureDecision(),
                 config.sinkType(),
                 config.sinkFile(),
                 config.fileSinkRotation(),
@@ -140,6 +159,8 @@ public record StandaloneCollectorAppConfig(
                 backpressureDecision,
                 backpressureMaxPayloadBytes,
                 oversizedPayloadDecision,
+                sinkFailureBackpressureThreshold,
+                sinkFailureBackpressureDecision,
                 sinkType,
                 sinkFile,
                 fileSinkRotation,

@@ -52,6 +52,10 @@ final class RuntimeSinkCounters {
                 failure.getMessage());
     }
 
+    long sinkFailureCount() {
+        return sinkFailureCount.get();
+    }
+
     CollectorRuntimeMetrics snapshot() {
         ParseFailure failure = lastParseFailure;
         BackpressureEvent backpressure = lastBackpressure;

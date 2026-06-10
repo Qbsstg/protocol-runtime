@@ -15,6 +15,9 @@ Draft release notes for the `0.9.0` runtime release line.
 - Report file sink operational state, including output path, open state, active
   byte count, retained history count, in-process rotation count, and rotation
   limits.
+- Add optional app-level sink-failure-triggered backpressure so downstream sink
+  failures can make later ingress payloads return `RETRY_LATER` or `DROP`
+  before parsing.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability
   exporter dependencies.

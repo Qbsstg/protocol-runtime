@@ -404,6 +404,8 @@ collector.source.id=iec104:station-1
 collector.backpressure=ACCEPT
 collector.backpressure.maxPayloadBytes=0
 collector.backpressure.oversizedPayloadDecision=DROP
+collector.backpressure.sinkFailureThreshold=0
+collector.backpressure.sinkFailureDecision=RETRY_LATER
 collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
@@ -451,6 +453,8 @@ they can override checked-in defaults for local runs.
 | `collector.backpressure` | `ACCEPT` | One of `ACCEPT`, `RETRY_LATER`, or `DROP`. |
 | `collector.backpressure.maxPayloadBytes` | `0` | Optional app-level payload-size threshold before parsing. `0` disables the threshold. |
 | `collector.backpressure.oversizedPayloadDecision` | `DROP` | Decision for payloads larger than `collector.backpressure.maxPayloadBytes`; one of `DROP` or `RETRY_LATER`. |
+| `collector.backpressure.sinkFailureThreshold` | `0` | Optional app-level sink-failure threshold before parsing. `0` disables the threshold. |
+| `collector.backpressure.sinkFailureDecision` | `RETRY_LATER` | Decision after sink failures reach `collector.backpressure.sinkFailureThreshold`; one of `RETRY_LATER` or `DROP`. |
 | `collector.sink.type` | `logging` | One of `logging`, `file`, or `in-memory`. |
 | `collector.sink.file` | unset | Required when `collector.sink.type=file`. |
 | `collector.sink.file.maxBytes` | `10485760` | Rotate the file sink before the active file grows beyond this byte limit. |
@@ -563,6 +567,7 @@ The snapshot includes:
 - sink type, file sink output path/open state/active byte count/history count,
   file rotation policy, backpressure mode, payload threshold policy, and strict
   ASDU setting
+- sink failure backpressure threshold and decision
 
 ### File Sink Format
 
@@ -595,6 +600,10 @@ The app also isolates runtime sink failures at the app assembly boundary. If a
 record or failure sink throws while handling a parsed result, the exception is
 captured in the collector metrics and status output instead of being propagated
 back into `runtime-core` or the ingress adapter.
+Operators can optionally set `collector.backpressure.sinkFailureThreshold` and
+`collector.backpressure.sinkFailureDecision` so subsequent ingress payloads are
+rejected with `RETRY_LATER` or `DROP` after downstream sink failures reach the
+configured threshold.
 
 ### Troubleshooting
 

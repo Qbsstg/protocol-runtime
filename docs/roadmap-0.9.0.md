@@ -57,10 +57,14 @@ protocol-neutral contract is proven necessary.
 - file sink status is exposed from the app boundary with output path, open
   state, active byte count, retained history count, in-process rotation count,
   and rotation limits.
+- runtime-app supports optional sink-failure-triggered backpressure with a
+  configurable threshold and `RETRY_LATER` or `DROP` decision before parsing.
 - focused tests cover record sink and failure sink exceptions without adding
   dependencies to `runtime-core`.
 - focused tests cover file sink rotation status and collector status output
   without adding dependencies to `runtime-core`.
+- focused tests cover sink-failure-triggered backpressure and configuration
+  validation without adding dependencies to `runtime-core`.
 
 ## Non-Goals
 

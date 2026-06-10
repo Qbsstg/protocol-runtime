@@ -11,12 +11,16 @@ final class RuntimeAppBackpressureStrategy implements BackpressureStrategy {
     private final BackpressureDecision fixedDecision;
     private final long maxPayloadBytes;
     private final BackpressureDecision oversizedPayloadDecision;
+    private final long sinkFailureThreshold;
+    private final BackpressureDecision sinkFailureDecision;
     private final RuntimeSinkCounters counters;
 
     RuntimeAppBackpressureStrategy(
             BackpressureDecision fixedDecision,
             long maxPayloadBytes,
             BackpressureDecision oversizedPayloadDecision,
+            long sinkFailureThreshold,
+            BackpressureDecision sinkFailureDecision,
             RuntimeSinkCounters counters) {
         this.fixedDecision = Objects.requireNonNull(fixedDecision, "fixedDecision must not be null");
         if (maxPayloadBytes < 0) {
@@ -28,6 +32,16 @@ final class RuntimeAppBackpressureStrategy implements BackpressureStrategy {
                 "oversizedPayloadDecision must not be null");
         if (oversizedPayloadDecision == BackpressureDecision.ACCEPT) {
             throw new IllegalArgumentException("oversizedPayloadDecision must be RETRY_LATER or DROP");
+        }
+        if (sinkFailureThreshold < 0) {
+            throw new IllegalArgumentException("sinkFailureThreshold must not be negative");
+        }
+        this.sinkFailureThreshold = sinkFailureThreshold;
+        this.sinkFailureDecision = Objects.requireNonNull(
+                sinkFailureDecision,
+                "sinkFailureDecision must not be null");
+        if (sinkFailureDecision == BackpressureDecision.ACCEPT) {
+            throw new IllegalArgumentException("sinkFailureDecision must be RETRY_LATER or DROP");
         }
         this.counters = Objects.requireNonNull(counters, "counters must not be null");
     }
@@ -48,6 +62,9 @@ final class RuntimeAppBackpressureStrategy implements BackpressureStrategy {
         }
         if (maxPayloadBytes > 0 && envelope.payload().length > maxPayloadBytes) {
             return oversizedPayloadDecision;
+        }
+        if (sinkFailureThreshold > 0 && counters.sinkFailureCount() >= sinkFailureThreshold) {
+            return sinkFailureDecision;
         }
         return BackpressureDecision.ACCEPT;
     }
