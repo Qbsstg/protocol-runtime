@@ -30,9 +30,9 @@ ingress baseline and runtime-app MQTT collector assembly. `0.9.0` published
 the downstream sink and operations hardening line, including app-level sink
 failure isolation, file sink status, and sink-failure-triggered backpressure.
 
-The current development line is `0.10.0-SNAPSHOT`, focused on health checks
-and runtime status productionization after the published TCP, HTTP, Kafka,
-MQTT, and sink-hardening baselines. The `0.10.0` roadmap is tracked in
+The current release branch fixes `0.10.0`, focused on health checks and
+runtime status productionization after the published TCP, HTTP, Kafka, MQTT,
+and sink-hardening baselines. The `0.10.0` roadmap is tracked in
 [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md), and release notes are
 tracked in [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md).
 
@@ -360,7 +360,7 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current `0.10.0-SNAPSHOT` development line can run TCP/Netty, JDK HTTP,
+The current `0.10.0` release line can run TCP/Netty, JDK HTTP,
 Kafka, or MQTT ingress through the same app-owned pipeline:
 
 ```text
@@ -379,7 +379,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -412,7 +412,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -452,7 +452,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -601,7 +601,7 @@ The snapshot includes:
   ASDU setting
 - sink failure backpressure threshold and decision
 
-`0.10.0-SNAPSHOT` adds app-local health/readiness derivation on top of the
+`0.10.0` adds app-local health/readiness derivation on top of the
 snapshot. `CollectorHealthSnapshot` reports `HEALTHY`, `DEGRADED`, `FAILED`,
 `CONFIGURED`, `STARTING`, `STOPPING`, or `STOPPED`, plus `READY` or
 `NOT_READY`. A running collector is `READY` only when at least one listener is

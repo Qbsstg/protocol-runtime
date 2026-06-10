@@ -4,8 +4,8 @@ Release notes for the `0.10.0` runtime release line.
 
 ## Planned Highlights
 
-- Open the Maven reactor at `0.10.0-SNAPSHOT` after the published `0.9.0` sink
-  and operations hardening release.
+- Finalize the Maven reactor at `0.10.0` after the published `0.9.0` sink and
+  operations hardening release.
 - Formalize runtime-app health and readiness state for standalone collector
   operation.
 - Improve status output so operators can distinguish listener, source, parser,
@@ -42,7 +42,7 @@ boundary is explicit. `runtime-protocol-*` modules continue to depend only on
 
 ## Verification Target
 
-Before release branch work, the readiness branch should pass:
+Before final publication, the release branch should pass:
 
 - `git diff --check`
 - `mvn -q verify`
