@@ -561,6 +561,9 @@ readiness 可以保持 `READY`。
 `healthReasons=[...]`，方便在没有外部管理端点的情况下，从本地日志区分 healthy、
 degraded、failed 和 stopped runtime 状态。
 
+面向运维的状态示例、状态矩阵、reason 对照表和排查顺序记录在
+[`docs/status-health-readiness.zh-CN.md`](docs/status-health-readiness.zh-CN.md)。
+
 ### File Sink 输出格式
 
 file sink 每行输出一条类似 JSON 的记录。当前输出文件超过

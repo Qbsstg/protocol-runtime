@@ -55,6 +55,8 @@ protocol-binding, and sink-hardening boundaries.
   `runtime-core`.
 - Focused tests cover configured/not-ready, healthy/running, parse-failure
   degradation, backpressure degradation, and startup-failure health states.
+- Added English and Chinese operator guides with a health/readiness matrix,
+  trimmed status-line examples, reason catalog, and triage order.
 
 ## Non-Goals
 
