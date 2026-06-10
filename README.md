@@ -613,6 +613,10 @@ The single-line status output now includes `health=...`, `readiness=...`, and
 `healthReasons=[...]` so local logs can distinguish healthy, degraded, failed,
 and stopped runtime states without an external management endpoint.
 
+Operator-facing examples, a status matrix, reason catalog, and triage order are
+documented in
+[`docs/status-health-readiness.md`](docs/status-health-readiness.md).
+
 ### File Sink Format
 
 The file sink writes one JSON-like line per parsed record or parse failure. It

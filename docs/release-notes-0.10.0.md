@@ -15,6 +15,8 @@ Release notes for the `0.10.0` runtime release line.
   `NOT_READY`, and explainable health reasons.
 - Add examples and troubleshooting guidance for healthy, degraded, failed, and
   stopped collector states.
+- Add English and Chinese status guides with a health/readiness matrix,
+  trimmed status-line examples, reason catalog, and operator triage order.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability
   exporter dependencies.
