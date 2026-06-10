@@ -72,6 +72,9 @@ class StandaloneCollectorTest {
         try (StandaloneCollector collector = StandaloneCollector.create(config(0, "in-memory"))) {
             CollectorStatusSnapshot configured = collector.statusSnapshot();
             assertEquals(CollectorLifecycleState.CONFIGURED, configured.state());
+            assertEquals(CollectorHealthState.CONFIGURED, configured.health().health());
+            assertEquals(CollectorReadinessState.NOT_READY, configured.health().readiness());
+            assertEquals(List.of("lifecycle=CONFIGURED"), configured.health().reasons());
             assertNull(configured.startedAt());
             assertEquals(SinkType.IN_MEMORY, configured.sinkType());
             assertNull(configured.fileSinkStatus());
@@ -99,6 +102,9 @@ class StandaloneCollectorTest {
 
             CollectorStatusSnapshot running = collector.statusSnapshot();
             assertEquals(CollectorLifecycleState.RUNNING, running.state());
+            assertEquals(CollectorHealthState.HEALTHY, running.health().health());
+            assertEquals(CollectorReadinessState.READY, running.health().readiness());
+            assertTrue(running.health().reasons().isEmpty());
             assertNotNull(running.startedAt());
             assertNull(running.stoppedAt());
             assertEquals(1, running.sources().size());
@@ -117,6 +123,9 @@ class StandaloneCollectorTest {
 
             String status = CollectorStatusFormatter.format(running);
             assertTrue(status.contains("state=RUNNING"));
+            assertTrue(status.contains("health=HEALTHY"));
+            assertTrue(status.contains("readiness=READY"));
+            assertTrue(status.contains("healthReasons=[]"));
             assertTrue(status.contains("listeners=1"));
             assertTrue(status.contains("parsedRecords=1"));
             assertTrue(status.contains("parseFailures=0"));
@@ -230,6 +239,9 @@ class StandaloneCollectorTest {
             CollectorStatusSnapshot snapshot = collector.statusSnapshot();
             assertEquals(1, snapshot.metrics().parsedRecordCount());
             assertEquals(1, snapshot.metrics().parseFailureCount());
+            assertEquals(CollectorHealthState.DEGRADED, snapshot.health().health());
+            assertEquals(CollectorReadinessState.READY, snapshot.health().readiness());
+            assertTrue(snapshot.health().reasons().contains("parseFailures=1"));
             assertEquals("iec104:station-1", snapshot.metrics().lastParseFailureSourceId());
             assertTrue(snapshot.metrics().lastParseFailureMessage().contains("Invalid IEC104 APDU length"));
             assertNotNull(snapshot.metrics().lastParseFailureAt());
@@ -268,6 +280,10 @@ class StandaloneCollectorTest {
             assertEquals(BackpressureDecision.RETRY_LATER, metrics.lastBackpressureDecision());
             assertEquals(SINGLE_POINT_FRAME.length, metrics.lastBackpressurePayloadSize());
             assertEquals("iec104:station-1", metrics.lastBackpressureSourceId());
+            CollectorHealthSnapshot health = collector.statusSnapshot().health();
+            assertEquals(CollectorHealthState.DEGRADED, health.health());
+            assertEquals(CollectorReadinessState.READY, health.readiness());
+            assertTrue(health.reasons().contains("backpressureRetryLater=1"));
         }
     }
 
@@ -870,6 +886,9 @@ class StandaloneCollectorTest {
 
                 CollectorStatusSnapshot failed = collector.statusSnapshot();
                 assertEquals(CollectorLifecycleState.FAILED, failed.state());
+                assertEquals(CollectorHealthState.FAILED, failed.health().health());
+                assertEquals(CollectorReadinessState.NOT_READY, failed.health().readiness());
+                assertTrue(failed.health().reasons().stream().anyMatch(reason -> reason.startsWith("startupFailure=")));
                 assertTrue(failed.startupFailureReason().contains("HTTP listener http-main"));
                 assertNotNull(failed.lastExceptionType());
                 assertNotNull(failed.lastExceptionMessage());
@@ -1030,6 +1049,9 @@ class StandaloneCollectorTest {
             assertFalse(collector.isRunning());
             CollectorStatusSnapshot failed = collector.statusSnapshot();
             assertEquals(CollectorLifecycleState.FAILED, failed.state());
+            assertEquals(CollectorHealthState.FAILED, failed.health().health());
+            assertEquals(CollectorReadinessState.NOT_READY, failed.health().readiness());
+            assertTrue(failed.health().reasons().stream().anyMatch(reason -> reason.startsWith("startupFailure=")));
             assertNotNull(failed.startupFailureReason());
             assertNotNull(failed.lastExceptionType());
             assertNotNull(failed.lastExceptionMessage());
@@ -1048,6 +1070,9 @@ class StandaloneCollectorTest {
 
         CollectorStatusSnapshot failed = collector.statusSnapshot();
         assertEquals(CollectorLifecycleState.FAILED, failed.state());
+        assertEquals(CollectorHealthState.FAILED, failed.health().health());
+        assertEquals(CollectorReadinessState.NOT_READY, failed.health().readiness());
+        assertTrue(failed.health().reasons().stream().anyMatch(reason -> reason.startsWith("startupFailure=")));
         assertTrue(failed.startupFailureReason().contains("south"));
         assertNotNull(failed.lastExceptionType());
         assertNotNull(failed.lastExceptionMessage());

@@ -10,6 +10,9 @@ Release notes for the `0.10.0` runtime release line.
   operation.
 - Improve status output so operators can distinguish listener, source, parser,
   sink, failure, and backpressure posture.
+- Add app-local `CollectorHealthSnapshot` derivation with `HEALTHY`,
+  `DEGRADED`, `FAILED`, lifecycle-aligned non-running states, `READY` /
+  `NOT_READY`, and explainable health reasons.
 - Add examples and troubleshooting guidance for healthy, degraded, failed, and
   stopped collector states.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,

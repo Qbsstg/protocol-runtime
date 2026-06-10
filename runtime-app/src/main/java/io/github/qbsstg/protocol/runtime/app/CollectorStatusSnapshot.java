@@ -54,4 +54,8 @@ public record CollectorStatusSnapshot(
             throw new IllegalArgumentException("sinkFailureBackpressureDecision must not be null");
         }
     }
+
+    public CollectorHealthSnapshot health() {
+        return CollectorHealthSnapshot.from(this);
+    }
 }

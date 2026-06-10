@@ -531,6 +531,8 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
 状态快照包含：
 
 - lifecycle 状态
+- 派生 health 状态和 readiness 状态
+- 非 healthy 或非 ready collector 的 health reason
 - 启动失败原因和最后一次异常类型/消息
 - 启动时间和停止时间
 - source 摘要
@@ -546,6 +548,18 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
 - sink 类型、file sink 输出路径/open 状态/当前活跃文件字节数/历史文件数、
   file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
 - sink failure backpressure 阈值和决策
+
+`0.10.0-SNAPSHOT` 在 snapshot 之上增加 app-local health/readiness 派生能力。
+`CollectorHealthSnapshot` 会报告 `HEALTHY`、`DEGRADED`、`FAILED`、
+`CONFIGURED`、`STARTING`、`STOPPING` 或 `STOPPED`，同时报告 `READY` 或
+`NOT_READY`。运行中的 collector 只有在至少配置了一个 listener、所有 listener
+都处于 running，并且 file sink 已 open 时才是 `READY`。parse failure、sink
+failure 和 backpressure 决策会让 health 降级，但如果 collector 仍能接收 ingress，
+readiness 可以保持 `READY`。
+
+单行 status 输出现在包含 `health=...`、`readiness=...` 和
+`healthReasons=[...]`，方便在没有外部管理端点的情况下，从本地日志区分 healthy、
+degraded、failed 和 stopped runtime 状态。
 
 ### File Sink 输出格式
 
