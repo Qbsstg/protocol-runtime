@@ -41,7 +41,14 @@ class RuntimeSinksTest {
         assertEquals(IllegalStateException.class.getName(), metrics.lastSinkFailureType());
         assertEquals("disk full", metrics.lastSinkFailureMessage());
 
-        String status = CollectorStatusFormatter.format(snapshot(metrics));
+        CollectorStatusSnapshot snapshot = snapshot(metrics);
+        assertEquals(CollectorHealthState.DEGRADED, snapshot.health().health());
+        assertEquals(CollectorReadinessState.NOT_READY, snapshot.health().readiness());
+        assertTrue(snapshot.health().reasons().contains("sinkFailures=1"));
+
+        String status = CollectorStatusFormatter.format(snapshot);
+        assertTrue(status.contains("health=DEGRADED"));
+        assertTrue(status.contains("readiness=NOT_READY"));
         assertTrue(status.contains("sinkFailures=1"));
         assertTrue(status.contains("lastSinkFailure=record@iec104:station-1/"));
         assertTrue(status.contains(IllegalStateException.class.getName() + ":disk full"));

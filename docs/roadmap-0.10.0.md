@@ -46,6 +46,16 @@ protocol-binding, and sink-hardening boundaries.
    later release after the health model is stable.
 7. Add release-readiness notes before the `0.10.0` release branch.
 
+## Progress
+
+- Added app-local `CollectorHealthSnapshot`, `CollectorHealthState`, and
+  `CollectorReadinessState` derived from the existing `CollectorStatusSnapshot`.
+- Status output now includes `health`, `readiness`, and health reasons without
+  adding management endpoint, framework, exporter, or adapter dependencies to
+  `runtime-core`.
+- Focused tests cover configured/not-ready, healthy/running, parse-failure
+  degradation, backpressure degradation, and startup-failure health states.
+
 ## Non-Goals
 
 - Spring Boot or application framework adoption.

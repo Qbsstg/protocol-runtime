@@ -7,8 +7,12 @@ final class CollectorStatusFormatter {
 
     static String format(CollectorStatusSnapshot snapshot) {
         CollectorRuntimeMetrics metrics = snapshot.metrics();
+        CollectorHealthSnapshot health = snapshot.health();
         return "Protocol Runtime collector status"
                 + " state=" + snapshot.state()
+                + " health=" + health.health()
+                + " readiness=" + health.readiness()
+                + " healthReasons=" + healthReasons(health)
                 + " sources=" + snapshot.sources().size()
                 + " listeners=" + (snapshot.tcpListeners().size()
                         + snapshot.httpListeners().size()
@@ -33,6 +37,13 @@ final class CollectorStatusFormatter {
                 + " httpListeners=" + httpListeners(snapshot)
                 + " kafkaConsumers=" + kafkaConsumers(snapshot)
                 + " mqttClients=" + mqttClients(snapshot);
+    }
+
+    private static String healthReasons(CollectorHealthSnapshot health) {
+        if (health.reasons().isEmpty()) {
+            return "[]";
+        }
+        return "[" + String.join(",", health.reasons()) + "]";
     }
 
     private static String tcpListeners(CollectorStatusSnapshot snapshot) {

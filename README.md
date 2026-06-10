@@ -581,6 +581,8 @@ and counter summaries for local log inspection.
 The snapshot includes:
 
 - lifecycle state
+- derived health state and readiness state
+- health reasons for non-healthy or non-ready collectors
 - startup failure reason and last exception type/message
 - start and stop timestamps
 - source summaries
@@ -598,6 +600,18 @@ The snapshot includes:
   file rotation policy, backpressure mode, payload threshold policy, and strict
   ASDU setting
 - sink failure backpressure threshold and decision
+
+`0.10.0-SNAPSHOT` adds app-local health/readiness derivation on top of the
+snapshot. `CollectorHealthSnapshot` reports `HEALTHY`, `DEGRADED`, `FAILED`,
+`CONFIGURED`, `STARTING`, `STOPPING`, or `STOPPED`, plus `READY` or
+`NOT_READY`. A running collector is `READY` only when at least one listener is
+configured, all configured listeners are running, and a configured file sink is
+open. Parse failures, sink failures, and backpressure decisions degrade health
+while preserving readiness if the collector can still accept ingress.
+
+The single-line status output now includes `health=...`, `readiness=...`, and
+`healthReasons=[...]` so local logs can distinguish healthy, degraded, failed,
+and stopped runtime states without an external management endpoint.
 
 ### File Sink Format
 
