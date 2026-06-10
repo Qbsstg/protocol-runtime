@@ -38,7 +38,7 @@ deployment concerns.
 | `runtime-ingress-http` | `runtime-core`, JDK `HttpServer`, tests. | Protocol SDK modules, Spring, Netty, Kafka, MQTT, database, Redis, changes to `runtime-core` for HTTP-specific policy. |
 | `runtime-ingress-kafka` | `runtime-core`, Kafka client libraries, tests. | Protocol SDK modules, HTTP/MQTT adapter dependencies, database, Redis, changes to `runtime-core` for offset policy. |
 | `runtime-ingress-mqtt` | `runtime-core`, MQTT client libraries, tests. | Protocol SDK modules, HTTP/Kafka adapter dependencies, database, Redis, changes to `runtime-core` for topic/session policy. |
-| `runtime-app` | Runtime modules, JDK logging/file APIs, tests. | New parser implementation, SDK changes, Spring framework, database, Redis, moving adapter dependencies into core or protocol bindings. |
+| `runtime-app` | Runtime modules, JDK logging/file APIs, JDK `HttpServer` management endpoints, tests. | New parser implementation, SDK changes, Spring framework, database, Redis, moving adapter dependencies into core or protocol bindings. |
 | `runtime-smoke-tests` | Runtime modules and tests. | Application dependency use. Central publishing is skipped for future releases. |
 
 ## Planned Adapter Module Rules
@@ -315,20 +315,35 @@ Not allowed:
 ## `0.11.0` Development Boundary
 
 The Maven reactor is now open at `0.11.0-SNAPSHOT` after the published
-`0.10.0` health and status release. The next release scope is not fixed yet.
+`0.10.0` health and status release. The current boundary is the first
+standalone collector management plane.
 
 Allowed:
 
-- keep `runtime-core` dependency-light while planning new app or adapter
-  productionization work
-- add documentation, tests, or contracts that preserve the existing dependency
-  direction from `protocol-runtime` to `protocol-sdk`
+- `runtime-app` may expose app-local JDK `HttpServer` management endpoints for
+  `/health`, `/readiness`, and `/status`
+- management configuration may live under `collector.management.*` and is owned
+  by `runtime-app`
+- management JSON may serialize existing `CollectorStatusSnapshot`,
+  `CollectorHealthSnapshot`, runtime metrics, listener status, sink status, and
+  backpressure configuration
+- management port binding failures may fail collector startup and roll back
+  already-started app listeners
+- tests and standalone smoke scripts may query management endpoints on real
+  localhost ports
+- future non-JDK management dependencies must live in `runtime-app` or a
+  dedicated management adapter module
 
 Not allowed:
 
 - adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or
   observability exporter dependencies to `runtime-core`
 - changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as the management API; it remains the protocol
+  payload ingestion adapter
+- moving management endpoint, metrics exporter, dashboard, durable health
+  history, database, Redis, or broker-publishing policy into
+  `runtime-protocol-*`
 
 ## `0.10.0` Health And Status Boundary
 

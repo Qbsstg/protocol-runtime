@@ -26,7 +26,7 @@ This note records the first open-source module shape for `protocol-runtime`.
 | `runtime-ingress-http` | `0.5.0` JDK `HttpServer` baseline for HTTP POST payloads, source mapping, request limits, response policy, and runtime backpressure behavior. | `0.6.0` runtime-app HTTP collector assembly, lifecycle hardening, richer response policy, and smoke coverage. |
 | `runtime-ingress-kafka` | `0.7.0` Kafka `ConsumerRecord` baseline for source mapping, payload mapping, envelope attributes, polling lifecycle, backpressure result mapping, and commit-mode decisions. | Broker-backed integration tests, retry/dead-letter posture, and downstream Kafka sink boundaries. |
 | `runtime-ingress-mqtt` | `0.8.0` MQTT message baseline for source mapping, payload mapping, envelope attributes, Paho client lifecycle, and backpressure result mapping. | Broker-backed integration tests, reconnect hardening, and downstream MQTT sink boundaries. |
-| `runtime-app` | Provide the standalone collector assembly with property-based configuration, source id selection, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, backpressure mode, and logging/file/in-memory sinks. | Service wrappers, health/status surfaces, TLS, reconnect policy, and downstream sink adapters. |
+| `runtime-app` | Provide the standalone collector assembly with property-based configuration, source id selection, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, backpressure mode, logging/file/in-memory sinks, and app-owned management endpoints. | Service wrappers, TLS, reconnect policy, richer management security, and downstream sink adapters. |
 | `runtime-smoke-tests` | Prove the first IEC104 over TCP runtime path with EmbeddedChannel and real localhost socket tests through `TcpNettyServer`, `TcpNettyIngressHandler`, `RuntimePipelineRunner`, `Iec104RuntimeBinding`, sinks, active sessions, and disconnect lifecycle. | More cross-module runtime paths after new ingress and protocol bindings land. |
 
 ## Deferred Modules
@@ -56,9 +56,22 @@ dependencies into `runtime-core` or `protocol-sdk`.
 ## `0.11.0` Development Posture
 
 The Maven reactor is now open at `0.11.0-SNAPSHOT` after the published
-`0.10.0` health and status release. The next release scope is not fixed yet.
-Any new production dependency must stay in a dedicated app or adapter module
-until its boundary is explicit.
+`0.10.0` health and status release.
+
+The current goal is a minimal app-owned management plane for the standalone
+collector:
+
+| Module | 0.11.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, management endpoint, or observability exporter dependencies. |
+| `runtime-app` | Add JDK `HttpServer` based management configuration and endpoints for `/health`, `/readiness`, and `/status`; expose JSON snapshots from existing app-local health/status models. |
+| `runtime-ingress-http` | Remain the protocol payload HTTP ingestion adapter; do not own management endpoints. |
+| `runtime-ingress-*` | Preserve published ingress behavior and keep adapter-specific dependencies isolated. |
+| `runtime-protocol-*` | Continue to parse payloads without transport, app, management, exporter, or sink dependencies. |
+| `runtime-smoke-tests` | Keep repository-only cross-module smoke coverage; management checks can remain app-level and standalone-script based. |
+
+Any future non-JDK management dependency must stay in `runtime-app` or a
+dedicated management adapter module until its boundary is explicit.
 
 ## `0.10.0` Published Posture
 

@@ -328,6 +328,7 @@ class StandaloneCollectorTest {
         assertEquals(1, appConfig.sources().size());
         assertEquals(1, appConfig.tcpListeners().size());
         assertTrue(appConfig.httpListeners().isEmpty());
+        assertFalse(appConfig.management().enabled());
         assertEquals("default", appConfig.sources().get(0).name());
         assertEquals("iec104:station-1", appConfig.sources().get(0).sourceId().qualifiedValue());
         assertEquals(RuntimeProtocol.IEC104, appConfig.sources().get(0).protocol());
@@ -335,6 +336,82 @@ class StandaloneCollectorTest {
         assertEquals("default", appConfig.tcpListeners().get(0).sourceName());
         assertEquals(RuntimeProtocol.IEC104, appConfig.tcpListeners().get(0).protocol());
         assertEquals(2404, appConfig.tcpListeners().get(0).tcp().port());
+    }
+
+    @Test
+    void parsesManagementEndpointConfigurationWithoutChangingLegacyDefaults() {
+        Properties properties = managementProperties(0, "in-memory", 0);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_HEALTH_PATH, "/live");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_READINESS_PATH, "/ready");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_STATUS_PATH, "/runtime/status");
+
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertTrue(appConfig.management().enabled());
+        assertEquals("127.0.0.1", appConfig.management().host());
+        assertEquals(0, appConfig.management().port());
+        assertEquals("/live", appConfig.management().healthPath());
+        assertEquals("/ready", appConfig.management().readinessPath());
+        assertEquals("/runtime/status", appConfig.management().statusPath());
+    }
+
+    @Test
+    void exposesManagementHealthReadinessAndStatusOnLocalhostPortZero() throws Exception {
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(managementProperties(0, "in-memory", 0)))) {
+            assertTrue(collector.managementEnabled());
+            assertFalse(collector.managementRunning());
+
+            collector.start();
+
+            assertTrue(collector.managementRunning());
+            assertTrue(collector.managementPort() > 0);
+            HttpResponse<String> health = getManagement(collector, "/health");
+            HttpResponse<String> readiness = getManagement(collector, "/readiness");
+            HttpResponse<String> status = getManagement(collector, "/status");
+
+            assertEquals(200, health.statusCode());
+            assertEquals(200, readiness.statusCode());
+            assertEquals(200, status.statusCode());
+            assertTrue(health.body().contains("\"health\":\"HEALTHY\""));
+            assertTrue(readiness.body().contains("\"readiness\":\"READY\""));
+            assertTrue(status.body().contains("\"lifecycle\":\"RUNNING\""));
+            assertTrue(status.body().contains("\"health\":\"HEALTHY\""));
+            assertTrue(status.body().contains("\"readiness\":\"READY\""));
+            assertTrue(status.body().contains("\"sources\""));
+            assertTrue(status.body().contains("\"listeners\""));
+            assertTrue(status.body().contains("\"sink\":{\"type\":\"in-memory\""));
+            assertTrue(status.body().contains("\"backpressure\""));
+            assertTrue(status.body().contains("\"failureCounters\""));
+
+            collector.stop();
+
+            assertFalse(collector.managementRunning());
+        }
+    }
+
+    @Test
+    void managementStatusReportsDegradedCollectorAfterParseFailure() throws Exception {
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(managementProperties(0, "in-memory", 0)))) {
+            collector.start();
+
+            byte[] malformed = bytes(0x68, 0x03, 0x00, 0x00, 0x00);
+            writeFrame(collector, malformed);
+            awaitFailures(collector.inMemorySink().orElseThrow(), 1);
+
+            HttpResponse<String> health = getManagement(collector, "/health");
+            HttpResponse<String> readiness = getManagement(collector, "/readiness");
+            HttpResponse<String> status = getManagement(collector, "/status");
+
+            assertEquals(200, health.statusCode());
+            assertEquals(200, readiness.statusCode());
+            assertTrue(health.body().contains("\"health\":\"DEGRADED\""));
+            assertTrue(readiness.body().contains("\"readiness\":\"READY\""));
+            assertTrue(status.body().contains("\"parseFailureCount\":1"));
+            assertTrue(status.body().contains("\"parse\":1"));
+            assertTrue(status.body().contains("parseFailures=1"));
+        }
     }
 
     @Test
@@ -902,6 +979,34 @@ class StandaloneCollectorTest {
     }
 
     @Test
+    void managementPortConflictFailsFastAndRollsBackCollectorListeners() throws Exception {
+        com.sun.net.httpserver.HttpServer blocker =
+                com.sun.net.httpserver.HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        blocker.start();
+        try {
+            Properties properties = managementProperties(0, "in-memory", blocker.getAddress().getPort());
+            StandaloneCollector collector = StandaloneCollector.create(
+                    StandaloneCollectorConfig.appConfigFromProperties(properties));
+
+            assertThrows(RuntimeException.class, collector::start);
+
+            CollectorStatusSnapshot failed = collector.statusSnapshot();
+            assertEquals(CollectorLifecycleState.FAILED, failed.state());
+            assertEquals(CollectorHealthState.FAILED, failed.health().health());
+            assertEquals(CollectorReadinessState.NOT_READY, failed.health().readiness());
+            assertTrue(failed.startupFailureReason().contains("management listener management"));
+            assertNotNull(failed.lastExceptionType());
+            assertNotNull(failed.lastExceptionMessage());
+            assertFalse(collector.managementRunning());
+            assertTrue(failed.tcpListeners().stream().noneMatch(TcpListenerStatus::running));
+            assertNull(failed.startedAt());
+            assertNotNull(failed.stoppedAt());
+        } finally {
+            blocker.stop(0);
+        }
+    }
+
+    @Test
     void validatesHttpListenerConfiguration() {
         Properties properties = httpProperties(0, "in-memory");
         String prefix = StandaloneCollectorConfig.HTTP_LISTENER_PREFIX + "http-main";
@@ -921,6 +1026,35 @@ class StandaloneCollectorTest {
                 + " must be ACK_ON_ACCEPT or NO_BODY");
         assertContainsError(validation, prefix + StandaloneCollectorConfig.HTTP_LISTENER_WORKER_THREADS_SUFFIX
                 + " must be positive");
+    }
+
+    @Test
+    void validatesManagementEndpointConfiguration() {
+        Properties properties = managementProperties(2404, "in-memory", 2404);
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, "management endpoint 127.0.0.1:2404 conflicts with TCP listener default");
+
+        properties = managementProperties(0, "in-memory", 0);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_PORT, "70000");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_HEALTH_PATH, "health");
+
+        validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.MANAGEMENT_PORT + " must be between");
+        assertContainsError(validation, "collector.management is invalid: healthPath must start with /");
+
+        properties = managementProperties(0, "in-memory", 0);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_READINESS_PATH, "/status");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_STATUS_PATH, "/status");
+
+        validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, "collector.management is invalid: management paths must be distinct");
     }
 
     @Test
@@ -1276,6 +1410,14 @@ class StandaloneCollectorTest {
         return properties;
     }
 
+    private static Properties managementProperties(int collectorPort, String sinkType, int managementPort) {
+        Properties properties = baseProperties(collectorPort, sinkType);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_ENABLED, "true");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_HOST, "127.0.0.1");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_PORT, Integer.toString(managementPort));
+        return properties;
+    }
+
     private static Properties httpProperties(int port, String sinkType) {
         Properties properties = new Properties();
         properties.setProperty(StandaloneCollectorConfig.SOURCE_ID, "iec104:station-1");
@@ -1460,6 +1602,15 @@ class StandaloneCollectorTest {
                 .POST(HttpRequest.BodyPublishers.ofByteArray(payload));
         headers.forEach(request::header);
         return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private static HttpResponse<String> getManagement(
+            StandaloneCollector collector,
+            String path) throws IOException, InterruptedException {
+        InetSocketAddress address = collector.managementLocalAddress();
+        URI uri = URI.create("http://" + address.getHostString() + ":" + address.getPort() + path);
+        HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
+        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
     }
 
     private static ConsumerRecord<byte[], byte[]> kafkaRecord(byte[] value) {

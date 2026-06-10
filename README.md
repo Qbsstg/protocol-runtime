@@ -34,7 +34,14 @@ including app-local health/readiness snapshots, explainable health reasons,
 operator status guides, and standalone health smoke coverage.
 
 The Maven reactor is now open for `0.11.0-SNAPSHOT` development after the
-published `0.10.0` health and status release.
+published `0.10.0` health and status release. The active `0.11.0` line adds an
+app-owned JDK HTTP management plane for standalone collectors, with independent
+health, readiness, and status endpoints on a separate management port.
+
+The active `0.11.0` scope is tracked in
+[`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md), and draft release notes
+are tracked in
+[`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md).
 
 The published `0.10.0` release scope is tracked in
 [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md), and release notes are
@@ -136,12 +143,50 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.10.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.11.0 development | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, and richer deployable
 runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
+
+## `0.11.0` Management Plane Development
+
+`0.11.0` adds the first standalone collector management plane after the
+published `0.10.0` health/readiness model:
+
+- `runtime-core` remains free of Spring, Netty, Kafka, MQTT, HTTP, database,
+  Redis, and observability exporter dependencies
+- management HTTP is app-owned and currently implemented with JDK `HttpServer`
+  inside `runtime-app`
+- `runtime-ingress-http` remains the protocol-payload HTTP ingestion adapter;
+  it is not the management API
+- management configuration lives under `collector.management.*`
+- `/health`, `/readiness`, and `/status` expose JSON snapshots with lifecycle,
+  health, readiness, sources, listeners, sink, backpressure, metrics, and
+  failure counters
+
+Example management configuration:
+
+```properties
+collector.management.enabled=true
+collector.management.host=127.0.0.1
+collector.management.port=8081
+collector.management.healthPath=/health
+collector.management.readinessPath=/readiness
+collector.management.statusPath=/status
+```
+
+Example checks:
+
+```sh
+curl -s http://127.0.0.1:8081/health
+curl -s http://127.0.0.1:8081/readiness
+curl -s http://127.0.0.1:8081/status
+```
+
+The detailed plan is maintained in
+[`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md).
 
 ## `0.10.0` Health And Status Release
 

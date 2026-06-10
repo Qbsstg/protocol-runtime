@@ -39,6 +39,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     private final List<HttpListenerRuntime> httpListeners;
     private final List<KafkaConsumerRuntime<?>> kafkaConsumers;
     private final List<MqttClientRuntime<?>> mqttClients;
+    private final ManagementHttpServer managementServer;
     private final List<RuntimeListener> listeners;
     private final Clock clock;
     private final CountDownLatch stopped = new CountDownLatch(1);
@@ -101,13 +102,21 @@ public final class StandaloneCollector implements RuntimeLifecycle {
             mqttClientRuntimes.add(createMqttClient(client, mqttMessageSourceFactory.apply(client)));
         }
         this.mqttClients = List.copyOf(mqttClientRuntimes);
+        this.managementServer = new ManagementHttpServer(appConfig.management(), this::statusSnapshot);
         List<RuntimeListener> runtimeListeners =
                 new ArrayList<>(
-                        tcpListeners.size() + httpListeners.size() + kafkaConsumers.size() + mqttClients.size());
+                        tcpListeners.size()
+                                + httpListeners.size()
+                                + kafkaConsumers.size()
+                                + mqttClients.size()
+                                + (appConfig.management().enabled() ? 1 : 0));
         runtimeListeners.addAll(tcpListeners);
         runtimeListeners.addAll(httpListeners);
         runtimeListeners.addAll(kafkaConsumers);
         runtimeListeners.addAll(mqttClients);
+        if (appConfig.management().enabled()) {
+            runtimeListeners.add(new ManagementRuntime(managementServer));
+        }
         this.listeners = List.copyOf(runtimeListeners);
     }
 
@@ -185,7 +194,8 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 && tcpListeners.stream().allMatch(listener -> listener.server().isRunning())
                 && httpListeners.stream().allMatch(listener -> listener.server().isRunning())
                 && kafkaConsumers.stream().allMatch(KafkaConsumerRuntime::isRunning)
-                && mqttClients.stream().allMatch(MqttClientRuntime::isRunning);
+                && mqttClients.stream().allMatch(MqttClientRuntime::isRunning)
+                && (!appConfig.management().enabled() || managementServer.isRunning());
     }
 
     public synchronized InetSocketAddress localAddress() {
@@ -210,6 +220,22 @@ public final class StandaloneCollector implements RuntimeLifecycle {
 
     public synchronized List<Integer> httpPorts() {
         return httpListeners.stream().map(listener -> listener.server().port()).toList();
+    }
+
+    public synchronized boolean managementEnabled() {
+        return appConfig.management().enabled();
+    }
+
+    public synchronized boolean managementRunning() {
+        return managementServer.isRunning();
+    }
+
+    public synchronized InetSocketAddress managementLocalAddress() {
+        return managementServer.localAddress();
+    }
+
+    public synchronized int managementPort() {
+        return managementServer.port();
     }
 
     public synchronized int activeConnectionCount() {
@@ -601,6 +627,24 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         @Override
         public String name() {
             return config.name();
+        }
+
+        @Override
+        public RuntimeLifecycle lifecycle() {
+            return server;
+        }
+    }
+
+    private record ManagementRuntime(ManagementHttpServer server) implements RuntimeListener {
+
+        @Override
+        public String transport() {
+            return "management";
+        }
+
+        @Override
+        public String name() {
+            return "management";
         }
 
         @Override
