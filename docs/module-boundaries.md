@@ -312,10 +312,10 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
-## `0.11.0` Development Boundary
+## `0.11.0` Release Branch Boundary
 
-The Maven reactor is now open at `0.11.0-SNAPSHOT` after the published
-`0.10.0` health and status release. The current boundary is the first
+The Maven reactor is fixed at `0.11.0` on the release branch after the
+published `0.10.0` health and status release. The release boundary is the first
 standalone collector management plane.
 
 Allowed:
