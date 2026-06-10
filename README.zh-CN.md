@@ -26,7 +26,9 @@ baseline 和 runtime-app Kafka collector 装配。`0.8.0` 已发布 MQTT ingress
 baseline 和 runtime-app MQTT collector 装配。
 
 当前开发线是 `0.9.0-SNAPSHOT`，重点是在 TCP、HTTP、Kafka 和 MQTT ingress
-baseline 之后补齐 downstream sink 边界和运行期生产化能力。
+baseline 之后补齐 downstream sink 边界和运行期生产化能力。`0.9.0`
+release-readiness audit 记录在
+[`docs/release-readiness-0.9.0.md`](docs/release-readiness-0.9.0.md)。
 
 已发布的 `0.8.0` 范围记录在
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)，release notes 记录在

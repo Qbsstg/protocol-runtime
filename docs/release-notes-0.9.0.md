@@ -48,5 +48,5 @@ Before release branch work, the readiness branch should pass:
 - dependency boundary checks proving new dependencies do not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
 
-The readiness audit will be tracked in `release-readiness-0.9.0.md` once the
-release scope is stable.
+The readiness audit is tracked in
+[`release-readiness-0.9.0.md`](release-readiness-0.9.0.md).

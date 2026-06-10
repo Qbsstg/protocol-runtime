@@ -30,7 +30,8 @@ ingress baseline and runtime-app MQTT collector assembly.
 
 The current development line is `0.9.0-SNAPSHOT`, focused on downstream sink
 boundaries and operational hardening after the TCP, HTTP, Kafka, and MQTT
-ingress baselines.
+ingress baselines. The `0.9.0` release-readiness audit is tracked in
+[`docs/release-readiness-0.9.0.md`](docs/release-readiness-0.9.0.md).
 
 The published `0.8.0` release scope is tracked in
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md), release notes are tracked in
