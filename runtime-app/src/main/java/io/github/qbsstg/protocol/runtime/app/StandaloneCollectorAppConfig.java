@@ -20,7 +20,8 @@ public record StandaloneCollectorAppConfig(
         SinkType sinkType,
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
-        boolean strictAsduParsing) {
+        boolean strictAsduParsing,
+        ManagementServerConfig management) {
 
     public StandaloneCollectorAppConfig {
         sources = List.copyOf(Objects.requireNonNull(sources, "sources must not be null"));
@@ -33,6 +34,7 @@ public record StandaloneCollectorAppConfig(
         Objects.requireNonNull(sinkFailureBackpressureDecision, "sinkFailureBackpressureDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
+        Objects.requireNonNull(management, "management must not be null");
         if (backpressureMaxPayloadBytes < 0) {
             throw new IllegalArgumentException("backpressureMaxPayloadBytes must not be negative");
         }
@@ -83,7 +85,8 @@ public record StandaloneCollectorAppConfig(
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
-                strictAsduParsing);
+                strictAsduParsing,
+                ManagementServerConfig.disabled());
     }
 
     public StandaloneCollectorAppConfig(
@@ -114,7 +117,8 @@ public record StandaloneCollectorAppConfig(
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
-                strictAsduParsing);
+                strictAsduParsing,
+                ManagementServerConfig.disabled());
     }
 
     public static StandaloneCollectorAppConfig fromSingle(StandaloneCollectorConfig config) {
@@ -140,7 +144,8 @@ public record StandaloneCollectorAppConfig(
                 config.sinkType(),
                 config.sinkFile(),
                 config.fileSinkRotation(),
-                config.strictAsduParsing());
+                config.strictAsduParsing(),
+                ManagementServerConfig.disabled());
     }
 
     public StandaloneCollectorConfig singleCollectorConfig() {

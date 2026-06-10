@@ -90,6 +90,12 @@ public record StandaloneCollectorConfig(
     public static final String MQTT_CLIENT_AUTOMATIC_RECONNECT_SUFFIX = ".automaticReconnect";
     public static final String MQTT_CLIENT_CONNECTION_TIMEOUT_SECONDS_SUFFIX = ".connectionTimeoutSeconds";
     public static final String MQTT_CLIENT_KEEP_ALIVE_SECONDS_SUFFIX = ".keepAliveSeconds";
+    public static final String MANAGEMENT_ENABLED = "collector.management.enabled";
+    public static final String MANAGEMENT_HOST = "collector.management.host";
+    public static final String MANAGEMENT_PORT = "collector.management.port";
+    public static final String MANAGEMENT_HEALTH_PATH = "collector.management.healthPath";
+    public static final String MANAGEMENT_READINESS_PATH = "collector.management.readinessPath";
+    public static final String MANAGEMENT_STATUS_PATH = "collector.management.statusPath";
     public static final String SOURCES = "collector.sources";
     public static final String SOURCE_ID = "collector.source.id";
     public static final String SOURCE_PREFIX = "collector.source.";
@@ -251,6 +257,7 @@ public record StandaloneCollectorConfig(
                 property(properties, PROTOCOL, defaults.protocol().configValue()),
                 errors);
         boolean strictAsduParsing = parseBoolean(properties, IEC104_STRICT_ASDU, defaults.strictAsduParsing(), errors);
+        ManagementServerConfig management = parseManagementConfig(properties, errors);
 
         SourceParseResult sourceResult = parseSources(properties, defaults, protocol, errors);
         boolean httpListenersDeclared = rawProperty(properties, HTTP_LISTENERS) != null;
@@ -269,6 +276,7 @@ public record StandaloneCollectorConfig(
         addDuplicateTcpListenerEndpointErrors(tcpListeners, errors);
         addDuplicateHttpListenerEndpointErrors(httpListeners, errors);
         addDuplicateNetworkListenerEndpointErrors(tcpListeners, httpListeners, errors);
+        addManagementEndpointConflictErrors(management, tcpListeners, httpListeners, errors);
         if (tcpListeners.isEmpty() && httpListeners.isEmpty() && kafkaConsumers.isEmpty() && mqttClients.isEmpty()) {
             errors.add("at least one TCP listener, HTTP listener, Kafka consumer, or MQTT client is required");
         }
@@ -292,8 +300,25 @@ public record StandaloneCollectorConfig(
                         sinkType,
                         sinkFile,
                         fileSinkRotation,
-                        strictAsduParsing),
+                        strictAsduParsing,
+                        management),
                 CollectorConfigValidation.valid());
+    }
+
+    private static ManagementServerConfig parseManagementConfig(Properties properties, List<String> errors) {
+        ManagementServerConfig defaults = ManagementServerConfig.defaults();
+        boolean enabled = parseBoolean(properties, MANAGEMENT_ENABLED, defaults.enabled(), errors);
+        String host = property(properties, MANAGEMENT_HOST, defaults.host());
+        int port = intProperty(properties, MANAGEMENT_PORT, defaults.port(), 0, 65535, errors);
+        String healthPath = property(properties, MANAGEMENT_HEALTH_PATH, defaults.healthPath());
+        String readinessPath = property(properties, MANAGEMENT_READINESS_PATH, defaults.readinessPath());
+        String statusPath = property(properties, MANAGEMENT_STATUS_PATH, defaults.statusPath());
+        try {
+            return new ManagementServerConfig(enabled, host, port, healthPath, readinessPath, statusPath);
+        } catch (IllegalArgumentException ex) {
+            errors.add("collector.management is invalid: " + ex.getMessage());
+            return defaults;
+        }
     }
 
     private static SourceParseResult parseSources(
@@ -1071,6 +1096,31 @@ public record StandaloneCollectorConfig(
             if (previous != null && !previous.equals("HTTP listener " + listener.name())) {
                 errors.add("duplicate network listener endpoint " + endpoint
                         + " for " + previous + " and HTTP listener " + listener.name());
+            }
+        }
+    }
+
+    private static void addManagementEndpointConflictErrors(
+            ManagementServerConfig management,
+            List<TcpListenerConfig> tcpListeners,
+            List<HttpListenerConfig> httpListeners,
+            List<String> errors) {
+        if (!management.enabled() || management.port() == 0) {
+            return;
+        }
+        String endpoint = management.host() + ":" + management.port();
+        for (TcpListenerConfig listener : tcpListeners) {
+            if (listener.tcp().port() != 0
+                    && endpoint.equals(listener.tcp().host() + ":" + listener.tcp().port())) {
+                errors.add("management endpoint " + endpoint
+                        + " conflicts with TCP listener " + listener.name());
+            }
+        }
+        for (HttpListenerConfig listener : httpListeners) {
+            if (listener.http().port() != 0
+                    && endpoint.equals(listener.http().host() + ":" + listener.http().port())) {
+                errors.add("management endpoint " + endpoint
+                        + " conflicts with HTTP ingress listener " + listener.name());
             }
         }
     }

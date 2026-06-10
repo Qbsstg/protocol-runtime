@@ -1,15 +1,25 @@
 # Runtime App Health And Readiness Status
 
 This guide explains the local `runtime-app` status line emitted by the
-standalone collector. It is intentionally app-owned documentation: it does not
-add a management endpoint, metrics exporter, framework dependency, database, or
-broker dependency to `runtime-core`.
+standalone collector. It is intentionally app-owned documentation: the
+`0.11.0` management endpoint exposes the same health/readiness/status evidence
+as JSON, but it does not add a framework dependency, metrics exporter,
+database, broker dependency, or management concern to `runtime-core`.
 
 `StandaloneCollectorMain` writes a status line after a successful start and
 again during shutdown. Look for lines starting with:
 
 ```text
 Protocol Runtime collector status
+```
+
+When `collector.management.enabled=true`, the standalone collector also exposes
+the app-local snapshot through the configured management paths:
+
+```text
+/health
+/readiness
+/status
 ```
 
 The most important fields are:
@@ -114,8 +124,10 @@ Protocol Runtime collector status state=FAILED health=FAILED readiness=NOT_READY
 
 ## Boundary
 
-This status model is local to `runtime-app`. It is safe to build future HTTP
-management endpoints, metrics exporters, dashboards, databases, Redis-backed
-health history, or broker-publishing integrations in dedicated app or adapter
-modules, but those dependencies must not move into `runtime-core` or
+This status model is local to `runtime-app`. The `0.11.0` management endpoint
+uses JDK `HttpServer` in the app boundary and is separate from
+`runtime-ingress-http`, which remains the protocol-payload ingestion adapter.
+It is safe to build future metrics exporters, dashboards, databases,
+Redis-backed health history, or broker-publishing integrations in dedicated app
+or adapter modules, but those dependencies must not move into `runtime-core` or
 `runtime-protocol-*`.

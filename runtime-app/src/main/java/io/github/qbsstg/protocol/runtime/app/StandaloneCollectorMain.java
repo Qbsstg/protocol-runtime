@@ -46,6 +46,15 @@ public final class StandaloneCollectorMain {
                     collector.httpPorts(),
                     config.sinkType().configValue());
         }
+        if (config.management().enabled()) {
+            System.out.printf(
+                    "Protocol Runtime management started host=%s port=%d health=%s readiness=%s status=%s%n",
+                    config.management().host(),
+                    collector.managementPort(),
+                    config.management().healthPath(),
+                    config.management().readinessPath(),
+                    config.management().statusPath());
+        }
         System.out.println(CollectorStatusFormatter.format(collector.statusSnapshot()));
         collector.awaitShutdown();
     }

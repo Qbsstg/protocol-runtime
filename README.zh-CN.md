@@ -31,7 +31,13 @@ health/readiness 快照、可解释 health reasons、运维状态指南和 stand
 health smoke 覆盖。
 
 `0.10.0` 健康检查和状态发布完成后，Maven reactor 已打开到
-`0.11.0-SNAPSHOT` 开发线。
+`0.11.0-SNAPSHOT` 开发线。当前 `0.11.0` 方向是在 standalone collector 的
+app 边界内增加 JDK HTTP 管理面，通过独立管理端口暴露 health、readiness 和
+status JSON 查询。
+
+当前 `0.11.0` 范围记录在
+[`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)，release notes 草案记录在
+[`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)。
 
 已发布的 `0.10.0` 范围记录在
 [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)，release notes 记录在
@@ -132,11 +138,48 @@ release notes 记录在
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | 基于 Paho MQTT 的 ingress adapter，把 MQTT payload 和 message metadata 映射为 runtime envelope，同时保持 MQTT 依赖不进入 `runtime-core`。 |
-| `runtime-app` | 0.10.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
+| `runtime-app` | 0.11.0 development | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 pipeline、更多 sink 和更完整的可部署运行时应用。这些依赖都属于
 runtime 仓库，不应反向进入 `protocol-sdk`。
+
+## `0.11.0` 管理面开发线
+
+`0.11.0` 在已发布的 `0.10.0` health/readiness 模型基础上，增加第一版
+standalone collector 管理面：
+
+- `runtime-core` 继续不引入 Spring、Netty、Kafka、MQTT、HTTP、数据库、Redis
+  和 observability exporter 依赖。
+- 管理 HTTP 属于 app 边界，目前在 `runtime-app` 内使用 JDK `HttpServer`
+  实现。
+- `runtime-ingress-http` 继续只负责协议 payload 的 HTTP 采集接入，不作为管理
+  API。
+- 管理端配置统一放在 `collector.management.*`。
+- `/health`、`/readiness`、`/status` 输出 JSON，包含 lifecycle、health、
+  readiness、sources、listeners、sink、backpressure、metrics 和 failure
+  counters。
+
+管理端配置示例：
+
+```properties
+collector.management.enabled=true
+collector.management.host=127.0.0.1
+collector.management.port=8081
+collector.management.healthPath=/health
+collector.management.readinessPath=/readiness
+collector.management.statusPath=/status
+```
+
+检查命令示例：
+
+```sh
+curl -s http://127.0.0.1:8081/health
+curl -s http://127.0.0.1:8081/readiness
+curl -s http://127.0.0.1:8081/status
+```
+
+详细规划维护在 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)。
 
 ## `0.10.0` 健康检查与状态生产化发布
 

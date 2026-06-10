@@ -1,14 +1,24 @@
 # Runtime App 健康状态和就绪状态说明
 
 本文说明 standalone collector 输出的本地 `runtime-app` 状态行。这个能力只属于
-app 边界：不会把 management endpoint、metrics exporter、应用框架、数据库或
-broker 依赖加入 `runtime-core`。
+app 边界：`0.11.0` 管理端会把同一套 health/readiness/status 证据以 JSON
+暴露出来，但不会把应用框架、metrics exporter、数据库、broker 依赖或管理端
+职责加入 `runtime-core`。
 
 `StandaloneCollectorMain` 会在启动成功后输出一次状态行，并在 shutdown 时再输出
 一次。查日志时先找这一行前缀：
 
 ```text
 Protocol Runtime collector status
+```
+
+当 `collector.management.enabled=true` 时，standalone collector 还会通过配置的
+管理端路径暴露 app-local snapshot：
+
+```text
+/health
+/readiness
+/status
 ```
 
 最重要的字段如下：
@@ -109,7 +119,8 @@ Protocol Runtime collector status state=FAILED health=FAILED readiness=NOT_READY
 
 ## 边界
 
-这套状态模型只属于 `runtime-app`。未来可以在专门的 app 或 adapter 模块里实现
-HTTP management endpoint、metrics exporter、dashboard、数据库、Redis-backed
-health history 或 broker-publishing 集成，但这些依赖不能进入 `runtime-core` 或
-`runtime-protocol-*`。
+这套状态模型只属于 `runtime-app`。`0.11.0` 管理端在 app 边界内使用 JDK
+`HttpServer`，并且和 `runtime-ingress-http` 分离；后者继续只负责协议 payload
+的 HTTP 采集接入。未来可以在专门的 app 或 adapter 模块里实现 metrics
+exporter、dashboard、数据库、Redis-backed health history 或 broker-publishing
+集成，但这些依赖不能进入 `runtime-core` 或 `runtime-protocol-*`。
