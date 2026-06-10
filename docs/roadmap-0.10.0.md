@@ -60,6 +60,8 @@ protocol-binding, and sink-hardening boundaries.
 - Added `runtime-smoke-tests` coverage for standalone IEC104 over TCP health
   status, including healthy/ready startup and degraded/ready parser failure
   evidence.
+- Added `docs/release-readiness-0.10.0.md` to record release scope, module
+  policy, health/status gates, verification commands, and readiness evidence.
 
 ## Non-Goals
 

@@ -744,6 +744,7 @@ verified.
 - [`docs/roadmap-0.9.0.md`](docs/roadmap-0.9.0.md)
 - [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.10.0.md`](docs/release-readiness-0.10.0.md)
 - [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
 - [`docs/release-readiness-0.2.0.md`](docs/release-readiness-0.2.0.md)

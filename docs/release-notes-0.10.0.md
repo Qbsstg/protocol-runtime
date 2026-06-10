@@ -19,6 +19,8 @@ Release notes for the `0.10.0` runtime release line.
   trimmed status-line examples, reason catalog, and operator triage order.
 - Add repository smoke coverage proving standalone TCP/IEC104 collector health
   status across healthy/ready and degraded/ready parser-failure states.
+- Add a `0.10.0` release-readiness audit covering release scope, module policy,
+  health/status gates, verification commands, and readiness evidence.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability
   exporter dependencies.
