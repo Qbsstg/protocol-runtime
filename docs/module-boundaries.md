@@ -290,6 +290,8 @@ Allowed:
   reporting, and operator-facing examples
 - app-local file sink status may report output path, open state, active byte
   count, retained history count, in-process rotation count, and rotation limits
+- app-local sink-failure backpressure may reject later ingress payloads before
+  parsing after a configured sink failure threshold is reached
 - dedicated `runtime-sink-*` modules may own downstream delivery dependencies
   after their contracts are explicit
 - ingress adapters route accepted records through runtime sinks rather than

@@ -64,7 +64,7 @@ Kafka, and MQTT ingress baselines are all published:
 | Module | 0.9.0 goal |
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, or observability exporter dependencies unless a protocol-neutral contract is proven necessary. |
-| `runtime-app` | Harden app-owned sink configuration, sink lifecycle, file sink status output, parse-failure isolation, and backpressure/failure routing across TCP, HTTP, Kafka, and MQTT collectors. |
+| `runtime-app` | Harden app-owned sink configuration, sink lifecycle, file sink status output, parse-failure isolation, and sink-failure backpressure/failure routing across TCP, HTTP, Kafka, and MQTT collectors. |
 | `runtime-sink-*` | Introduce downstream delivery modules only if the sink boundary is stable enough to avoid leaking broker, storage, retry, or operational dependencies into `runtime-core`. |
 | `runtime-ingress-*` | Preserve published ingress behavior and route delivery concerns through sink contracts instead of coupling ingress adapters to downstream systems. |
 | `runtime-protocol-*` | Continue to parse protocol payloads without transport, app, or downstream sink dependencies. |

@@ -174,6 +174,8 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 appConfig.backpressureDecision(),
                 appConfig.backpressureMaxPayloadBytes(),
                 appConfig.oversizedPayloadDecision(),
+                appConfig.sinkFailureBackpressureThreshold(),
+                appConfig.sinkFailureBackpressureDecision(),
                 appConfig.strictAsduParsing());
     }
 

@@ -26,6 +26,8 @@ final class CollectorStatusFormatter {
                 + " backpressure=" + snapshot.backpressureDecision()
                 + " maxPayloadBytes=" + snapshot.backpressureMaxPayloadBytes()
                 + " oversizedPayloadDecision=" + snapshot.oversizedPayloadDecision()
+                + " sinkFailureThreshold=" + snapshot.sinkFailureBackpressureThreshold()
+                + " sinkFailureDecision=" + snapshot.sinkFailureBackpressureDecision()
                 + " strictAsdu=" + snapshot.strictAsduParsing()
                 + " tcpListeners=" + tcpListeners(snapshot)
                 + " httpListeners=" + httpListeners(snapshot)

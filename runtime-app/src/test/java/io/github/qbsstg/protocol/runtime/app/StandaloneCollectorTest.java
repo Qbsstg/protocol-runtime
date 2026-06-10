@@ -80,6 +80,8 @@ class StandaloneCollectorTest {
             assertEquals(BackpressureDecision.ACCEPT, configured.backpressureDecision());
             assertEquals(0, configured.backpressureMaxPayloadBytes());
             assertEquals(BackpressureDecision.DROP, configured.oversizedPayloadDecision());
+            assertEquals(0, configured.sinkFailureBackpressureThreshold());
+            assertEquals(BackpressureDecision.RETRY_LATER, configured.sinkFailureBackpressureDecision());
             assertFalse(configured.strictAsduParsing());
 
             collector.start();
@@ -119,6 +121,8 @@ class StandaloneCollectorTest {
             assertTrue(status.contains("parsedRecords=1"));
             assertTrue(status.contains("parseFailures=0"));
             assertTrue(status.contains("sink=in-memory"));
+            assertTrue(status.contains("sinkFailureThreshold=0"));
+            assertTrue(status.contains("sinkFailureDecision=RETRY_LATER"));
             assertTrue(status.contains("tcpListeners=[default@127.0.0.1:0->"));
         }
     }
@@ -1105,6 +1109,8 @@ class StandaloneCollectorTest {
         properties.setProperty(StandaloneCollectorConfig.SINK_FILE_MAX_HISTORY, "0");
         properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_MAX_PAYLOAD_BYTES, "-1");
         properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION, "ACCEPT");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_SINK_FAILURE_THRESHOLD, "-1");
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_SINK_FAILURE_DECISION, "ACCEPT");
 
         CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
 
@@ -1121,6 +1127,10 @@ class StandaloneCollectorTest {
         assertContainsError(
                 validation,
                 StandaloneCollectorConfig.BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION + " must be RETRY_LATER or DROP");
+        assertContainsError(validation, StandaloneCollectorConfig.BACKPRESSURE_SINK_FAILURE_THRESHOLD
+                + " must be between");
+        assertContainsError(validation, StandaloneCollectorConfig.BACKPRESSURE_SINK_FAILURE_DECISION
+                + " must be RETRY_LATER or DROP");
     }
 
     @Test
@@ -1165,12 +1175,18 @@ class StandaloneCollectorTest {
         properties.setProperty(
                 StandaloneCollectorConfig.BACKPRESSURE_OVERSIZED_PAYLOAD_DECISION,
                 BackpressureDecision.RETRY_LATER.name());
+        properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE_SINK_FAILURE_THRESHOLD, "2");
+        properties.setProperty(
+                StandaloneCollectorConfig.BACKPRESSURE_SINK_FAILURE_DECISION,
+                BackpressureDecision.DROP.name());
 
         StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
 
         assertEquals(BackpressureDecision.ACCEPT, appConfig.backpressureDecision());
         assertEquals(64, appConfig.backpressureMaxPayloadBytes());
         assertEquals(BackpressureDecision.RETRY_LATER, appConfig.oversizedPayloadDecision());
+        assertEquals(2, appConfig.sinkFailureBackpressureThreshold());
+        assertEquals(BackpressureDecision.DROP, appConfig.sinkFailureBackpressureDecision());
     }
 
     @Test
@@ -1310,6 +1326,8 @@ class StandaloneCollectorTest {
                 BackpressureDecision.ACCEPT,
                 0,
                 BackpressureDecision.DROP,
+                0,
+                BackpressureDecision.RETRY_LATER,
                 SinkType.IN_MEMORY,
                 null,
                 FileSinkRotationConfig.defaults(),
