@@ -53,10 +53,33 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
+## `0.10.0` Development Posture
+
+The `0.10.0` runtime line starts from the published `0.9.0` sink and operations
+hardening release and opens the Maven reactor at `0.10.0-SNAPSHOT`.
+
+The goal is health checks and runtime status productionization after the TCP,
+HTTP, Kafka, MQTT, and sink-hardening baselines are all published:
+
+| Module | 0.10.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability exporter dependencies unless a protocol-neutral contract is proven necessary. |
+| `runtime-app` | Formalize app-owned health/readiness state, degraded-state calculation, status formatting, failure summaries, and operator examples. |
+| `runtime-ingress-*` | Preserve published ingress behavior and expose only app-consumable status evidence needed by runtime-app health calculations. |
+| `runtime-protocol-*` | Continue to parse protocol payloads without transport, app, health endpoint, metrics exporter, or downstream sink dependencies. |
+| `runtime-smoke-tests` | Add repository-only smoke coverage for stable health/status paths that should not become supported application dependencies. |
+
+`0.10.0` should not introduce Spring, database, Redis, object storage,
+observability exporter, Kafka producer, MQTT publisher, HTTP management, or
+dashboard dependencies into `runtime-core`. Those dependencies belong only in
+dedicated adapter/app modules after their boundaries are explicit.
+
 ## `0.9.0` Development Posture
 
 The `0.9.0` runtime line starts from the published `0.8.0` MQTT runtime-app
 release and opens the Maven reactor at `0.9.0-SNAPSHOT`.
+
+`0.9.0` has since been published as the sink and operations hardening release.
 
 The goal is downstream sink and operations hardening after the TCP, HTTP,
 Kafka, and MQTT ingress baselines are all published:

@@ -26,14 +26,22 @@ MQTT adapter design notes while keeping Kafka and MQTT client dependencies out
 of the runtime. `0.6.0` published the HTTP ingress productionization line and
 runtime-app HTTP collector assembly. `0.7.0` published the Kafka ingress
 baseline and runtime-app Kafka collector assembly. `0.8.0` published the MQTT
-ingress baseline and runtime-app MQTT collector assembly.
+ingress baseline and runtime-app MQTT collector assembly. `0.9.0` published
+the downstream sink and operations hardening line, including app-level sink
+failure isolation, file sink status, and sink-failure-triggered backpressure.
 
-The current release branch is `0.9.0`, focused on downstream sink boundaries
-and operational hardening after the TCP, HTTP, Kafka, and MQTT ingress
-baselines. The `0.9.0` release-readiness audit is tracked in
-[`docs/release-readiness-0.9.0.md`](docs/release-readiness-0.9.0.md).
+The current development line is `0.10.0-SNAPSHOT`, focused on health checks
+and runtime status productionization after the published TCP, HTTP, Kafka,
+MQTT, and sink-hardening baselines. The `0.10.0` roadmap is tracked in
+[`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md), and release notes are
+tracked in [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md).
 
-The published `0.8.0` release scope is tracked in
+The published `0.9.0` release scope is tracked in
+[`docs/roadmap-0.9.0.md`](docs/roadmap-0.9.0.md), release notes are tracked in
+[`docs/release-notes-0.9.0.md`](docs/release-notes-0.9.0.md), and the
+release-readiness audit is tracked in
+[`docs/release-readiness-0.9.0.md`](docs/release-readiness-0.9.0.md). The
+published `0.8.0` release scope is tracked in
 [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md), release notes are tracked in
 [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md), and the
 release-readiness audit is tracked in
@@ -55,14 +63,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.8.0`. Runtime modules are
+The latest published runtime release version is `0.9.0`. Runtime modules are
 JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -70,7 +78,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -78,7 +86,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -86,7 +94,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -94,7 +102,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -102,7 +110,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -122,16 +130,34 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.8.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.9.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, and richer deployable
 runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
 
-## `0.9.0` Sink And Operations Plan
+## `0.10.0` Health And Status Plan
 
-`0.9.0` finalizes the production-hardening line opened after `0.8.0`:
+`0.10.0` opens the next productionization line after `0.9.0`:
+
+- keep `runtime-core` free of Spring, Netty, Kafka, MQTT, HTTP, database,
+  Redis, and observability exporter dependencies
+- make runtime-app health/readiness state explicit for configured, starting,
+  running, degraded, failed, and stopped collectors
+- expose operator-facing status output that distinguishes listener health,
+  source health, sink health, parse failure pressure, and backpressure state
+- keep any management HTTP, metrics exporter, or external monitoring
+  dependency in dedicated app/adapter modules, not in `runtime-core`
+- preserve published TCP, HTTP, Kafka, MQTT, and sink-hardening behavior while
+  adding health evidence around those paths
+
+The detailed plan is maintained in
+[`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md).
+
+## `0.9.0` Sink And Operations Release
+
+`0.9.0` published the production-hardening line opened after `0.8.0`:
 
 - keep `runtime-core` free of Spring, Netty, Kafka, MQTT, HTTP, database,
   Redis, and observability exporter dependencies
@@ -143,6 +169,9 @@ runtime applications. Those dependencies belong here, not in
   configurations
 - keep future Kafka/MQTT/HTTP sink or management dependencies in dedicated
   adapter/app modules, not in `runtime-core` or `protocol-sdk`
+
+The detailed plan is maintained in
+[`docs/roadmap-0.9.0.md`](docs/roadmap-0.9.0.md).
 
 ## `0.8.0` MQTT Ingress Release
 
@@ -331,8 +360,8 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current `0.9.0` line can run TCP/Netty, JDK HTTP, Kafka, or MQTT
-ingress through the same app-owned pipeline:
+The current `0.10.0-SNAPSHOT` development line can run TCP/Netty, JDK HTTP,
+Kafka, or MQTT ingress through the same app-owned pipeline:
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -350,7 +379,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.9.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -383,7 +412,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.9.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -423,7 +452,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.9.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -695,6 +724,7 @@ verified.
 - [`docs/roadmap-0.7.0.md`](docs/roadmap-0.7.0.md)
 - [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)
 - [`docs/roadmap-0.9.0.md`](docs/roadmap-0.9.0.md)
+- [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
@@ -704,6 +734,7 @@ verified.
 - [`docs/release-readiness-0.5.0.md`](docs/release-readiness-0.5.0.md)
 - [`docs/release-readiness-0.6.0.md`](docs/release-readiness-0.6.0.md)
 - [`docs/release-readiness-0.7.0.md`](docs/release-readiness-0.7.0.md)
+- [`docs/release-readiness-0.9.0.md`](docs/release-readiness-0.9.0.md)
 - [`docs/release-notes-0.1.0.md`](docs/release-notes-0.1.0.md)
 - [`docs/release-notes-0.2.0.md`](docs/release-notes-0.2.0.md)
 - [`docs/release-notes-0.3.0.md`](docs/release-notes-0.3.0.md)
@@ -713,3 +744,4 @@ verified.
 - [`docs/release-notes-0.7.0.md`](docs/release-notes-0.7.0.md)
 - [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)
 - [`docs/release-notes-0.9.0.md`](docs/release-notes-0.9.0.md)
+- [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md)

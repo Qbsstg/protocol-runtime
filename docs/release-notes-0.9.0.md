@@ -1,13 +1,12 @@
 # Protocol Runtime 0.9.0 Release Notes
 
-Release notes for the `0.9.0` runtime release line.
+Release notes for the published `0.9.0` runtime release.
 
-## Planned Highlights
+`0.9.0` has been tagged as `v0.9.0`, published to Maven Central, verified from
+isolated local Maven repositories, and published as a GitHub Release.
 
-- Open the Maven reactor at `0.9.0-SNAPSHOT` after the published `0.8.0` MQTT
-  runtime-app release.
-- Fix the Maven reactor at `0.9.0` on the release branch after readiness
-  checks pass.
+## Highlights
+
 - Harden downstream sink boundaries after TCP, HTTP, Kafka, and MQTT ingress
   baselines are available.
 - Improve standalone collector sink configuration, sink failure isolation,
@@ -41,7 +40,7 @@ on `runtime-core`, published `protocol-sdk` parser artifacts, and tests.
 
 ## Verification Target
 
-Before release branch work, the readiness branch should pass:
+The release branch passed:
 
 - `git diff --check`
 - `mvn -q verify`
@@ -52,3 +51,14 @@ Before release branch work, the readiness branch should pass:
 
 The readiness audit is tracked in
 [`release-readiness-0.9.0.md`](release-readiness-0.9.0.md).
+
+## Publication
+
+- Release tag: `v0.9.0`
+- Release commit: `16fcd5f831c5a90d27b46b3db9ccbc9a34a0ca8d`
+- Central deployment: `f3a7448f-c79d-4a5b-a73c-a251bfb1ad8f`
+- GitHub Release:
+  <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.9.0>
+- Public Maven Central resolution passed for `runtime-core`,
+  `runtime-ingress-kafka`, `runtime-ingress-mqtt`, `runtime-app`, and
+  `runtime-app` with the `standalone` classifier.

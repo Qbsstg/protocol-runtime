@@ -200,3 +200,21 @@ PR:
 
 No tag was created and no real Maven Central upload was part of the release
 branch PR.
+
+## Final Publication On 2026-06-10
+
+`0.9.0` has been tagged, uploaded, manually published, and verified.
+
+| Check | Result | Note |
+| --- | --- | --- |
+| Release tag | Passed | `v0.9.0` points to `16fcd5f831c5a90d27b46b3db9ccbc9a34a0ca8d`. |
+| Signed dry run | Passed | `mvn -Pcentral-release -Dcentral.skipPublishing=true clean deploy` signed artifacts and completed without upload. |
+| Central upload | Passed | `mvn -Pcentral-release clean deploy` created deployment `f3a7448f-c79d-4a5b-a73c-a251bfb1ad8f`. |
+| Central publish | Passed | Deployment `f3a7448f-c79d-4a5b-a73c-a251bfb1ad8f` reached `PUBLISHED`. |
+| GitHub Release | Passed | `v0.9.0` GitHub Release was created after Central publish. |
+| Maven Central resolution | Passed | Isolated local Maven repositories resolved `runtime-core`, `runtime-ingress-kafka`, `runtime-ingress-mqtt`, `runtime-app`, and the `runtime-app` `standalone` classifier at `0.9.0` from Maven Central. |
+
+`0.9.0` is now the latest published runtime release. The next development line
+is `0.10.0-SNAPSHOT`, focused on health checks and runtime status
+productionization while preserving the dependency boundaries proven in this
+release.
