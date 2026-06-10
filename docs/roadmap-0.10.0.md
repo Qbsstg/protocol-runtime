@@ -57,6 +57,9 @@ protocol-binding, and sink-hardening boundaries.
   degradation, backpressure degradation, and startup-failure health states.
 - Added English and Chinese operator guides with a health/readiness matrix,
   trimmed status-line examples, reason catalog, and triage order.
+- Added `runtime-smoke-tests` coverage for standalone IEC104 over TCP health
+  status, including healthy/ready startup and degraded/ready parser failure
+  evidence.
 
 ## Non-Goals
 

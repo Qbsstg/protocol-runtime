@@ -17,6 +17,8 @@ Release notes for the `0.10.0` runtime release line.
   stopped collector states.
 - Add English and Chinese status guides with a health/readiness matrix,
   trimmed status-line examples, reason catalog, and operator triage order.
+- Add repository smoke coverage proving standalone TCP/IEC104 collector health
+  status across healthy/ready and degraded/ready parser-failure states.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or observability
   exporter dependencies.
