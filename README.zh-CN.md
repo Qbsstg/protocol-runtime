@@ -27,7 +27,7 @@ baseline 和 runtime-app MQTT collector 装配。`0.9.0` 已发布 downstream si
 和运行期生产化加固，包括 app 级 sink 失败隔离、file sink 状态和
 sink-failure-triggered backpressure。
 
-当前开发线是 `0.10.0-SNAPSHOT`，重点是在已发布的 TCP、HTTP、Kafka、MQTT
+当前 release 分支固定为 `0.10.0`，重点是在已发布的 TCP、HTTP、Kafka、MQTT
 和 sink-hardening baseline 之后补齐健康检查和运行状态生产化能力。`0.10.0`
 roadmap 记录在 [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)，release
 notes 记录在 [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md)。
@@ -317,7 +317,7 @@ server.bind();
 ## Standalone Collector App
 
 `runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前
-`0.10.0-SNAPSHOT` 开发线可以把 TCP/Netty、JDK HTTP、Kafka 或 MQTT ingress
+`0.10.0` release 线可以把 TCP/Netty、JDK HTTP、Kafka 或 MQTT ingress
 接到同一个 app-owned pipeline：
 
 ```text
@@ -336,7 +336,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -369,7 +369,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -408,7 +408,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.10.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.10.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -549,7 +549,7 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
   file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
 - sink failure backpressure 阈值和决策
 
-`0.10.0-SNAPSHOT` 在 snapshot 之上增加 app-local health/readiness 派生能力。
+`0.10.0` 在 snapshot 之上增加 app-local health/readiness 派生能力。
 `CollectorHealthSnapshot` 会报告 `HEALTHY`、`DEGRADED`、`FAILED`、
 `CONFIGURED`、`STARTING`、`STOPPING` 或 `STOPPED`，同时报告 `READY` 或
 `NOT_READY`。运行中的 collector 只有在至少配置了一个 listener、所有 listener

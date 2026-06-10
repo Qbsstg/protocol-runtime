@@ -62,6 +62,7 @@ protocol-binding, and sink-hardening boundaries.
   evidence.
 - Added `docs/release-readiness-0.10.0.md` to record release scope, module
   policy, health/status gates, verification commands, and readiness evidence.
+- Fixed the release branch Maven reactor at `0.10.0`.
 
 ## Non-Goals
 
@@ -73,9 +74,9 @@ protocol-binding, and sink-hardening boundaries.
 
 ## Readiness Criteria
 
-Before `0.10.0` release readiness:
+Before `0.10.0` final publication:
 
-- README and Chinese README describe the `0.10.0-SNAPSHOT` development line.
+- README and Chinese README describe the `0.10.0` release line.
 - `docs/module-plan.md` and `docs/module-boundaries.md` describe the health and
   status boundary.
 - health/readiness behavior is covered by focused tests.
