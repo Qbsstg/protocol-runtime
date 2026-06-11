@@ -1,9 +1,9 @@
 # Protocol Runtime 0.11.0 Roadmap
 
-`0.11.0` starts after the published `0.10.0` health and status release. The
-release branch fixes the Maven reactor version at `0.11.0`.
+`0.11.0` started after the published `0.10.0` health and status release and
+has since been published as `v0.11.0`.
 
-The release target is a minimal runtime management plane for the standalone
+The release target was a minimal runtime management plane for the standalone
 collector. The management plane is app-owned and exposes local HTTP health,
 readiness, and status snapshots without introducing Spring, external metrics
 exporters, database, Redis, or broker dependencies.
@@ -76,6 +76,7 @@ exporters, database, Redis, or broker dependencies.
 - [x] central-release dry run passes with publishing disabled.
 - [x] dependency boundary checks prove new dependencies stay out of
   `runtime-core`, `runtime-protocol-*`, and `protocol-sdk`.
-- [x] `docs/release-readiness-0.11.0.md` records the release branch gates and
-  final pre-publication checks.
-- [ ] GitHub CI passes before merge.
+- [x] `docs/release-readiness-0.11.0.md` records the release branch gates,
+  final pre-publication checks, and final publication evidence.
+- [x] GitHub CI passed before merge.
+- [x] `v0.11.0` was published to Maven Central and GitHub Releases.

@@ -31,17 +31,24 @@ the downstream sink and operations hardening line, including app-level sink
 failure isolation, file sink status, and sink-failure-triggered backpressure.
 `0.10.0` published health checks and runtime status productionization,
 including app-local health/readiness snapshots, explainable health reasons,
-operator status guides, and standalone health smoke coverage.
+operator status guides, and standalone health smoke coverage. `0.11.0`
+published the app-owned JDK HTTP management plane for standalone collectors,
+with independent health, readiness, and status endpoints on a separate
+management port.
 
-The Maven reactor is fixed at `0.11.0` on the release branch after the
-published `0.10.0` health and status release. The `0.11.0` line adds an
-app-owned JDK HTTP management plane for standalone collectors, with independent
-health, readiness, and status endpoints on a separate management port.
+The Maven reactor is now open at `0.12.0-SNAPSHOT` after the published
+`0.11.0` management-plane baseline. The `0.12.0` line productionizes the
+management surface with explicit security boundaries, configurable access
+control, management request logging, expanded JSON metrics, health history
+snapshots, error response rules, configuration examples, and smoke coverage.
 
-The `0.11.0` scope is tracked in
-[`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md), and draft release notes
-are tracked in
-[`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md). The
+The `0.12.0` scope is tracked in
+[`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md), and draft release notes
+are tracked in [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md).
+
+The published `0.11.0` release scope is tracked in
+[`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md), release notes are tracked
+in [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md), and the
 release-readiness audit is tracked in
 [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md).
 
@@ -78,14 +85,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.10.0`. Runtime modules are
+The latest published runtime release version is `0.11.0`. Runtime modules are
 JDK 21 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -93,7 +100,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -101,7 +108,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -109,7 +116,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -117,7 +124,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -125,7 +132,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -145,22 +152,42 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.11.0 release branch | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, and an executable shaded jar. The IEC104 default configuration path remains compatible. |
+| `runtime-app` | 0.12.0-SNAPSHOT planning | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, and an executable shaded jar. The `0.12.0` line plans management security, access control, request logging, JSON metrics, health history, error responses, examples, and smoke coverage. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, and richer deployable
 runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
 
+## `0.12.0` Management Productionization Planning
+
+`0.12.0` starts after the published `0.11.0` management-plane baseline and
+keeps the management implementation inside the app/adapter boundary:
+
+- `runtime-core` remains free of Spring, Netty, Kafka, MQTT, HTTP, database,
+  Redis, and observability exporter dependencies
+- management HTTP stays separate from `runtime-ingress-http`, which remains the
+  protocol-payload ingestion adapter
+- management security is defined as an app boundary before adding broader
+  remote-control behavior
+- access control, request logging, JSON metrics, health history snapshots, and
+  error response rules are added without moving those concerns into parser or
+  core contracts
+- examples and smoke tests cover healthy, degraded, unauthorized/forbidden, and
+  malformed management request paths
+
+The detailed plan is maintained in
+[`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md).
+
 ## `0.11.0` Management Plane Release
 
-`0.11.0` adds the first standalone collector management plane after the
+`0.11.0` published the first standalone collector management plane after the
 published `0.10.0` health/readiness model:
 
 - `runtime-core` remains free of Spring, Netty, Kafka, MQTT, HTTP, database,
   Redis, and observability exporter dependencies
-- management HTTP is app-owned and currently implemented with JDK `HttpServer`
-  inside `runtime-app`
+- management HTTP is app-owned and implemented with JDK `HttpServer` inside
+  `runtime-app`
 - `runtime-ingress-http` remains the protocol-payload HTTP ingestion adapter;
   it is not the management API
 - management configuration lives under `collector.management.*`
@@ -187,7 +214,7 @@ curl -s http://127.0.0.1:8081/readiness
 curl -s http://127.0.0.1:8081/status
 ```
 
-The detailed plan is maintained in
+The detailed release record is maintained in
 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md).
 
 ## `0.10.0` Health And Status Release
@@ -413,9 +440,9 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current `0.11.0` development line preserves the published
-`0.10.0` TCP/Netty, JDK HTTP, Kafka, and MQTT collector paths through the same
-app-owned pipeline:
+The current `0.12.0-SNAPSHOT` development line preserves the published
+`0.11.0` TCP/Netty, JDK HTTP, Kafka, MQTT, and management endpoint paths
+through the same app-owned pipeline:
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -433,7 +460,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -466,7 +493,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -506,7 +533,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -797,7 +824,10 @@ verified.
 - [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)
 - [`docs/roadmap-0.9.0.md`](docs/roadmap-0.9.0.md)
 - [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)
+- [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
+- [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
 - [`docs/release-readiness-0.10.0.md`](docs/release-readiness-0.10.0.md)
 - [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
@@ -818,3 +848,5 @@ verified.
 - [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)
 - [`docs/release-notes-0.9.0.md`](docs/release-notes-0.9.0.md)
 - [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md)
+- [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)
+- [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)

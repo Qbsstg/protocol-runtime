@@ -1,10 +1,10 @@
 # Protocol Runtime 0.11.0 Release Notes
 
-Release notes draft for the `0.11.0` runtime release branch.
+`0.11.0` is the standalone collector management-plane baseline release.
 
-The `0.11.0` release branch fixes the Maven reactor at `0.11.0`. It has not
-been tagged or published yet, and no real Maven Central upload is part of the
-release branch PR.
+The `0.11.0` release was tagged as `v0.11.0`, uploaded in Central deployment
+`ad3dcf19-2aa1-4b02-9a3e-2215043274f1`, published to Maven Central, verified
+from an isolated local Maven repository, and published as a GitHub Release.
 
 ## Highlights
 
@@ -34,27 +34,27 @@ and exposes that evidence through a separate management port.
 
 ## Dependency Policy
 
-`runtime-core` must remain free of transport, broker, storage, database,
-framework, health endpoint, management API, dashboard, and exporter
-dependencies.
+`runtime-core` remains free of transport, broker, storage, database, framework,
+health endpoint, management API, dashboard, and exporter dependencies.
 
-The management endpoint is currently implemented with JDK `HttpServer` inside
+The management endpoint is implemented with JDK `HttpServer` inside
 `runtime-app`. Future management adapters may move to a dedicated app/adapter
 module, but those dependencies must still stay out of `runtime-core`,
 `runtime-protocol-*`, and `protocol-sdk`.
 
-## Verification Targets
+## Verification
 
-The release must pass before publication:
+The release passed:
 
 - `git diff --check`
 - `mvn -q verify`
-- `mvn -q -Pcentral-release -Dgpg.skip=true -Dcentral.skipPublishing=true deploy`
 - standalone TCP collector smoke, including management HTTP checks
 - standalone HTTP collector smoke, including management HTTP checks
 - dependency boundary checks proving new dependencies do not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
-- GitHub CI on the release PR
+- signed Central dry run with publishing disabled
+- real Maven Central upload and public Central resolution checks, including
+  `io.github.qbsstg:runtime-app:0.11.0:jar:standalone`
 
 The detailed plan is tracked in [`roadmap-0.11.0.md`](roadmap-0.11.0.md).
 The release-readiness audit is tracked in
@@ -62,7 +62,7 @@ The release-readiness audit is tracked in
 
 ## Publication
 
-- Tag: not created
-- Central deployment: not started
-- Central state: not published
-- GitHub Release: not created
+- Tag: `v0.11.0`
+- Central deployment: `ad3dcf19-2aa1-4b02-9a3e-2215043274f1`
+- Central state: `PUBLISHED`
+- GitHub Release: <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.11.0>

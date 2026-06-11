@@ -3,9 +3,9 @@
 This note records the release-readiness decision for the `0.11.0`
 `protocol-runtime` release branch.
 
-The release branch fixes the Maven reactor version at `0.11.0`. No tag should
-be created and no real Maven Central upload should happen during this release
-branch PR.
+The release branch fixed the Maven reactor version at `0.11.0`. No tag was
+created and no real Maven Central upload happened during the release branch PR;
+final publication was completed after merge.
 
 ## Release Scope
 
@@ -168,12 +168,17 @@ PR:
 | `JAVA_BIN=/opt/homebrew/Cellar/openjdk/23.0.2/libexec/openjdk.jdk/Contents/Home/bin/java sh examples/smoke-standalone-http.sh` | Passed | Standalone HTTP collector built `runtime-app-0.11.0-standalone.jar`, verified management HTTP endpoints, accepted an IEC104 POST payload, and wrote a parsed record to the file sink. |
 | Dependency boundary checks | Passed | `runtime-core` has no compile dependencies; `runtime-protocol-*` modules depend only on `runtime-core` and protocol SDK artifacts; adapter dependencies remain isolated to adapter modules, app assembly, or test-only smoke coverage. |
 
-No tag should be created and no real Maven Central upload should be part of the
-release branch PR.
+No tag was created and no real Maven Central upload was part of the release
+branch PR.
 
 ## Final Publication
 
-Final `0.11.0` publication is not part of this release branch PR. After this PR
-merges, a separate final release step should create and push `v0.11.0`, run the
-signed Central upload, wait for validation, publish the Central deployment,
-verify public Maven Central resolution, and create the GitHub Release.
+Final `0.11.0` publication completed after the release branch merged:
+
+| Step | Result | Evidence |
+| --- | --- | --- |
+| Tag | Passed | `v0.11.0` was created from `3730d156e53bc602b74cb08bec8c5a923672fc89` and pushed to GitHub. |
+| Real Central upload | Passed | Central deployment `ad3dcf19-2aa1-4b02-9a3e-2215043274f1` was created and validated. |
+| Manual Central publish | Passed | Deployment `ad3dcf19-2aa1-4b02-9a3e-2215043274f1` reached `PUBLISHED`. |
+| Public Maven Central verification | Passed | Runtime artifacts and `io.github.qbsstg:runtime-app:0.11.0:jar:standalone` resolved from an isolated local Maven repository. |
+| GitHub Release | Passed | <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.11.0> |
