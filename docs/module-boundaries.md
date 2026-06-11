@@ -312,11 +312,43 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
-## `0.11.0` Release Branch Boundary
+## `0.12.0` Management Productionization Boundary
 
-The Maven reactor is fixed at `0.11.0` on the release branch after the
-published `0.10.0` health and status release. The release boundary is the first
-standalone collector management plane.
+The Maven reactor moves to `0.12.0-SNAPSHOT` after the published `0.11.0`
+management-plane release. The development boundary is productionizing the
+app-owned management plane without widening `runtime-core` or `protocol-sdk`.
+
+Allowed:
+
+- `runtime-app` may own management security defaults, configurable access
+  control, request logging, JSON metrics expansion, health history snapshots,
+  and management error response formatting
+- management configuration may extend `collector.management.*` for access
+  control, request logging, metrics, history, and error response behavior
+- management JSON may expose bounded operational evidence from app-owned
+  snapshots, counters, listener status, sink status, and backpressure policy
+- smoke tests may query real localhost management endpoints for healthy,
+  degraded, unauthorized/forbidden, malformed request, and shutdown paths
+- future non-JDK management or observability dependencies must live in
+  `runtime-app` or a dedicated management/observability adapter module
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or
+  observability exporter dependencies to `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as the management API; it remains the protocol
+  payload ingestion adapter
+- moving access-control, management endpoint, metrics exporter, dashboard,
+  durable health history, database, Redis, or broker-publishing policy into
+  `runtime-protocol-*`
+- exposing management request logging or health history as parser-side concerns
+
+## `0.11.0` Published Boundary
+
+The `0.11.0` line started after the published `0.10.0` health and status
+release and has since been published as the first standalone collector
+management plane.
 
 Allowed:
 

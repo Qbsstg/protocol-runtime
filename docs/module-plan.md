@@ -53,13 +53,34 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.11.0` Release Branch Posture
+## `0.12.0` Development Posture
 
-The Maven reactor is fixed at `0.11.0` on the release branch after the
-published `0.10.0` health and status release.
+The `0.12.0` runtime line starts from the published `0.11.0` management-plane
+baseline and opens the Maven reactor at `0.12.0-SNAPSHOT`.
 
-The release goal is a minimal app-owned management plane for the standalone
-collector:
+The goal is management-plane productionization without moving management,
+observability, storage, or framework dependencies into core contracts:
+
+| Module | 0.12.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, management endpoint, access-control, request-logging, or observability exporter dependencies. |
+| `runtime-app` | Own management security defaults, configurable access control, request logging, JSON metrics expansion, health history snapshots, error response formatting, examples, and smoke coverage. |
+| `runtime-ingress-http` | Remain the protocol payload HTTP ingestion adapter; do not own management security, status, or metrics endpoints. |
+| `runtime-ingress-*` | Preserve published ingress behavior and expose only app-consumable status evidence needed by runtime-app. |
+| `runtime-protocol-*` | Continue to parse payloads without transport, app, management, exporter, access-control, logging, or sink dependencies. |
+| `runtime-smoke-tests` | Keep repository-only cross-module smoke coverage; add management HTTP smoke only as integration verification, not as a supported dependency surface. |
+
+Any future non-JDK management or observability dependency must stay in
+`runtime-app` or a dedicated management/observability adapter module until its
+boundary is explicit.
+
+## `0.11.0` Published Posture
+
+The `0.11.0` runtime line started after the published `0.10.0` health and
+status release and has since been published as the first app-owned management
+plane for standalone collectors.
+
+The published scope is a minimal management plane for the standalone collector:
 
 | Module | 0.11.0 goal |
 | --- | --- |

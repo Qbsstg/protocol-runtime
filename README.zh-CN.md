@@ -28,15 +28,20 @@ baseline 和 runtime-app MQTT collector 装配。`0.9.0` 已发布 downstream si
 sink-failure-triggered backpressure。
 `0.10.0` 已发布健康检查和运行状态生产化能力，包括 app-local
 health/readiness 快照、可解释 health reasons、运维状态指南和 standalone
-health smoke 覆盖。
+health smoke 覆盖。`0.11.0` 已发布 standalone collector 的 app-owned JDK
+HTTP 管理面，通过独立管理端口暴露 health、readiness 和 status JSON 查询。
 
-`0.10.0` 健康检查和状态发布完成后，release 分支已将 Maven reactor 固定为
-`0.11.0`。当前 `0.11.0` 方向是在 standalone collector 的
-app 边界内增加 JDK HTTP 管理面，通过独立管理端口暴露 health、readiness 和
-status JSON 查询。
+`0.11.0` 管理面 baseline 发布完成后，Maven reactor 已打开到
+`0.12.0-SNAPSHOT`。当前 `0.12.0` 方向是在 app/adapter 边界内继续生产化管理面，
+包括管理端安全边界、可配置访问控制、management request logging、JSON metrics
+扩展、健康状态历史快照、管理端错误响应规范、配置示例和 smoke 覆盖。
 
-当前 `0.11.0` 范围记录在
-[`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)，release notes 草案记录在
+当前 `0.12.0` 范围记录在
+[`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)，release notes 草案记录在
+[`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)。
+
+已发布的 `0.11.0` 范围记录在
+[`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)，release notes 记录在
 [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)，
 release-readiness audit 记录在
 [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)。
@@ -73,14 +78,14 @@ release notes 记录在
 
 ## Maven 坐标
 
-最新运行时发布版本是 `0.10.0`。Runtime 模块是 JDK 21 artifact。应用侧应
+最新运行时发布版本是 `0.11.0`。Runtime 模块是 JDK 21 artifact。应用侧应
 按需直接依赖具体模块：
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -88,7 +93,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -96,7 +101,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -104,7 +109,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -112,7 +117,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -120,7 +125,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0</version>
 </dependency>
 ```
 
@@ -140,21 +145,37 @@ release notes 记录在
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | 基于 Paho MQTT 的 ingress adapter，把 MQTT payload 和 message metadata 映射为 runtime envelope，同时保持 MQTT 依赖不进入 `runtime-core`。 |
-| `runtime-app` | 0.11.0 release branch | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点，以及可执行 shaded jar。默认 IEC104 配置路径保持兼容。 |
+| `runtime-app` | 0.12.0-SNAPSHOT planning | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点，以及可执行 shaded jar。`0.12.0` 规划继续补齐管理端安全、访问控制、请求日志、JSON metrics、健康历史、错误响应、示例和 smoke 覆盖。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 pipeline、更多 sink 和更完整的可部署运行时应用。这些依赖都属于
 runtime 仓库，不应反向进入 `protocol-sdk`。
 
+## `0.12.0` 管理面生产化规划
+
+`0.12.0` 从已发布的 `0.11.0` 管理面 baseline 继续推进，并保持管理能力只在
+app/adapter 边界内演进：
+
+- `runtime-core` 继续不引入 Spring、Netty、Kafka、MQTT、HTTP、数据库、Redis
+  和 observability exporter 依赖。
+- 管理 HTTP 继续独立于 `runtime-ingress-http`；后者仍只负责协议 payload 的
+  HTTP 采集接入。
+- 在扩展远程控制能力前，先明确管理端安全边界。
+- 可配置访问控制、request logging、JSON metrics、健康历史快照和错误响应规范
+  都归属 app/adapter 边界，不能进入 parser 或 core 合同。
+- 示例和 smoke test 覆盖 healthy、degraded、unauthorized/forbidden 以及 malformed
+  management request 路径。
+
+详细规划维护在 [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)。
+
 ## `0.11.0` 管理面发布线
 
-`0.11.0` 在已发布的 `0.10.0` health/readiness 模型基础上，增加第一版
+`0.11.0` 已在发布的 `0.10.0` health/readiness 模型基础上，增加第一版
 standalone collector 管理面：
 
 - `runtime-core` 继续不引入 Spring、Netty、Kafka、MQTT、HTTP、数据库、Redis
   和 observability exporter 依赖。
-- 管理 HTTP 属于 app 边界，目前在 `runtime-app` 内使用 JDK `HttpServer`
-  实现。
+- 管理 HTTP 属于 app 边界，在 `runtime-app` 内使用 JDK `HttpServer` 实现。
 - `runtime-ingress-http` 继续只负责协议 payload 的 HTTP 采集接入，不作为管理
   API。
 - 管理端配置统一放在 `collector.management.*`。
@@ -181,7 +202,7 @@ curl -s http://127.0.0.1:8081/readiness
 curl -s http://127.0.0.1:8081/status
 ```
 
-详细规划维护在 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)。
+详细发布记录维护在 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)。
 
 ## `0.10.0` 健康检查与状态生产化发布
 
@@ -369,8 +390,8 @@ server.bind();
 ## Standalone Collector App
 
 `runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前
-`0.11.0` 开发线继续保留已发布的 `0.10.0` TCP/Netty、JDK HTTP、
-Kafka 和 MQTT collector 路径，并接到同一个 app-owned pipeline：
+`0.12.0-SNAPSHOT` 开发线继续保留已发布的 `0.11.0` TCP/Netty、JDK HTTP、
+Kafka、MQTT 和 management endpoint 路径，并接到同一个 app-owned pipeline：
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -388,7 +409,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -421,7 +442,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -460,7 +481,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.11.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -735,7 +756,10 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.8.0.md`](docs/roadmap-0.8.0.md)
 - [`docs/roadmap-0.9.0.md`](docs/roadmap-0.9.0.md)
 - [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)
+- [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
+- [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
 - [`docs/release-readiness-0.10.0.md`](docs/release-readiness-0.10.0.md)
 - [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)
 - [`docs/release-readiness-0.1.0.md`](docs/release-readiness-0.1.0.md)
@@ -756,3 +780,5 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/release-notes-0.8.0.md`](docs/release-notes-0.8.0.md)
 - [`docs/release-notes-0.9.0.md`](docs/release-notes-0.9.0.md)
 - [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md)
+- [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)
+- [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)

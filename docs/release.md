@@ -5,13 +5,13 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.10.0`.
+The latest published runtime release is `0.11.0`.
 
-The current release branch is `0.11.0` after the published `0.10.0` health and
-status release. No `v0.11.0` tag has been created yet, and no real Maven
-Central upload is part of the release branch PR.
+The Maven reactor is open at `0.12.0-SNAPSHOT` after the published `0.11.0`
+management-plane release. No `v0.12.0` tag has been created, and no real Maven
+Central upload is part of the development-line planning PR.
 
-The published `0.10.0` release includes:
+The published `0.11.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -29,10 +29,12 @@ The published `0.10.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.11.0` roadmap is maintained in
-[`roadmap-0.11.0.md`](roadmap-0.11.0.md), release notes are maintained in
-[`release-notes-0.11.0.md`](release-notes-0.11.0.md), and the `0.11.0`
-release-readiness audit is tracked in
+The `0.12.0` roadmap is maintained in
+[`roadmap-0.12.0.md`](roadmap-0.12.0.md), and release notes are maintained in
+[`release-notes-0.12.0.md`](release-notes-0.12.0.md). The published `0.11.0`
+roadmap is maintained in [`roadmap-0.11.0.md`](roadmap-0.11.0.md), release
+notes are maintained in [`release-notes-0.11.0.md`](release-notes-0.11.0.md),
+and the `0.11.0` release-readiness audit is tracked in
 [`release-readiness-0.11.0.md`](release-readiness-0.11.0.md). The published
 `0.10.0` roadmap is maintained in
 [`roadmap-0.10.0.md`](roadmap-0.10.0.md), release notes are maintained in
@@ -72,6 +74,12 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.11.0` was tagged as `v0.11.0`, uploaded in Central deployment
+`ad3dcf19-2aa1-4b02-9a3e-2215043274f1`, published, and verified from Maven
+Central with an isolated local Maven repository, including the
+`runtime-app:standalone` classifier. GitHub release notes are published at
+<https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.11.0>.
 
 `0.10.0` was tagged as `v0.10.0`, uploaded in Central deployment
 `976f18d2-4067-4163-8bf4-2f37425e3507`, published, and verified from Maven
