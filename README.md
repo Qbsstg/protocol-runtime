@@ -36,15 +36,19 @@ published the app-owned JDK HTTP management plane for standalone collectors,
 with independent health, readiness, and status endpoints on a separate
 management port.
 
-The Maven reactor is now open at `0.12.0-SNAPSHOT` after the published
-`0.11.0` management-plane baseline. The `0.12.0` line productionizes the
-management surface with explicit security boundaries, configurable access
-control, management request logging, expanded JSON metrics, health history
-snapshots, error response rules, configuration examples, and smoke coverage.
+The Maven reactor is fixed at `0.12.0` on the release branch after the
+published `0.11.0` management-plane baseline. The `0.12.0` line
+productionizes the management surface with explicit security boundaries,
+configurable access control, management request logging, expanded JSON
+metrics, health history snapshots, error response rules, configuration
+examples, and smoke coverage. No `v0.12.0` tag has been created and no real
+Maven Central upload is part of the release branch PR.
 
 The `0.12.0` scope is tracked in
-[`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md), and draft release notes
-are tracked in [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md).
+[`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md), release notes are tracked
+in [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md), and the
+release-readiness audit is tracked in
+[`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md).
 
 The published `0.11.0` release scope is tracked in
 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md), release notes are tracked
@@ -85,14 +89,15 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime release version is `0.11.0`. Runtime modules are
-JDK 21 artifacts. Applications should depend on the modules they use directly:
+The latest runtime release candidate version is `0.12.0`. Runtime modules are
+JDK 21 artifacts. Applications should depend on the modules they use directly
+after the release is published:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -100,7 +105,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -108,7 +113,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -116,7 +121,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -124,7 +129,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -132,7 +137,7 @@ JDK 21 artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -470,9 +475,9 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The current `0.12.0-SNAPSHOT` development line preserves the published
-`0.11.0` TCP/Netty, JDK HTTP, Kafka, MQTT, and management endpoint paths
-through the same app-owned pipeline:
+The `0.12.0` release candidate preserves the published `0.11.0` TCP/Netty,
+JDK HTTP, Kafka, MQTT, and management endpoint paths through the same
+app-owned pipeline:
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -490,7 +495,7 @@ mvn -q -pl runtime-app -am package
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -523,7 +528,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -563,7 +568,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -867,6 +872,7 @@ verified.
 - [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
 - [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
 - [`docs/release-readiness-0.10.0.md`](docs/release-readiness-0.10.0.md)
 - [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)

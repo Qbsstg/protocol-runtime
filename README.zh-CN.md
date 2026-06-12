@@ -31,14 +31,17 @@ health/readiness 快照、可解释 health reasons、运维状态指南和 stand
 health smoke 覆盖。`0.11.0` 已发布 standalone collector 的 app-owned JDK
 HTTP 管理面，通过独立管理端口暴露 health、readiness 和 status JSON 查询。
 
-`0.11.0` 管理面 baseline 发布完成后，Maven reactor 已打开到
-`0.12.0-SNAPSHOT`。当前 `0.12.0` 方向是在 app/adapter 边界内继续生产化管理面，
+`0.11.0` 管理面 baseline 发布完成后，Maven reactor 已在 release 分支固定到
+`0.12.0`。当前 `0.12.0` 方向是在 app/adapter 边界内继续生产化管理面，
 包括管理端安全边界、可配置访问控制、management request logging、JSON metrics
-扩展、健康状态历史快照、管理端错误响应规范、配置示例和 smoke 覆盖。
+扩展、健康状态历史快照、管理端错误响应规范、配置示例和 smoke 覆盖。当前还没有
+创建 `v0.12.0` tag，release branch PR 不执行真实 Maven Central 上传。
 
 当前 `0.12.0` 范围记录在
-[`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)，release notes 草案记录在
-[`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)。
+[`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)，release notes 记录在
+[`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)，
+release-readiness audit 记录在
+[`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)。
 
 已发布的 `0.11.0` 范围记录在
 [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)，release notes 记录在
@@ -78,14 +81,14 @@ release notes 记录在
 
 ## Maven 坐标
 
-最新运行时发布版本是 `0.11.0`。Runtime 模块是 JDK 21 artifact。应用侧应
-按需直接依赖具体模块：
+最新运行时候选发布版本是 `0.12.0`。Runtime 模块是 JDK 21 artifact。正式发布后，
+应用侧应按需直接依赖具体模块：
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -93,7 +96,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -101,7 +104,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -109,7 +112,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -117,7 +120,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -125,7 +128,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.11.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -417,9 +420,9 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。当前
-`0.12.0-SNAPSHOT` 开发线继续保留已发布的 `0.11.0` TCP/Netty、JDK HTTP、
-Kafka、MQTT 和 management endpoint 路径，并接到同一个 app-owned pipeline：
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。`0.12.0` 候选发布版本继续
+保留已发布的 `0.11.0` TCP/Netty、JDK HTTP、Kafka、MQTT 和 management endpoint
+路径，并接到同一个 app-owned pipeline：
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -437,7 +440,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -470,7 +473,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -509,7 +512,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -797,6 +800,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
 - [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
 - [`docs/release-readiness-0.10.0.md`](docs/release-readiness-0.10.0.md)
 - [`docs/release-readiness-0.8.0.md`](docs/release-readiness-0.8.0.md)

@@ -1,10 +1,10 @@
 # Protocol Runtime 0.12.0 Release Notes
 
-Release notes draft for the `0.12.0` runtime development line.
+Release notes for the `0.12.0` runtime release candidate.
 
-The Maven reactor is open at `0.12.0-SNAPSHOT` after the published `0.11.0`
-management-plane baseline. No `v0.12.0` tag has been created, and no real Maven
-Central upload is part of this baseline PR.
+The Maven reactor is fixed at `0.12.0` on the release branch after the
+published `0.11.0` management-plane baseline. No `v0.12.0` tag has been
+created, and no real Maven Central upload is part of the release branch PR.
 
 ## Baseline Highlights
 
@@ -63,6 +63,9 @@ The release must pass before publication:
 - dependency boundary checks proving new dependencies do not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
 - GitHub CI on the release PR
+
+The release-readiness audit is tracked in
+[`release-readiness-0.12.0.md`](release-readiness-0.12.0.md).
 
 The detailed plan is tracked in [`roadmap-0.12.0.md`](roadmap-0.12.0.md).
 
