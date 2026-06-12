@@ -46,12 +46,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.jupiter.api.Test;
@@ -353,6 +357,22 @@ class StandaloneCollectorTest {
         assertEquals("/live", appConfig.management().healthPath());
         assertEquals("/ready", appConfig.management().readinessPath());
         assertEquals("/runtime/status", appConfig.management().statusPath());
+        assertEquals(ManagementAccessMode.LOCAL, appConfig.management().accessMode());
+        assertTrue(appConfig.management().requestLoggingEnabled());
+        assertEquals(ManagementServerConfig.DEFAULT_HEALTH_HISTORY_MAX_ENTRIES,
+                appConfig.management().healthHistoryMaxEntries());
+
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_ACCESS, "token");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_TOKEN, "secret-token");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_REQUEST_LOGGING_ENABLED, "false");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_HEALTH_HISTORY_MAX_ENTRIES, "4");
+
+        appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertEquals(ManagementAccessMode.TOKEN, appConfig.management().accessMode());
+        assertEquals("secret-token", appConfig.management().token());
+        assertFalse(appConfig.management().requestLoggingEnabled());
+        assertEquals(4, appConfig.management().healthHistoryMaxEntries());
     }
 
     @Test
@@ -383,6 +403,10 @@ class StandaloneCollectorTest {
             assertTrue(status.body().contains("\"sink\":{\"type\":\"in-memory\""));
             assertTrue(status.body().contains("\"backpressure\""));
             assertTrue(status.body().contains("\"failureCounters\""));
+            assertTrue(status.body().contains("\"management\""));
+            assertTrue(status.body().contains("\"mode\":\"local\""));
+            assertTrue(status.body().contains("\"requestCount\":2"));
+            assertTrue(status.body().contains("\"healthHistory\""));
 
             collector.stop();
 
@@ -411,6 +435,184 @@ class StandaloneCollectorTest {
             assertTrue(status.body().contains("\"parseFailureCount\":1"));
             assertTrue(status.body().contains("\"parse\":1"));
             assertTrue(status.body().contains("parseFailures=1"));
+        }
+    }
+
+    @Test
+    void tokenManagementAccessRejectsMissingOrInvalidTokensAndAllowsBearerToken() throws Exception {
+        Properties properties = managementProperties(0, "in-memory", 0);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_ACCESS, "token");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_TOKEN, "secret-token");
+
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(properties))) {
+            collector.start();
+
+            HttpResponse<String> missing = getManagement(collector, "/health");
+            HttpResponse<String> invalid = getManagement(
+                    collector,
+                    "/health",
+                    Map.of("Authorization", "Bearer wrong-token"));
+            HttpResponse<String> allowed = getManagement(
+                    collector,
+                    "/health",
+                    Map.of("Authorization", "Bearer secret-token"));
+            HttpResponse<String> status = getManagement(
+                    collector,
+                    "/status",
+                    Map.of("Authorization", "Bearer secret-token"));
+
+            assertEquals(401, missing.statusCode());
+            assertEquals(401, invalid.statusCode());
+            assertEquals(200, allowed.statusCode());
+            assertEquals(200, status.statusCode());
+            assertTrue(missing.body().contains("\"code\":\"unauthorized\""));
+            assertTrue(invalid.body().contains("\"status\":401"));
+            assertTrue(status.body().contains("\"mode\":\"token\""));
+            assertTrue(status.body().contains("\"requestCount\":3"));
+            assertTrue(status.body().contains("\"rejectedRequestCount\":2"));
+            assertTrue(status.body().contains("\"401\":2"));
+            assertFalse(status.body().contains("secret-token"));
+        }
+    }
+
+    @Test
+    void localManagementAccessControllerForbidsNonLoopbackRemoteAddress() throws Exception {
+        ManagementServerConfig config = new ManagementServerConfig(
+                true,
+                "0.0.0.0",
+                0,
+                "/health",
+                "/readiness",
+                "/status",
+                ManagementAccessMode.LOCAL,
+                null,
+                true,
+                32);
+
+        ManagementAccessDecision decision = new ManagementAccessController().authorize(
+                config,
+                java.net.InetAddress.getByName("192.0.2.10"),
+                List.of(),
+                List.of());
+
+        assertFalse(decision.allowed());
+        assertEquals(403, decision.statusCode());
+        assertEquals("forbidden", decision.errorCode());
+        assertEquals("non_local_remote", decision.rejectionReason());
+    }
+
+    @Test
+    void managementErrorResponsesUseStableJson() throws Exception {
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(managementProperties(0, "in-memory", 0)))) {
+            collector.start();
+
+            HttpResponse<String> notFound = getManagement(collector, "/missing");
+            HttpResponse<String> methodNotAllowed = managementRequest(
+                    collector,
+                    "POST",
+                    "/status",
+                    Map.of(),
+                    HttpRequest.BodyPublishers.noBody());
+            HttpResponse<String> malformed = managementRequest(
+                    collector,
+                    "GET",
+                    "/status",
+                    Map.of(),
+                    HttpRequest.BodyPublishers.ofString("unexpected-body"));
+
+            assertEquals(404, notFound.statusCode());
+            assertEquals(405, methodNotAllowed.statusCode());
+            assertEquals("GET", methodNotAllowed.headers().firstValue("Allow").orElse(""));
+            assertEquals(400, malformed.statusCode());
+            assertTrue(notFound.body().contains("\"code\":\"not_found\""));
+            assertTrue(methodNotAllowed.body().contains("\"code\":\"method_not_allowed\""));
+            assertTrue(malformed.body().contains("\"code\":\"malformed_request\""));
+            assertTrue(malformed.body().contains("\"path\":\"/status\""));
+        }
+    }
+
+    @Test
+    void managementRequestLoggingDoesNotLeakTokenOrPayload() throws Exception {
+        Logger logger = Logger.getLogger(ManagementHttpServer.class.getName());
+        List<String> messages = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                messages.add(record.getMessage());
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        logger.addHandler(handler);
+        try {
+            Properties properties = managementProperties(0, "in-memory", 0);
+            properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_ACCESS, "token");
+            properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_TOKEN, "secret-token");
+
+            try (StandaloneCollector collector = StandaloneCollector.create(
+                    StandaloneCollectorConfig.appConfigFromProperties(properties))) {
+                collector.start();
+
+                HttpResponse<String> success = getManagement(
+                        collector,
+                        "/status",
+                        Map.of("X-Management-Token", "secret-token"));
+                HttpResponse<String> malformed = managementRequest(
+                        collector,
+                        "GET",
+                        "/status",
+                        Map.of("Authorization", "Bearer secret-token"),
+                        HttpRequest.BodyPublishers.ofString("payload-bytes"));
+
+                assertEquals(200, success.statusCode());
+                assertEquals(400, malformed.statusCode());
+            }
+        } finally {
+            logger.removeHandler(handler);
+        }
+
+        assertFalse(messages.isEmpty());
+        String joined = String.join("\n", messages);
+        assertTrue(joined.contains("method=GET"));
+        assertTrue(joined.contains("path=/status"));
+        assertTrue(joined.contains("status=200"));
+        assertTrue(joined.contains("status=400"));
+        assertFalse(joined.contains("secret-token"));
+        assertFalse(joined.contains("payload-bytes"));
+    }
+
+    @Test
+    void managementHealthHistoryIsBoundedAndRecordsStateChanges() throws Exception {
+        Properties properties = managementProperties(0, "in-memory", 0);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_HEALTH_HISTORY_MAX_ENTRIES, "2");
+
+        try (StandaloneCollector collector = StandaloneCollector.create(
+                StandaloneCollectorConfig.appConfigFromProperties(properties))) {
+            collector.statusSnapshot();
+            collector.start();
+            collector.statusSnapshot();
+
+            byte[] malformed = bytes(0x68, 0x03, 0x00, 0x00, 0x00);
+            writeFrame(collector, malformed);
+            awaitFailures(collector.inMemorySink().orElseThrow(), 1);
+            CollectorStatusSnapshot degraded = collector.statusSnapshot();
+
+            List<HealthHistoryEntry> history = degraded.management().healthHistory();
+            assertEquals(2, history.size());
+            assertEquals(CollectorLifecycleState.RUNNING, history.get(0).lifecycle());
+            assertEquals(CollectorHealthState.HEALTHY, history.get(0).health());
+            assertEquals("lifecycle", history.get(0).transition());
+            assertEquals(CollectorHealthState.DEGRADED, history.get(1).health());
+            assertEquals("degraded", history.get(1).transition());
+            assertTrue(history.get(1).reasons().contains("parseFailures=1"));
         }
     }
 
@@ -1055,6 +1257,28 @@ class StandaloneCollectorTest {
 
         assertFalse(validation.isValid());
         assertContainsError(validation, "collector.management is invalid: management paths must be distinct");
+
+        properties = managementProperties(0, "in-memory", 0);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_ACCESS, "cookie");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_REQUEST_LOGGING_ENABLED, "sometimes");
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_HEALTH_HISTORY_MAX_ENTRIES, "-1");
+
+        validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, StandaloneCollectorConfig.MANAGEMENT_ACCESS + " must be local, open, or token");
+        assertContainsError(validation, StandaloneCollectorConfig.MANAGEMENT_REQUEST_LOGGING_ENABLED
+                + " must be true or false");
+        assertContainsError(validation, StandaloneCollectorConfig.MANAGEMENT_HEALTH_HISTORY_MAX_ENTRIES
+                + " must be between");
+
+        properties = managementProperties(0, "in-memory", 0);
+        properties.setProperty(StandaloneCollectorConfig.MANAGEMENT_ACCESS, "token");
+
+        validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, "collector.management is invalid: token is required");
     }
 
     @Test
@@ -1607,10 +1831,27 @@ class StandaloneCollectorTest {
     private static HttpResponse<String> getManagement(
             StandaloneCollector collector,
             String path) throws IOException, InterruptedException {
+        return getManagement(collector, path, Map.of());
+    }
+
+    private static HttpResponse<String> getManagement(
+            StandaloneCollector collector,
+            String path,
+            Map<String, String> headers) throws IOException, InterruptedException {
+        return managementRequest(collector, "GET", path, headers, HttpRequest.BodyPublishers.noBody());
+    }
+
+    private static HttpResponse<String> managementRequest(
+            StandaloneCollector collector,
+            String method,
+            String path,
+            Map<String, String> headers,
+            HttpRequest.BodyPublisher body) throws IOException, InterruptedException {
         InetSocketAddress address = collector.managementLocalAddress();
         URI uri = URI.create("http://" + address.getHostString() + ":" + address.getPort() + path);
-        HttpRequest request = HttpRequest.newBuilder(uri).GET().build();
-        return HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        HttpRequest.Builder request = HttpRequest.newBuilder(uri).method(method, body);
+        headers.forEach(request::header);
+        return HttpClient.newHttpClient().send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private static ConsumerRecord<byte[], byte[]> kafkaRecord(byte[] value) {

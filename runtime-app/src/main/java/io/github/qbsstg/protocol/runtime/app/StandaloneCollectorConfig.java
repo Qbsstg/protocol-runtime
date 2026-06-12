@@ -96,6 +96,12 @@ public record StandaloneCollectorConfig(
     public static final String MANAGEMENT_HEALTH_PATH = "collector.management.healthPath";
     public static final String MANAGEMENT_READINESS_PATH = "collector.management.readinessPath";
     public static final String MANAGEMENT_STATUS_PATH = "collector.management.statusPath";
+    public static final String MANAGEMENT_ACCESS = "collector.management.access";
+    public static final String MANAGEMENT_TOKEN = "collector.management.token";
+    public static final String MANAGEMENT_REQUEST_LOGGING_ENABLED =
+            "collector.management.requestLogging.enabled";
+    public static final String MANAGEMENT_HEALTH_HISTORY_MAX_ENTRIES =
+            "collector.management.healthHistory.maxEntries";
     public static final String SOURCES = "collector.sources";
     public static final String SOURCE_ID = "collector.source.id";
     public static final String SOURCE_PREFIX = "collector.source.";
@@ -313,8 +319,34 @@ public record StandaloneCollectorConfig(
         String healthPath = property(properties, MANAGEMENT_HEALTH_PATH, defaults.healthPath());
         String readinessPath = property(properties, MANAGEMENT_READINESS_PATH, defaults.readinessPath());
         String statusPath = property(properties, MANAGEMENT_STATUS_PATH, defaults.statusPath());
+        ManagementAccessMode accessMode = parseManagementAccessMode(
+                property(properties, MANAGEMENT_ACCESS, defaults.accessMode().configValue()),
+                errors);
+        String token = property(properties, MANAGEMENT_TOKEN, defaults.token());
+        boolean requestLoggingEnabled = parseBoolean(
+                properties,
+                MANAGEMENT_REQUEST_LOGGING_ENABLED,
+                defaults.requestLoggingEnabled(),
+                errors);
+        int healthHistoryMaxEntries = intProperty(
+                properties,
+                MANAGEMENT_HEALTH_HISTORY_MAX_ENTRIES,
+                defaults.healthHistoryMaxEntries(),
+                0,
+                Integer.MAX_VALUE,
+                errors);
         try {
-            return new ManagementServerConfig(enabled, host, port, healthPath, readinessPath, statusPath);
+            return new ManagementServerConfig(
+                    enabled,
+                    host,
+                    port,
+                    healthPath,
+                    readinessPath,
+                    statusPath,
+                    accessMode,
+                    token,
+                    requestLoggingEnabled,
+                    healthHistoryMaxEntries);
         } catch (IllegalArgumentException ex) {
             errors.add("collector.management is invalid: " + ex.getMessage());
             return defaults;
@@ -883,6 +915,15 @@ public record StandaloneCollectorConfig(
         } catch (RuntimeException ex) {
             errors.add(key + " must be CONFIGURED, HEADER, or PATH");
             return HttpIngressSourceIdMode.CONFIGURED;
+        }
+    }
+
+    private static ManagementAccessMode parseManagementAccessMode(String value, List<String> errors) {
+        try {
+            return ManagementAccessMode.parse(value);
+        } catch (RuntimeException ex) {
+            errors.add(MANAGEMENT_ACCESS + " must be local, open, or token");
+            return ManagementServerConfig.DEFAULT_ACCESS_MODE;
         }
     }
 

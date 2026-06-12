@@ -332,6 +332,12 @@ Allowed:
 - future non-JDK management or observability dependencies must live in
   `runtime-app` or a dedicated management/observability adapter module
 
+The first baseline implements those rules with app-owned `local`, `open`, and
+`token` access modes, JDK request logging, in-memory management counters,
+bounded health history, and stable management error JSON. Runtime-core and
+protocol modules receive no access-control, request-logging, HTTP management,
+database, Redis, or exporter dependency.
+
 Not allowed:
 
 - adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage, or

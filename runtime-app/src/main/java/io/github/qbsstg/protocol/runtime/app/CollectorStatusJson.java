@@ -52,7 +52,21 @@ final class CollectorStatusJson {
         sink(json, snapshot);
         backpressure(json, snapshot);
         metrics(json, metrics);
+        management(json, snapshot.management());
         json.name("strictAsduParsing").value(snapshot.strictAsduParsing());
+        json.endObject();
+        return json.toString();
+    }
+
+    static String error(int status, String code, String message, String path) {
+        JsonWriter json = new JsonWriter();
+        json.beginObject();
+        json.name("error").beginObject();
+        json.name("code").value(code);
+        json.name("message").value(message);
+        json.name("status").value(status);
+        json.name("path").value(path);
+        json.endObject();
         json.endObject();
         return json.toString();
     }
@@ -224,6 +238,58 @@ final class CollectorStatusJson {
         json.endObject();
     }
 
+    private static void management(JsonWriter json, ManagementStatusSnapshot management) {
+        json.name("management").beginObject();
+        json.name("enabled").value(management.enabled());
+        json.name("running").value(management.running());
+        json.name("configuredHost").value(management.configuredHost());
+        json.name("configuredPort").value(management.configuredPort());
+        json.name("boundHost").value(management.boundHost());
+        json.name("boundPort").value(management.boundPort());
+        json.name("healthPath").value(management.healthPath());
+        json.name("readinessPath").value(management.readinessPath());
+        json.name("statusPath").value(management.statusPath());
+        json.name("access").beginObject();
+        json.name("mode").value(management.accessMode().configValue());
+        json.name("requestLoggingEnabled").value(management.requestLoggingEnabled());
+        json.endObject();
+        json.name("healthHistoryMaxEntries").value(management.healthHistoryMaxEntries());
+        managementMetrics(json, management.metrics());
+        healthHistory(json, management.healthHistory());
+        json.endObject();
+    }
+
+    private static void managementMetrics(JsonWriter json, ManagementMetricsSnapshot metrics) {
+        json.name("metrics").beginObject();
+        json.name("requestCount").value(metrics.requestCount());
+        json.name("rejectedRequestCount").value(metrics.rejectedRequestCount());
+        json.name("errorResponseCount").value(metrics.errorResponseCount());
+        json.name("statusCounts").longMap(metrics.statusCounts());
+        json.name("lastMethod").value(metrics.lastMethod());
+        json.name("lastPath").value(metrics.lastPath());
+        json.name("lastStatus").value(metrics.lastStatus());
+        json.name("lastDurationMillis").value(metrics.lastDurationMillis());
+        json.name("lastRemoteAddress").value(metrics.lastRemoteAddress());
+        json.name("lastRejectionReason").value(metrics.lastRejectionReason());
+        json.name("lastRequestAt").value(metrics.lastRequestAt());
+        json.endObject();
+    }
+
+    private static void healthHistory(JsonWriter json, List<HealthHistoryEntry> history) {
+        json.name("healthHistory").beginArray();
+        for (HealthHistoryEntry entry : history) {
+            json.beginObject();
+            json.name("observedAt").value(entry.observedAt());
+            json.name("lifecycle").value(entry.lifecycle().name());
+            json.name("health").value(entry.health().name());
+            json.name("readiness").value(entry.readiness().name());
+            json.name("transition").value(entry.transition());
+            json.name("reasons").strings(entry.reasons());
+            json.endObject();
+        }
+        json.endArray();
+    }
+
     private static final class JsonWriter {
         private final StringBuilder value = new StringBuilder();
         private boolean[] firstStack = new boolean[32];
@@ -327,6 +393,15 @@ final class CollectorStatusJson {
             beginObject();
             for (Map.Entry<String, String> entry : values.entrySet()) {
                 name(entry.getKey()).value(entry.getValue());
+            }
+            endObject();
+            return this;
+        }
+
+        JsonWriter longMap(Map<Integer, Long> values) {
+            beginObject();
+            for (Map.Entry<Integer, Long> entry : values.entrySet()) {
+                name(Integer.toString(entry.getKey())).value(entry.getValue());
             }
             endObject();
             return this;

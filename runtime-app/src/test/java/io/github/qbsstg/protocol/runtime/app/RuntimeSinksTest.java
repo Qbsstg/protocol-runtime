@@ -171,6 +171,25 @@ class RuntimeSinksTest {
                 BackpressureDecision.DROP,
                 0,
                 BackpressureDecision.RETRY_LATER,
-                false);
+                false,
+                managementStatus());
+    }
+
+    private static ManagementStatusSnapshot managementStatus() {
+        return new ManagementStatusSnapshot(
+                false,
+                false,
+                ManagementServerConfig.DEFAULT_HOST,
+                ManagementServerConfig.DEFAULT_PORT,
+                null,
+                null,
+                ManagementServerConfig.DEFAULT_HEALTH_PATH,
+                ManagementServerConfig.DEFAULT_READINESS_PATH,
+                ManagementServerConfig.DEFAULT_STATUS_PATH,
+                ManagementServerConfig.DEFAULT_ACCESS_MODE,
+                ManagementServerConfig.DEFAULT_REQUEST_LOGGING_ENABLED,
+                ManagementServerConfig.DEFAULT_HEALTH_HISTORY_MAX_ENTRIES,
+                ManagementMetricsSnapshot.empty(),
+                List.of());
     }
 }

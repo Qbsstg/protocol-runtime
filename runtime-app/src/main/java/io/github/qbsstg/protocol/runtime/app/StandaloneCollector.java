@@ -40,6 +40,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
     private final List<KafkaConsumerRuntime<?>> kafkaConsumers;
     private final List<MqttClientRuntime<?>> mqttClients;
     private final ManagementHttpServer managementServer;
+    private final ManagementHealthHistory healthHistory;
     private final List<RuntimeListener> listeners;
     private final Clock clock;
     private final CountDownLatch stopped = new CountDownLatch(1);
@@ -103,6 +104,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         }
         this.mqttClients = List.copyOf(mqttClientRuntimes);
         this.managementServer = new ManagementHttpServer(appConfig.management(), this::statusSnapshot);
+        this.healthHistory = new ManagementHealthHistory(appConfig.management().healthHistoryMaxEntries());
         List<RuntimeListener> runtimeListeners =
                 new ArrayList<>(
                         tcpListeners.size()
@@ -163,7 +165,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         List<MqttClientStatus> mqttClientStatuses = mqttClients.stream()
                 .map(this::mqttClientStatus)
                 .toList();
-        return new CollectorStatusSnapshot(
+        CollectorStatusSnapshot snapshot = new CollectorStatusSnapshot(
                 state,
                 startedAt,
                 stoppedAt,
@@ -185,7 +187,10 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 appConfig.oversizedPayloadDecision(),
                 appConfig.sinkFailureBackpressureThreshold(),
                 appConfig.sinkFailureBackpressureDecision(),
-                appConfig.strictAsduParsing());
+                appConfig.strictAsduParsing(),
+                managementStatus(healthHistory.snapshot()));
+        return snapshot.withManagement(
+                snapshot.management().withHealthHistory(healthHistory.recordAndSnapshot(clock.instant(), snapshot)));
     }
 
     public synchronized boolean isRunning() {
@@ -441,6 +446,33 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 mqtt.connectionTimeoutSeconds(),
                 mqtt.keepAliveSeconds(),
                 runtime.isRunning());
+    }
+
+    private ManagementStatusSnapshot managementStatus(List<HealthHistoryEntry> history) {
+        ManagementServerConfig config = appConfig.management();
+        boolean running = managementServer.isRunning();
+        String boundHost = null;
+        Integer boundPort = null;
+        if (running) {
+            InetSocketAddress localAddress = managementServer.localAddress();
+            boundHost = localAddress.getHostString();
+            boundPort = localAddress.getPort();
+        }
+        return new ManagementStatusSnapshot(
+                config.enabled(),
+                running,
+                config.host(),
+                config.port(),
+                boundHost,
+                boundPort,
+                config.healthPath(),
+                config.readinessPath(),
+                config.statusPath(),
+                config.accessMode(),
+                config.requestLoggingEnabled(),
+                config.healthHistoryMaxEntries(),
+                managementServer.metricsSnapshot(),
+                history);
     }
 
     private void recordStartupFailure(RuntimeListener failedListener, Exception failure) {

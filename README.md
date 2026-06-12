@@ -152,14 +152,14 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.12.0-SNAPSHOT planning | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, and an executable shaded jar. The `0.12.0` line plans management security, access control, request logging, JSON metrics, health history, error responses, examples, and smoke coverage. |
+| `runtime-app` | 0.12.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, and an executable shaded jar. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, and richer deployable
 runtime applications. Those dependencies belong here, not in
 `protocol-sdk`.
 
-## `0.12.0` Management Productionization Planning
+## `0.12.0` Management Productionization Baseline
 
 `0.12.0` starts after the published `0.11.0` management-plane baseline and
 keeps the management implementation inside the app/adapter boundary:
@@ -175,6 +175,36 @@ keeps the management implementation inside the app/adapter boundary:
   core contracts
 - examples and smoke tests cover healthy, degraded, unauthorized/forbidden, and
   malformed management request paths
+
+The baseline keeps the management endpoint local by default. Operators can
+choose:
+
+- `collector.management.access=local`: only loopback clients are accepted
+- `collector.management.access=open`: no management authentication, intended
+  only for explicitly protected networks
+- `collector.management.access=token`: requires `Authorization: Bearer <token>`
+  or `X-Management-Token`
+
+The management request log records method, path, status, duration, remote
+address, and rejection reason. It does not log request headers, token values, or
+payload bytes. `/status` now includes management request counters, status-code
+counts, the latest rejection reason, and bounded health-history entries.
+
+Example token-protected management configuration:
+
+```properties
+collector.management.enabled=true
+collector.management.host=127.0.0.1
+collector.management.port=8081
+collector.management.access=token
+collector.management.token=change-me
+collector.management.requestLogging.enabled=true
+collector.management.healthHistory.maxEntries=32
+```
+
+```sh
+curl -s -H 'Authorization: Bearer change-me' http://127.0.0.1:8081/status
+```
 
 The detailed plan is maintained in
 [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md).
@@ -571,6 +601,16 @@ they can override checked-in defaults for local runs.
 | `collector.sink.file.maxBytes` | `10485760` | Rotate the file sink before the active file grows beyond this byte limit. |
 | `collector.sink.file.maxHistory` | `5` | Number of rotated file sink history files to keep. |
 | `collector.iec104.strictAsduParsing` | `false` | Enables strict IEC104 ASDU parsing in the SDK binding. |
+| `collector.management.enabled` | `false` | Enables the app-owned JDK `HttpServer` management endpoint. |
+| `collector.management.host` | `127.0.0.1` | Management listen host. Keep loopback unless an explicit access-control boundary is configured. |
+| `collector.management.port` | `8081` | Management listen port. Port `0` requests an ephemeral port for tests and smoke scripts. |
+| `collector.management.healthPath` | `/health` | Health endpoint path. |
+| `collector.management.readinessPath` | `/readiness` | Readiness endpoint path. |
+| `collector.management.statusPath` | `/status` | Runtime status and management metrics endpoint path. |
+| `collector.management.access` | `local` | Management access mode: `local`, `open`, or `token`. |
+| `collector.management.token` | unset | Required when `collector.management.access=token`; never emitted in status JSON or request logs. |
+| `collector.management.requestLogging.enabled` | `true` | Logs management method, path, status, duration, remote address, and rejection reason without headers or payload bytes. |
+| `collector.management.healthHistory.maxEntries` | `32` | Bounded in-memory health-history entries exposed by `/status`. Use `0` to disable history capture. |
 
 `0.3.0` introduces startup validation and an internal multi-source,
 multi-listener configuration model while preserving the single-source keys

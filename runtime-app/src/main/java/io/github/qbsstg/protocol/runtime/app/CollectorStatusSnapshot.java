@@ -27,7 +27,8 @@ public record CollectorStatusSnapshot(
         BackpressureDecision oversizedPayloadDecision,
         long sinkFailureBackpressureThreshold,
         BackpressureDecision sinkFailureBackpressureDecision,
-        boolean strictAsduParsing) {
+        boolean strictAsduParsing,
+        ManagementStatusSnapshot management) {
 
     public CollectorStatusSnapshot {
         sources = List.copyOf(sources);
@@ -53,9 +54,39 @@ public record CollectorStatusSnapshot(
         if (sinkFailureBackpressureDecision == null) {
             throw new IllegalArgumentException("sinkFailureBackpressureDecision must not be null");
         }
+        if (management == null) {
+            throw new IllegalArgumentException("management must not be null");
+        }
     }
 
     public CollectorHealthSnapshot health() {
         return CollectorHealthSnapshot.from(this);
+    }
+
+    CollectorStatusSnapshot withManagement(ManagementStatusSnapshot management) {
+        return new CollectorStatusSnapshot(
+                state,
+                startedAt,
+                stoppedAt,
+                startupFailureReason,
+                lastExceptionType,
+                lastExceptionMessage,
+                sources,
+                tcpListeners,
+                httpListeners,
+                kafkaConsumers,
+                mqttClients,
+                activeConnectionCount,
+                metrics,
+                sinkType,
+                fileSinkStatus,
+                fileSinkRotation,
+                backpressureDecision,
+                backpressureMaxPayloadBytes,
+                oversizedPayloadDecision,
+                sinkFailureBackpressureThreshold,
+                sinkFailureBackpressureDecision,
+                strictAsduParsing,
+                management);
     }
 }
