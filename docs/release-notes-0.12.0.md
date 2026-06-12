@@ -4,29 +4,34 @@ Release notes draft for the `0.12.0` runtime development line.
 
 The Maven reactor is open at `0.12.0-SNAPSHOT` after the published `0.11.0`
 management-plane baseline. No `v0.12.0` tag has been created, and no real Maven
-Central upload is part of the planning PR.
+Central upload is part of this baseline PR.
 
-## Planned Highlights
+## Baseline Highlights
 
-- Productionize the standalone collector management plane introduced in
+- Productionizes the standalone collector management plane introduced in
   `0.11.0`.
-- Define management security boundaries and safe default exposure rules.
-- Add configurable management access control under the app-owned management
+- Defines management security boundaries and safe default exposure rules.
+- Adds configurable management access control under the app-owned management
   configuration boundary.
-- Add management request logging with status, duration, remote address, and
+- Adds management request logging with status, duration, remote address, and
   rejection reason while avoiding secret and payload logging.
-- Expand JSON metrics for management requests, runtime counters, listener and
+- Expands JSON metrics for management requests, runtime counters, listener and
   source health, sink status, failure counters, and backpressure decisions.
-- Add bounded health status history snapshots for recent lifecycle, degraded,
+- Adds bounded health status history snapshots for recent lifecycle, degraded,
   failed, and recovered transitions.
-- Standardize management error responses for not found, method not allowed,
+- Standardizes management error responses for not found, method not allowed,
   malformed request, unauthorized, forbidden, and internal error paths.
-- Add configuration examples and smoke coverage for healthy, degraded,
+- Adds configuration examples and smoke coverage for healthy, degraded,
   unauthorized/forbidden, malformed request, metrics, request logging, and
   shutdown paths.
-- Preserve `runtime-core` as a dependency-light contract module with no Spring,
+- Preserves `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, object storage, access-control,
   request-logging, or observability exporter dependencies.
+
+The first baseline keeps implementation inside `runtime-app`: access modes are
+`local`, `open`, and `token`; request logging uses JDK logging; metrics and
+health history are in-memory and bounded; and `/status` never emits management
+tokens.
 
 ## Scope
 

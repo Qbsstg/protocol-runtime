@@ -10,6 +10,11 @@ LOG="$OUT_DIR/collector.log"
 SINK="$OUT_DIR/records.ndjson"
 RESPONSE="$OUT_DIR/response.json"
 STATUS="$OUT_DIR/status.json"
+UNAUTHORIZED="$OUT_DIR/unauthorized.json"
+NOT_FOUND="$OUT_DIR/not-found.json"
+METHOD_NOT_ALLOWED="$OUT_DIR/method-not-allowed.json"
+MALFORMED="$OUT_DIR/malformed.json"
+AUTH_HEADER="Authorization: Bearer smoke-management-token"
 
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
@@ -51,6 +56,10 @@ collector.management.port=0
 collector.management.healthPath=/health
 collector.management.readinessPath=/readiness
 collector.management.statusPath=/status
+collector.management.access=token
+collector.management.token=smoke-management-token
+collector.management.requestLogging.enabled=true
+collector.management.healthHistory.maxEntries=8
 EOF
 
 "$JAVA_BIN" -jar "$JAR" --config "$CONFIG" > "$LOG" 2>&1 &
@@ -86,8 +95,43 @@ if [ -z "$port" ] || [ -z "$management_port" ]; then
   exit 1
 fi
 
-curl -fsS "http://127.0.0.1:$management_port/health" >/dev/null
-curl -fsS "http://127.0.0.1:$management_port/status" > "$STATUS"
+http_code=$(curl -sS -o "$UNAUTHORIZED" -w "%{http_code}" "http://127.0.0.1:$management_port/status" || true)
+if [ "$http_code" != "401" ] || ! grep -q '"code":"unauthorized"' "$UNAUTHORIZED"; then
+  cat "$LOG"
+  cat "$UNAUTHORIZED"
+  echo "management token rejection did not return stable unauthorized JSON" >&2
+  exit 1
+fi
+
+http_code=$(curl -sS -H "$AUTH_HEADER" -o "$NOT_FOUND" -w "%{http_code}" \
+  "http://127.0.0.1:$management_port/missing" || true)
+if [ "$http_code" != "404" ] || ! grep -q '"code":"not_found"' "$NOT_FOUND"; then
+  cat "$LOG"
+  cat "$NOT_FOUND"
+  echo "management not-found path did not return stable JSON" >&2
+  exit 1
+fi
+
+http_code=$(curl -sS -X POST -H "$AUTH_HEADER" -o "$METHOD_NOT_ALLOWED" -w "%{http_code}" \
+  "http://127.0.0.1:$management_port/status" || true)
+if [ "$http_code" != "405" ] || ! grep -q '"code":"method_not_allowed"' "$METHOD_NOT_ALLOWED"; then
+  cat "$LOG"
+  cat "$METHOD_NOT_ALLOWED"
+  echo "management method-not-allowed path did not return stable JSON" >&2
+  exit 1
+fi
+
+http_code=$(printf 'bad' | curl -sS -X GET --data-binary @- -H "$AUTH_HEADER" \
+  -o "$MALFORMED" -w "%{http_code}" "http://127.0.0.1:$management_port/status" || true)
+if [ "$http_code" != "400" ] || ! grep -q '"code":"malformed_request"' "$MALFORMED"; then
+  cat "$LOG"
+  cat "$MALFORMED"
+  echo "management malformed request path did not return stable JSON" >&2
+  exit 1
+fi
+
+curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/health" >/dev/null
+curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/status" > "$STATUS"
 
 printf '\x68\x0E\x00\x00\x00\x00\x01\x01\x03\x00\x01\x00\x01\x00\x00\x01' \
   | curl -fsS -X POST --data-binary @- \
@@ -97,13 +141,17 @@ printf '\x68\x0E\x00\x00\x00\x00\x01\x01\x03\x00\x01\x00\x01\x00\x00\x01' \
 i=0
 while [ "$i" -lt 50 ]; do
   if [ -s "$SINK" ] \
-    && curl -fsS "http://127.0.0.1:$management_port/readiness" >/dev/null 2>&1 \
-    && curl -fsS "http://127.0.0.1:$management_port/status" > "$STATUS" \
+    && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/readiness" >/dev/null 2>&1 \
+    && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/status" > "$STATUS" \
     && grep -q '"kind":"record"' "$SINK" \
     && grep -q '"sourceId":"iec104:http-smoke"' "$SINK" \
     && grep -q "Protocol Runtime collector status state=RUNNING" "$LOG" \
     && grep -q "httpListeners=\[http-main@" "$LOG" \
-    && grep -q '"readiness":"READY"' "$STATUS"; then
+    && grep -q '"readiness":"READY"' "$STATUS" \
+    && grep -q '"mode":"token"' "$STATUS" \
+    && grep -q '"rejectedRequestCount":1' "$STATUS" \
+    && grep -q '"healthHistory"' "$STATUS" \
+    && grep -q '"statusCounts"' "$STATUS"; then
     echo "standalone HTTP collector smoke passed"
     echo "collector log: $LOG"
     echo "sink output: $SINK"
@@ -119,5 +167,9 @@ cat "$LOG"
 [ -f "$SINK" ] && cat "$SINK"
 [ -f "$RESPONSE" ] && cat "$RESPONSE"
 [ -f "$STATUS" ] && cat "$STATUS"
+[ -f "$UNAUTHORIZED" ] && cat "$UNAUTHORIZED"
+[ -f "$NOT_FOUND" ] && cat "$NOT_FOUND"
+[ -f "$METHOD_NOT_ALLOWED" ] && cat "$METHOD_NOT_ALLOWED"
+[ -f "$MALFORMED" ] && cat "$MALFORMED"
 echo "HTTP collector did not write a parsed record in time" >&2
 exit 1

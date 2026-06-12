@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,6 +20,8 @@ final class ManagementHttpServer implements RuntimeLifecycle {
 
     private final ManagementServerConfig config;
     private final Supplier<CollectorStatusSnapshot> snapshotSupplier;
+    private final ManagementAccessController accessController = new ManagementAccessController();
+    private final ManagementRuntimeMetrics metrics = new ManagementRuntimeMetrics();
     private HttpServer server;
     private ExecutorService executor;
     private InetSocketAddress localAddress;
@@ -37,9 +40,7 @@ final class ManagementHttpServer implements RuntimeLifecycle {
         }
         try {
             HttpServer httpServer = HttpServer.create(new InetSocketAddress(config.host(), config.port()), 0);
-            httpServer.createContext(config.healthPath(), exchange -> handleHealth(exchange, config.healthPath()));
-            httpServer.createContext(config.readinessPath(), exchange -> handleReadiness(exchange, config.readinessPath()));
-            httpServer.createContext(config.statusPath(), exchange -> handleStatus(exchange, config.statusPath()));
+            httpServer.createContext("/", this::handle);
             executor = Executors.newCachedThreadPool(runnable -> {
                 Thread thread = new Thread(runnable, "protocol-runtime-management");
                 thread.setDaemon(true);
@@ -84,42 +85,124 @@ final class ManagementHttpServer implements RuntimeLifecycle {
         return localAddress().getPort();
     }
 
-    private void handleHealth(HttpExchange exchange, String expectedPath) throws IOException {
-        if (!validateGet(exchange, expectedPath)) {
-            return;
-        }
-        CollectorStatusSnapshot snapshot = snapshotSupplier.get();
-        int statusCode = snapshot.health().health() == CollectorHealthState.FAILED ? 503 : 200;
-        writeJson(exchange, statusCode, CollectorStatusJson.health(snapshot));
+    ManagementMetricsSnapshot metricsSnapshot() {
+        return metrics.snapshot();
     }
 
-    private void handleReadiness(HttpExchange exchange, String expectedPath) throws IOException {
-        if (!validateGet(exchange, expectedPath)) {
-            return;
+    private void handle(HttpExchange exchange) throws IOException {
+        long startNanos = System.nanoTime();
+        int statusCode = 500;
+        String rejectionReason = null;
+        String path = path(exchange);
+        try {
+            ManagementAccessDecision access = accessController.authorize(config, exchange);
+            if (!access.allowed()) {
+                rejectionReason = access.rejectionReason();
+                if (access.statusCode() == 401) {
+                    exchange.getResponseHeaders().set("WWW-Authenticate", "Bearer");
+                }
+                statusCode = writeError(exchange, access.statusCode(), access.errorCode(), access.message(), path);
+                return;
+            }
+            statusCode = handleAuthorized(exchange, path);
+        } catch (Exception ex) {
+            rejectionReason = "internal_error";
+            statusCode = writeError(
+                    exchange,
+                    500,
+                    "internal_error",
+                    "Management request failed internally.",
+                    path);
+        } finally {
+            long durationMillis = Math.max(0, (System.nanoTime() - startNanos) / 1_000_000L);
+            String remoteAddress = exchange.getRemoteAddress() == null
+                    ? "unknown"
+                    : exchange.getRemoteAddress().getAddress().getHostAddress();
+            metrics.record(
+                    Instant.now(),
+                    exchange.getRequestMethod(),
+                    path,
+                    statusCode,
+                    durationMillis,
+                    remoteAddress,
+                    rejectionReason);
+            ManagementRequestLogger.log(
+                    config.requestLoggingEnabled(),
+                    exchange.getRequestMethod(),
+                    path,
+                    statusCode,
+                    durationMillis,
+                    remoteAddress,
+                    rejectionReason);
         }
-        CollectorStatusSnapshot snapshot = snapshotSupplier.get();
-        int statusCode = snapshot.health().readiness() == CollectorReadinessState.READY ? 200 : 503;
-        writeJson(exchange, statusCode, CollectorStatusJson.readiness(snapshot));
     }
 
-    private void handleStatus(HttpExchange exchange, String expectedPath) throws IOException {
-        if (!validateGet(exchange, expectedPath)) {
-            return;
-        }
-        writeJson(exchange, 200, CollectorStatusJson.status(snapshotSupplier.get()));
-    }
-
-    private boolean validateGet(HttpExchange exchange, String expectedPath) throws IOException {
-        if (!expectedPath.equals(exchange.getRequestURI().getPath())) {
-            writeJson(exchange, 404, "{\"error\":\"not_found\"}");
-            return false;
+    private int handleAuthorized(HttpExchange exchange, String path) throws IOException {
+        if (!isManagementPath(path)) {
+            return writeError(exchange, 404, "not_found", "Management endpoint was not found.", path);
         }
         if (!"GET".equals(exchange.getRequestMethod())) {
             exchange.getResponseHeaders().set("Allow", "GET");
-            writeJson(exchange, 405, "{\"error\":\"method_not_allowed\"}");
-            return false;
+            return writeError(exchange, 405, "method_not_allowed", "Management endpoint only supports GET.", path);
         }
-        return true;
+        if (hasRequestBody(exchange)) {
+            return writeError(exchange, 400, "malformed_request", "GET management requests must not include a body.", path);
+        }
+        if (config.healthPath().equals(path)) {
+            return handleHealth(exchange);
+        }
+        if (config.readinessPath().equals(path)) {
+            return handleReadiness(exchange);
+        }
+        return handleStatus(exchange);
+    }
+
+    private int handleHealth(HttpExchange exchange) throws IOException {
+        CollectorStatusSnapshot snapshot = snapshotSupplier.get();
+        int statusCode = snapshot.health().health() == CollectorHealthState.FAILED ? 503 : 200;
+        writeJson(exchange, statusCode, CollectorStatusJson.health(snapshot));
+        return statusCode;
+    }
+
+    private int handleReadiness(HttpExchange exchange) throws IOException {
+        CollectorStatusSnapshot snapshot = snapshotSupplier.get();
+        int statusCode = snapshot.health().readiness() == CollectorReadinessState.READY ? 200 : 503;
+        writeJson(exchange, statusCode, CollectorStatusJson.readiness(snapshot));
+        return statusCode;
+    }
+
+    private int handleStatus(HttpExchange exchange) throws IOException {
+        writeJson(exchange, 200, CollectorStatusJson.status(snapshotSupplier.get()));
+        return 200;
+    }
+
+    private boolean isManagementPath(String path) {
+        return config.healthPath().equals(path)
+                || config.readinessPath().equals(path)
+                || config.statusPath().equals(path);
+    }
+
+    private boolean hasRequestBody(HttpExchange exchange) {
+        String contentLength = exchange.getRequestHeaders().getFirst("Content-Length");
+        if (contentLength != null && !"0".equals(contentLength.trim())) {
+            return true;
+        }
+        return exchange.getRequestHeaders().containsKey("Transfer-Encoding");
+    }
+
+    private int writeError(
+            HttpExchange exchange,
+            int statusCode,
+            String code,
+            String message,
+            String path) throws IOException {
+        writeJson(exchange, statusCode, CollectorStatusJson.error(statusCode, code, message, path));
+        return statusCode;
+    }
+
+    private String path(HttpExchange exchange) {
+        String path = exchange.getRequestURI() == null ? null : exchange.getRequestURI().getPath();
+        return path == null || path.isBlank() ? "/" : path;
     }
 
     private void writeJson(HttpExchange exchange, int statusCode, String body) throws IOException {

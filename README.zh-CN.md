@@ -145,7 +145,7 @@ release notes 记录在
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | 基于 Paho MQTT 的 ingress adapter，把 MQTT payload 和 message metadata 映射为 runtime envelope，同时保持 MQTT 依赖不进入 `runtime-core`。 |
-| `runtime-app` | 0.12.0-SNAPSHOT planning | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点，以及可执行 shaded jar。`0.12.0` 规划继续补齐管理端安全、访问控制、请求日志、JSON metrics、健康历史、错误响应、示例和 smoke 覆盖。 |
+| `runtime-app` | 0.12.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点、管理端访问控制、请求日志、管理端 metrics、bounded health history、统一错误 JSON，以及可执行 shaded jar。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
 未来可能补充 pipeline、更多 sink 和更完整的可部署运行时应用。这些依赖都属于
@@ -165,6 +165,34 @@ app/adapter 边界内演进：
   都归属 app/adapter 边界，不能进入 parser 或 core 合同。
 - 示例和 smoke test 覆盖 healthy、degraded、unauthorized/forbidden 以及 malformed
   management request 路径。
+
+当前 baseline 默认保持本地安全姿态。管理端访问模式包括：
+
+- `collector.management.access=local`：只接受 loopback 本机访问。
+- `collector.management.access=open`：不做管理端认证，只适合已经被外部网络边界保护的环境。
+- `collector.management.access=token`：要求请求带
+  `Authorization: Bearer <token>` 或 `X-Management-Token`。
+
+management request log 只记录 method、path、status、duration、remote address 和
+rejection reason，不记录请求 header、token 值或 payload bytes。`/status` 会输出
+management request counters、status-code counters、最近一次拒绝原因，以及 bounded
+health history。
+
+token 保护的管理端配置示例：
+
+```properties
+collector.management.enabled=true
+collector.management.host=127.0.0.1
+collector.management.port=8081
+collector.management.access=token
+collector.management.token=change-me
+collector.management.requestLogging.enabled=true
+collector.management.healthHistory.maxEntries=32
+```
+
+```sh
+curl -s -H 'Authorization: Bearer change-me' http://127.0.0.1:8081/status
+```
 
 详细规划维护在 [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)。
 
@@ -518,6 +546,16 @@ java -jar runtime-app/target/runtime-app-0.12.0-SNAPSHOT-standalone.jar \
 | `collector.sink.file.maxBytes` | `10485760` | 当前 file sink 输出文件超过该字节数前触发轮转。 |
 | `collector.sink.file.maxHistory` | `5` | 保留的轮转历史文件数量。 |
 | `collector.iec104.strictAsduParsing` | `false` | 是否启用 IEC104 SDK binding 的严格 ASDU 解析。 |
+| `collector.management.enabled` | `false` | 是否启用 app-owned JDK `HttpServer` 管理端点。 |
+| `collector.management.host` | `127.0.0.1` | 管理端监听地址。除非已经配置明确访问控制边界，否则建议保持 loopback。 |
+| `collector.management.port` | `8081` | 管理端监听端口。端口 `0` 会让系统分配临时端口，适合测试和 smoke script。 |
+| `collector.management.healthPath` | `/health` | health endpoint path。 |
+| `collector.management.readinessPath` | `/readiness` | readiness endpoint path。 |
+| `collector.management.statusPath` | `/status` | runtime status 和 management metrics endpoint path。 |
+| `collector.management.access` | `local` | 管理端访问模式：`local`、`open` 或 `token`。 |
+| `collector.management.token` | 未设置 | 当 `collector.management.access=token` 时必填；不会写入 status JSON 或 request log。 |
+| `collector.management.requestLogging.enabled` | `true` | 记录管理请求 method、path、status、duration、remote address 和 rejection reason，不记录 header 或 payload bytes。 |
+| `collector.management.healthHistory.maxEntries` | `32` | `/status` 中输出的 bounded in-memory health history 数量；设置 `0` 可关闭。 |
 
 `0.3.0` 引入启动前配置校验和内部多 source、多 listener 配置模型，同时保留
 上面的单 source 配置项。应用会在打开网络端口前校验 source id、TCP 端口、

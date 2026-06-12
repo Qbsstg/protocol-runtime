@@ -48,12 +48,14 @@ public final class StandaloneCollectorMain {
         }
         if (config.management().enabled()) {
             System.out.printf(
-                    "Protocol Runtime management started host=%s port=%d health=%s readiness=%s status=%s%n",
+                    "Protocol Runtime management started host=%s port=%d health=%s readiness=%s status=%s access=%s requestLogging=%s%n",
                     config.management().host(),
                     collector.managementPort(),
                     config.management().healthPath(),
                     config.management().readinessPath(),
-                    config.management().statusPath());
+                    config.management().statusPath(),
+                    config.management().accessMode().configValue(),
+                    config.management().requestLoggingEnabled());
         }
         System.out.println(CollectorStatusFormatter.format(collector.statusSnapshot()));
         collector.awaitShutdown();

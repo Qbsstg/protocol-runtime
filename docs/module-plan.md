@@ -74,6 +74,12 @@ Any future non-JDK management or observability dependency must stay in
 `runtime-app` or a dedicated management/observability adapter module until its
 boundary is explicit.
 
+The first `0.12.0` baseline keeps this work in `runtime-app` only. It uses the
+existing JDK `HttpServer` management endpoint, JDK logging, app-local request
+counters, bounded in-memory health history, and stable JSON error formatting.
+No access-control or request-logging dependency is introduced into
+`runtime-core` or protocol binding modules.
+
 ## `0.11.0` Published Posture
 
 The `0.11.0` runtime line started after the published `0.10.0` health and

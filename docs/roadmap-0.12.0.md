@@ -47,7 +47,7 @@ move into `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`.
 | `runtime-protocol-*` | Continue to parse protocol payloads without transport, app, management endpoint, access-control, metrics exporter, request logging, or downstream sink dependencies. |
 | `runtime-smoke-tests` | Preserve repository-only cross-module smoke coverage; add management smoke only as integration verification. |
 
-## Planned Work
+## Baseline Work
 
 - Management security boundary documentation and default-localhost posture.
 - Config model additions for management access control and request logging.
@@ -59,6 +59,11 @@ move into `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`.
 - Management error response formatter with stable JSON fields.
 - Example properties files covering secured management endpoints.
 - Standalone smoke coverage for secured and malformed management requests.
+
+The implemented baseline uses only JDK `HttpServer`, JDK logging, and
+app-local in-memory counters/history. It adds `local`, `open`, and `token`
+management access modes, stable JSON errors, management request/status metrics,
+and bounded health-history entries under `/status`.
 
 ## Non-Goals
 
@@ -72,17 +77,17 @@ move into `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`.
 
 ## Readiness Checklist
 
-- [ ] README and Chinese README describe the `0.12.0` management
+- [x] README and Chinese README describe the `0.12.0` management
   productionization line.
-- [ ] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
+- [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
   management security and observability boundaries.
-- [ ] management access-control configuration is covered by focused tests.
-- [ ] request logging and JSON metrics are covered without logging secrets.
-- [ ] health history snapshots are bounded and app-owned.
-- [ ] management error responses have stable JSON fields and tests.
-- [ ] standalone smoke scripts cover management HTTP success and failure paths.
-- [ ] `git diff --check` passes.
-- [ ] `mvn -q verify` passes.
-- [ ] dependency boundary checks prove new dependencies stay out of
+- [x] management access-control configuration is covered by focused tests.
+- [x] request logging and JSON metrics are covered without logging secrets.
+- [x] health history snapshots are bounded and app-owned.
+- [x] management error responses have stable JSON fields and tests.
+- [x] standalone smoke scripts cover management HTTP success and failure paths.
+- [x] `git diff --check` passes.
+- [x] `mvn -q verify` passes.
+- [x] dependency boundary checks prove new dependencies stay out of
   `runtime-core`, `runtime-protocol-*`, and `protocol-sdk`.
 - [ ] GitHub CI passes before merge.

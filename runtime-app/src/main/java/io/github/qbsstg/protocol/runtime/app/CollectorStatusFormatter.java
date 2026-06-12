@@ -33,6 +33,7 @@ final class CollectorStatusFormatter {
                 + " sinkFailureThreshold=" + snapshot.sinkFailureBackpressureThreshold()
                 + " sinkFailureDecision=" + snapshot.sinkFailureBackpressureDecision()
                 + " strictAsdu=" + snapshot.strictAsduParsing()
+                + " management=" + management(snapshot.management())
                 + " tcpListeners=" + tcpListeners(snapshot)
                 + " httpListeners=" + httpListeners(snapshot)
                 + " kafkaConsumers=" + kafkaConsumers(snapshot)
@@ -100,6 +101,16 @@ final class CollectorStatusFormatter {
                 + "/rotations=" + status.rotationCount()
                 + "/maxBytes=" + status.rotation().maxBytes()
                 + "/maxHistory=" + status.rotation().maxHistory();
+    }
+
+    private static String management(ManagementStatusSnapshot management) {
+        return "enabled=" + management.enabled()
+                + "/running=" + management.running()
+                + "/access=" + management.accessMode().configValue()
+                + "/requests=" + management.metrics().requestCount()
+                + "/rejected=" + management.metrics().rejectedRequestCount()
+                + "/errors=" + management.metrics().errorResponseCount()
+                + "/history=" + management.healthHistory().size();
     }
 
     private static String httpListeners(CollectorStatusSnapshot snapshot) {
