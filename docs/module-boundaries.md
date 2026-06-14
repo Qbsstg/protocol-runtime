@@ -312,11 +312,46 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
+## `0.13.0` Production Deployment Governance Boundary
+
+The Maven reactor moves to `0.13.0-SNAPSHOT` after the published `0.12.0`
+management-plane productionization release. The development boundary is
+production deployment governance for the standalone collector without widening
+`runtime-core` or `protocol-sdk`.
+
+Allowed:
+
+- `runtime-app` may own configuration profile selection, profile-specific
+  config loading, runtime directory conventions, log file policy, PID/stop
+  behavior, status export, startup dry-run, and configuration validation CLI
+  behavior.
+- deployment examples such as systemd units, launchd plists, shell snippets,
+  and operator runbooks may live in docs or app-owned examples.
+- smoke tests may verify config validation, startup dry-run, status export,
+  startup failure, and graceful shutdown paths.
+- future deployment or observability dependencies must live in `runtime-app` or
+  a dedicated deployment/observability adapter module after their boundaries are
+  explicit.
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage,
+  service-manager, shell-wrapper, deployment-wrapper, filesystem-layout, or
+  observability exporter dependencies to `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as the management API or deployment API; it
+  remains the protocol payload ingestion adapter
+- moving configuration profiles, runtime directory layout, PID files, stop
+  scripts, systemd/launchd policy, status export, or deployment troubleshooting
+  into `runtime-protocol-*`
+- requiring database, Redis, service registry, external scheduler, or external
+  observability exporters for the first deployment-governance baseline
+
 ## `0.12.0` Management Productionization Boundary
 
-The Maven reactor moves to `0.12.0-SNAPSHOT` after the published `0.11.0`
-management-plane release. The development boundary is productionizing the
-app-owned management plane without widening `runtime-core` or `protocol-sdk`.
+The `0.12.0` line was published after the `0.11.0` management-plane release.
+The development boundary was productionizing the app-owned management plane
+without widening `runtime-core` or `protocol-sdk`.
 
 Allowed:
 

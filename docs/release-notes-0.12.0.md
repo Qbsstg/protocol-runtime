@@ -1,10 +1,11 @@
 # Protocol Runtime 0.12.0 Release Notes
 
-Release notes for the `0.12.0` runtime release candidate.
+Release notes for the published `0.12.0` runtime release.
 
-The Maven reactor is fixed at `0.12.0` on the release branch after the
-published `0.11.0` management-plane baseline. No `v0.12.0` tag has been
-created, and no real Maven Central upload is part of the release branch PR.
+The release was tagged as `v0.12.0`, uploaded in Central deployment
+`eec1ab98-8186-4332-bd66-4819bef9c1ad`, published, and verified from Maven
+Central with a fresh local Maven repository, including the `runtime-app`
+standalone classifier.
 
 ## Baseline Highlights
 
@@ -51,7 +52,7 @@ not become the management endpoint or inherit management security policy.
 
 ## Verification Targets
 
-The release must pass before publication:
+The release passed before publication:
 
 - `git diff --check`
 - `mvn -q verify`
@@ -71,7 +72,10 @@ The detailed plan is tracked in [`roadmap-0.12.0.md`](roadmap-0.12.0.md).
 
 ## Publication
 
-- Tag: not created
-- Central deployment: not started
-- Central state: not published
-- GitHub Release: not created
+- Tag: `v0.12.0`
+- Central deployment: `eec1ab98-8186-4332-bd66-4819bef9c1ad`
+- Central state: `PUBLISHED`
+- Public Maven Central verification: passed, including
+  `io.github.qbsstg:runtime-app:0.12.0:jar:standalone`
+- GitHub Release:
+  <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.12.0>

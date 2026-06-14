@@ -53,10 +53,36 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.12.0` Development Posture
+## `0.13.0` Development Posture
+
+The `0.13.0` runtime line starts from the published `0.12.0` management-plane
+productionization release and opens the Maven reactor at `0.13.0-SNAPSHOT`.
+
+The goal is production deployment governance for the standalone collector
+without moving deployment, service-manager, filesystem-layout, or observability
+dependencies into core contracts:
+
+| Module | 0.13.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, deployment wrapper, shell-wrapper, service-manager, filesystem-layout, access-control, request-logging, or observability exporter dependencies. |
+| `runtime-app` | Own configuration profiles, runtime directory conventions, log file policy, PID/stop-script behavior, systemd/launchd examples, config validation CLI, startup dry-run, status export, troubleshooting docs, and deployment smoke coverage. |
+| `runtime-ingress-*` | Preserve published ingress behavior and expose only app-consumable lifecycle/status evidence needed by deployment governance. |
+| `runtime-protocol-*` | Continue to parse payloads without transport, app, deployment, service-manager, filesystem-layout, status-export, or sink dependencies. |
+| `runtime-smoke-tests` | Keep repository-only cross-module smoke coverage; add deployment-governance smoke only as verification, not as a supported dependency surface. |
+
+Any future non-JDK deployment, observability, or service-wrapper dependency
+must stay in `runtime-app` or a dedicated deployment/observability adapter
+module until its boundary is explicit.
+
+The first `0.13.0` baseline is planned as documentation plus small app-owned
+operator surfaces. It should not introduce Spring, database, Redis, external
+observability exporters, or reverse dependencies into `protocol-sdk`.
+
+## `0.12.0` Published Posture
 
 The `0.12.0` runtime line starts from the published `0.11.0` management-plane
-baseline and opens the Maven reactor at `0.12.0-SNAPSHOT`.
+baseline and has since been published as the management-plane productionization
+release.
 
 The goal is management-plane productionization without moving management,
 observability, storage, or framework dependencies into core contracts:

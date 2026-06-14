@@ -34,17 +34,23 @@ including app-local health/readiness snapshots, explainable health reasons,
 operator status guides, and standalone health smoke coverage. `0.11.0`
 published the app-owned JDK HTTP management plane for standalone collectors,
 with independent health, readiness, and status endpoints on a separate
-management port.
+management port. `0.12.0` published management-plane productionization with
+explicit security boundaries, configurable access control, management request
+logging, expanded JSON metrics, health history snapshots, error response
+rules, configuration examples, and smoke coverage.
 
-The Maven reactor is fixed at `0.12.0` on the release branch after the
-published `0.11.0` management-plane baseline. The `0.12.0` line
-productionizes the management surface with explicit security boundaries,
-configurable access control, management request logging, expanded JSON
-metrics, health history snapshots, error response rules, configuration
-examples, and smoke coverage. No `v0.12.0` tag has been created and no real
-Maven Central upload is part of the release branch PR.
+The Maven reactor is open at `0.13.0-SNAPSHOT` after the published `0.12.0`
+release. The `0.13.0` line plans production deployment governance for the
+standalone collector, including configuration profiles, runtime directory
+conventions, log file policy, PID and stop-script behavior, systemd/launchd
+examples, configuration validation CLI, startup dry-run, status export,
+troubleshooting docs, and smoke coverage.
 
-The `0.12.0` scope is tracked in
+The `0.13.0` scope is tracked in
+[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md), and release notes are
+tracked in [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md).
+
+The published `0.12.0` release scope is tracked in
 [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md), release notes are tracked
 in [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md), and the
 release-readiness audit is tracked in
@@ -89,9 +95,8 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest runtime release candidate version is `0.12.0`. Runtime modules are
-JDK 21 artifacts. Applications should depend on the modules they use directly
-after the release is published:
+The latest published runtime version is `0.12.0`. Runtime modules are JDK 21
+artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
@@ -157,17 +162,41 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.12.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, and an executable shaded jar. |
+| `runtime-app` | 0.13.0 planning | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, and planned deployment governance. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
-Future modules may include pipelines, additional sinks, and richer deployable
-runtime applications. Those dependencies belong here, not in
-`protocol-sdk`.
+Future modules may include pipelines, additional sinks, richer deployable
+runtime applications, and dedicated app/adapter deployment helpers. Those
+dependencies belong here, not in `protocol-sdk`.
+
+## `0.13.0` Production Deployment Governance Planning
+
+`0.13.0` starts after the published `0.12.0` management productionization
+baseline and keeps production deployment governance inside the app/adapter
+boundary:
+
+- `runtime-core` remains free of Spring, Netty, Kafka, MQTT, HTTP, database,
+  Redis, observability exporter, access-control, request-logging, deployment
+  wrapper, service-manager, and filesystem-layout dependencies
+- deployment concerns stay in `runtime-app` or future dedicated app/adapter
+  modules; they do not move into parser bindings or SDK modules
+- configuration profiles define local, test, staging, and production-style
+  runtime configuration posture without introducing a framework
+- runtime directory conventions cover `conf`, `logs`, `data`, `run`, and
+  temporary paths
+- log file policy, PID and stop-script behavior, systemd/launchd examples,
+  configuration validation CLI, startup dry-run, status export, and
+  troubleshooting docs are planned as app-owned operator surfaces
+- smoke coverage should prove validation, dry-run, startup failure, graceful
+  shutdown, status export, and common deployment failure paths
+
+The detailed plan is maintained in
+[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md).
 
 ## `0.12.0` Management Productionization Baseline
 
-`0.12.0` starts after the published `0.11.0` management-plane baseline and
-keeps the management implementation inside the app/adapter boundary:
+`0.12.0` was published after the `0.11.0` management-plane baseline and keeps
+the management implementation inside the app/adapter boundary:
 
 - `runtime-core` remains free of Spring, Netty, Kafka, MQTT, HTTP, database,
   Redis, and observability exporter dependencies
@@ -475,9 +504,8 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The `0.12.0` release candidate preserves the published `0.11.0` TCP/Netty,
-JDK HTTP, Kafka, MQTT, and management endpoint paths through the same
-app-owned pipeline:
+The published `0.12.0` release preserves the TCP/Netty, JDK HTTP, Kafka, MQTT,
+and management endpoint paths through the same app-owned pipeline:
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -871,6 +899,7 @@ verified.
 - [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)
 - [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
+- [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
 - [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
@@ -896,3 +925,4 @@ verified.
 - [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md)
 - [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)
 - [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)
+- [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)

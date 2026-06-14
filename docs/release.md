@@ -5,13 +5,13 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.11.0`.
+The latest published runtime release is `0.12.0`.
 
-The Maven reactor is fixed at `0.12.0` on the release branch after the
-published `0.11.0` management-plane release. No `v0.12.0` tag has been
-created, and no real Maven Central upload is part of the release branch PR.
+The Maven reactor is open at `0.13.0-SNAPSHOT` after the published `0.12.0`
+management-plane productionization release. No `v0.13.0` tag has been created,
+and no real Maven Central upload is part of the development line.
 
-The published `0.11.0` release includes:
+The published `0.12.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -29,7 +29,10 @@ The published `0.11.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.12.0` roadmap is maintained in
+The `0.13.0` roadmap is maintained in
+[`roadmap-0.13.0.md`](roadmap-0.13.0.md), and release notes are maintained in
+[`release-notes-0.13.0.md`](release-notes-0.13.0.md). The published `0.12.0`
+roadmap is maintained in
 [`roadmap-0.12.0.md`](roadmap-0.12.0.md), and release notes are maintained in
 [`release-notes-0.12.0.md`](release-notes-0.12.0.md). The `0.12.0`
 release-readiness audit is tracked in
@@ -76,6 +79,12 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.12.0` was tagged as `v0.12.0`, uploaded in Central deployment
+`eec1ab98-8186-4332-bd66-4819bef9c1ad`, published, and verified from Maven
+Central with an isolated local Maven repository, including the
+`runtime-app:standalone` classifier. GitHub release notes are published at
+<https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.12.0>.
 
 `0.11.0` was tagged as `v0.11.0`, uploaded in Central deployment
 `ad3dcf19-2aa1-4b02-9a3e-2215043274f1`, published, and verified from Maven
