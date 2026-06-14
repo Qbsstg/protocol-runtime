@@ -21,7 +21,8 @@ public record StandaloneCollectorAppConfig(
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
         boolean strictAsduParsing,
-        ManagementServerConfig management) {
+        ManagementServerConfig management,
+        CollectorDeploymentConfig deployment) {
 
     public StandaloneCollectorAppConfig {
         sources = List.copyOf(Objects.requireNonNull(sources, "sources must not be null"));
@@ -35,6 +36,7 @@ public record StandaloneCollectorAppConfig(
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
         Objects.requireNonNull(management, "management must not be null");
+        Objects.requireNonNull(deployment, "deployment must not be null");
         if (backpressureMaxPayloadBytes < 0) {
             throw new IllegalArgumentException("backpressureMaxPayloadBytes must not be negative");
         }
@@ -86,7 +88,8 @@ public record StandaloneCollectorAppConfig(
                 sinkFile,
                 fileSinkRotation,
                 strictAsduParsing,
-                ManagementServerConfig.disabled());
+                ManagementServerConfig.disabled(),
+                CollectorDeploymentConfig.defaults());
     }
 
     public StandaloneCollectorAppConfig(
@@ -118,7 +121,8 @@ public record StandaloneCollectorAppConfig(
                 sinkFile,
                 fileSinkRotation,
                 strictAsduParsing,
-                ManagementServerConfig.disabled());
+                ManagementServerConfig.disabled(),
+                CollectorDeploymentConfig.defaults());
     }
 
     public static StandaloneCollectorAppConfig fromSingle(StandaloneCollectorConfig config) {
@@ -145,7 +149,8 @@ public record StandaloneCollectorAppConfig(
                 config.sinkFile(),
                 config.fileSinkRotation(),
                 config.strictAsduParsing(),
-                ManagementServerConfig.disabled());
+                ManagementServerConfig.disabled(),
+                CollectorDeploymentConfig.defaults());
     }
 
     public StandaloneCollectorConfig singleCollectorConfig() {

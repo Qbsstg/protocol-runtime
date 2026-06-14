@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.qbsstg.protocol-runtime</string>
+    <key>WorkingDirectory</key>
+    <string>/opt/protocol-runtime</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/java</string>
+        <string>-jar</string>
+        <string>/opt/protocol-runtime/runtime-app-0.13.0-SNAPSHOT-standalone.jar</string>
+        <string>--config</string>
+        <string>/opt/protocol-runtime/conf/collector.properties</string>
+        <string>--profile</string>
+        <string>production</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/opt/protocol-runtime/logs/protocol-runtime.log</string>
+    <key>StandardErrorPath</key>
+    <string>/opt/protocol-runtime/logs/protocol-runtime.log</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>JAVA_HOME</key>
+        <string>/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home</string>
+    </dict>
+</dict>
+</plist>

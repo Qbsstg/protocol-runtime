@@ -10,6 +10,9 @@ LOG="$OUT_DIR/collector.log"
 SINK="$OUT_DIR/records.ndjson"
 RESPONSE="$OUT_DIR/response.json"
 STATUS="$OUT_DIR/status.json"
+DRY_STATUS="$OUT_DIR/dry-run-status.json"
+RUNTIME_STATUS="$OUT_DIR/runtime/run/status.json"
+PID_FILE="$OUT_DIR/runtime/run/protocol-runtime.pid"
 UNAUTHORIZED="$OUT_DIR/unauthorized.json"
 NOT_FOUND="$OUT_DIR/not-found.json"
 METHOD_NOT_ALLOWED="$OUT_DIR/method-not-allowed.json"
@@ -35,6 +38,17 @@ if [ -z "$JAR" ]; then
 fi
 
 cat > "$CONFIG" <<EOF
+collector.profile=smoke
+collector.runtime.dir=$OUT_DIR/runtime
+collector.runtime.confDir=conf
+collector.runtime.logsDir=logs
+collector.runtime.dataDir=data
+collector.runtime.runDir=run
+collector.runtime.tmpDir=tmp
+collector.runtime.pidFile=run/protocol-runtime.pid
+collector.runtime.statusFile=run/status.json
+collector.runtime.logFile=logs/protocol-runtime.log
+collector.runtime.createDirectories=true
 collector.source.id=iec104:http-smoke
 collector.protocol=iec104
 collector.http.listeners=http-main
@@ -61,6 +75,14 @@ collector.management.token=smoke-management-token
 collector.management.requestLogging.enabled=true
 collector.management.healthHistory.maxEntries=8
 EOF
+
+"$JAVA_BIN" -jar "$JAR" --validate --config "$CONFIG" >/dev/null
+"$JAVA_BIN" -jar "$JAR" --dry-run --config "$CONFIG" --status-export "$DRY_STATUS" >/dev/null
+if ! grep -q '"lifecycle":"CONFIGURED"' "$DRY_STATUS"; then
+  cat "$DRY_STATUS"
+  echo "HTTP dry-run did not export configured status JSON" >&2
+  exit 1
+fi
 
 "$JAVA_BIN" -jar "$JAR" --config "$CONFIG" > "$LOG" 2>&1 &
 collector_pid=$!
@@ -92,6 +114,13 @@ done
 if [ -z "$port" ] || [ -z "$management_port" ]; then
   cat "$LOG"
   echo "HTTP collector did not start in time" >&2
+  exit 1
+fi
+
+if [ ! -s "$PID_FILE" ] || ! grep -q "$collector_pid" "$PID_FILE"; then
+  cat "$LOG"
+  [ -f "$PID_FILE" ] && cat "$PID_FILE"
+  echo "HTTP collector did not write the configured pid file" >&2
   exit 1
 fi
 
@@ -151,12 +180,18 @@ while [ "$i" -lt 50 ]; do
     && grep -q '"mode":"token"' "$STATUS" \
     && grep -q '"rejectedRequestCount":1' "$STATUS" \
     && grep -q '"healthHistory"' "$STATUS" \
-    && grep -q '"statusCounts"' "$STATUS"; then
+    && grep -q '"statusCounts"' "$STATUS" \
+    && grep -q '"lifecycle":"RUNNING"' "$RUNTIME_STATUS"; then
+    "$JAVA_BIN" -jar "$JAR" --stop --pid-file "$PID_FILE" >/dev/null
+    wait "$collector_pid" >/dev/null 2>&1 || true
+    "$JAVA_BIN" -jar "$JAR" --stop --pid-file "$PID_FILE" >/dev/null
+    trap - EXIT INT TERM
     echo "standalone HTTP collector smoke passed"
     echo "collector log: $LOG"
     echo "sink output: $SINK"
     echo "response output: $RESPONSE"
     echo "management status: $STATUS"
+    echo "runtime status export: $RUNTIME_STATUS"
     exit 0
   fi
   i=$((i + 1))
@@ -171,5 +206,6 @@ cat "$LOG"
 [ -f "$NOT_FOUND" ] && cat "$NOT_FOUND"
 [ -f "$METHOD_NOT_ALLOWED" ] && cat "$METHOD_NOT_ALLOWED"
 [ -f "$MALFORMED" ] && cat "$MALFORMED"
+[ -f "$RUNTIME_STATUS" ] && cat "$RUNTIME_STATUS"
 echo "HTTP collector did not write a parsed record in time" >&2
 exit 1

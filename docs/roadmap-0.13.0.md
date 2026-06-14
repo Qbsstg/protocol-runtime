@@ -43,23 +43,23 @@ preserving the existing module boundaries.
 | `runtime-protocol-*` | Continue to parse protocol payloads without transport, app, deployment, service-manager, status-export, or filesystem-layout dependencies. |
 | `runtime-smoke-tests` | Add repository-only smoke coverage for deployable app behavior; do not make smoke fixtures a supported application dependency. |
 
-## Planned Baseline Work
+## Baseline Work
 
-- `collector.profile` documentation for profile-specific configuration files
-  and override order.
-- Runtime directory convention documentation for config, log, data, run, and
-  temporary paths.
-- Logging file policy examples that keep secret-bearing config values out of
-  logs.
-- PID file and stop-script examples for local standalone execution.
-- systemd unit and launchd plist examples for operator-owned deployment.
-- `runtime-app` CLI documentation for config validation and startup dry-run.
-- Status export shape for scripts that need lifecycle, health, readiness,
-  listener, sink, backpressure, and failure summaries.
-- Troubleshooting docs for invalid config, port conflicts, management access
+- `collector.profile` supports profile-specific configuration files and a
+  documented override order.
+- Runtime directory conventions cover config, log, data, run, and temporary
+  paths under `collector.runtime.dir`.
+- Logging file policy examples keep secret-bearing config values out of logs.
+- PID file and stop-script behavior are owned by `runtime-app`.
+- systemd unit and launchd plist examples are provided as operator-owned
+  templates.
+- `runtime-app` CLI supports config validation and startup dry-run.
+- Status export writes lifecycle, health, readiness, listener, sink,
+  backpressure, management, and failure summaries as JSON.
+- Troubleshooting docs cover invalid config, port conflicts, management access
   failures, sink path failures, parser failures, backpressure, and shutdown.
-- Smoke coverage for config validation, dry-run, startup failure, graceful stop,
-  status export, and deployment example sanity.
+- Smoke coverage exercises config validation, dry-run, PID file creation,
+  graceful stop, status export, and deployment example sanity.
 
 ## Non-Goals
 
@@ -75,19 +75,19 @@ preserving the existing module boundaries.
 
 ## Readiness Checklist
 
-- [ ] README and Chinese README describe the `0.13.0` deployment governance
+- [x] README and Chinese README describe the `0.13.0` deployment governance
   line.
-- [ ] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
+- [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
   deployment-governance boundary.
-- [ ] configuration profile behavior is documented and covered by focused
+- [x] configuration profile behavior is documented and covered by focused
   tests or smoke checks.
-- [ ] runtime directory conventions are documented with examples.
-- [ ] logging file policy and redaction posture are documented.
-- [ ] PID/stop-script behavior is documented and smoke covered where practical.
-- [ ] systemd and launchd examples are provided as operator-owned templates.
-- [ ] config validation CLI and startup dry-run are documented and covered.
-- [ ] status export output is documented and smoke covered.
-- [ ] troubleshooting docs cover common startup, shutdown, config, sink,
+- [x] runtime directory conventions are documented with examples.
+- [x] logging file policy and redaction posture are documented.
+- [x] PID/stop-script behavior is documented and smoke covered where practical.
+- [x] systemd and launchd examples are provided as operator-owned templates.
+- [x] config validation CLI and startup dry-run are documented and covered.
+- [x] status export output is documented and smoke covered.
+- [x] troubleshooting docs cover common startup, shutdown, config, sink,
   management, and backpressure failures.
 - [ ] `git diff --check` passes.
 - [ ] `mvn -q verify` passes.
