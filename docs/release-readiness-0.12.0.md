@@ -195,8 +195,8 @@ Final `0.12.0` publication happens after the release branch merges:
 
 | Step | Result | Evidence |
 | --- | --- | --- |
-| Tag | Pending | Create `v0.12.0` from the merged release commit. |
-| Real Central upload | Pending | Create a Central deployment with `mvn -Pcentral-release clean deploy`. |
-| Manual Central publish | Pending | Publish the validated deployment after human confirmation. |
-| Public Maven Central verification | Pending | Resolve runtime artifacts and `io.github.qbsstg:runtime-app:0.12.0:jar:standalone` from an isolated local Maven repository. |
-| GitHub Release | Pending | Publish release notes at `https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.12.0`. |
+| Tag | Complete | `v0.12.0` was created from the merged release commit and pushed to GitHub. |
+| Real Central upload | Complete | `mvn -Pcentral-release clean deploy` created Central deployment `eec1ab98-8186-4332-bd66-4819bef9c1ad`. |
+| Manual Central publish | Complete | The deployment was published after human confirmation and reached `PUBLISHED`. |
+| Public Maven Central verification | Complete | Runtime artifacts and `io.github.qbsstg:runtime-app:0.12.0:jar:standalone` resolved from an isolated local Maven repository backed by Maven Central. |
+| GitHub Release | Complete | Release notes are published at `https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.12.0`. |

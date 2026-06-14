@@ -1,8 +1,7 @@
 # Protocol Runtime 0.12.0 Roadmap
 
-`0.12.0` starts after the published `0.11.0` management-plane baseline. The
-release branch fixes the Maven reactor at `0.12.0` for management-plane
-productionization publication.
+`0.12.0` was published after the `0.11.0` management-plane baseline. The
+release published management-plane productionization for standalone collectors.
 
 The release target is to harden the standalone collector management surface
 while preserving the existing dependency boundaries. Management and observability
@@ -90,7 +89,7 @@ and bounded health-history entries under `/status`.
 - [x] `mvn -q verify` passes.
 - [x] dependency boundary checks prove new dependencies stay out of
   `runtime-core`, `runtime-protocol-*`, and `protocol-sdk`.
-- [ ] GitHub CI passes before merge.
+- [x] GitHub CI passes before merge.
 
 The release-readiness audit is tracked in
 [`release-readiness-0.12.0.md`](release-readiness-0.12.0.md).

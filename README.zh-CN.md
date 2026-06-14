@@ -30,14 +30,20 @@ sink-failure-triggered backpressure。
 health/readiness 快照、可解释 health reasons、运维状态指南和 standalone
 health smoke 覆盖。`0.11.0` 已发布 standalone collector 的 app-owned JDK
 HTTP 管理面，通过独立管理端口暴露 health、readiness 和 status JSON 查询。
+`0.12.0` 已发布管理面生产化基线，包括管理端安全边界、可配置访问控制、
+management request logging、JSON metrics 扩展、健康状态历史快照、管理端错误
+响应规范、配置示例和 smoke 覆盖。
 
-`0.11.0` 管理面 baseline 发布完成后，Maven reactor 已在 release 分支固定到
-`0.12.0`。当前 `0.12.0` 方向是在 app/adapter 边界内继续生产化管理面，
-包括管理端安全边界、可配置访问控制、management request logging、JSON metrics
-扩展、健康状态历史快照、管理端错误响应规范、配置示例和 smoke 覆盖。当前还没有
-创建 `v0.12.0` tag，release branch PR 不执行真实 Maven Central 上传。
+`0.12.0` 发布完成后，Maven reactor 已打开到 `0.13.0-SNAPSHOT`。当前
+`0.13.0` 方向是 standalone collector 的生产部署治理规划，包括配置 profile、
+运行目录约定、日志文件策略、PID/stop 脚本、systemd/launchd 示例、配置校验
+CLI、启动前 dry-run、运行状态导出、故障排查文档和 smoke 覆盖。
 
-当前 `0.12.0` 范围记录在
+当前 `0.13.0` 范围记录在
+[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)，release notes 记录在
+[`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)。
+
+已发布的 `0.12.0` 范围记录在
 [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)，release notes 记录在
 [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)，
 release-readiness audit 记录在
@@ -81,8 +87,8 @@ release notes 记录在
 
 ## Maven 坐标
 
-最新运行时候选发布版本是 `0.12.0`。Runtime 模块是 JDK 21 artifact。正式发布后，
-应用侧应按需直接依赖具体模块：
+最新已发布运行时版本是 `0.12.0`。Runtime 模块是 JDK 21 artifact。应用侧应按需
+直接依赖具体模块：
 
 ```xml
 <dependency>
@@ -148,16 +154,35 @@ release notes 记录在
 | `runtime-ingress-http` | 0.6.0 baseline | 基于 JDK `HttpServer` 的 HTTP ingress：把 POST body 映射为 `IngressEnvelope`，支持 configured/header/path 三种 `SourceId` 来源、请求大小限制和按背压结果返回 HTTP 响应。 |
 | `runtime-ingress-kafka` | 0.7.0 baseline | 基于 Kafka client 的 ingress adapter，把 `ConsumerRecord<byte[], byte[]>` payload 和 Kafka metadata 映射为 runtime envelope，同时保持 Kafka 依赖不进入 `runtime-core`。 |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | 基于 Paho MQTT 的 ingress adapter，把 MQTT payload 和 message metadata 映射为 runtime envelope，同时保持 MQTT 依赖不进入 `runtime-core`。 |
-| `runtime-app` | 0.12.0 baseline | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点、管理端访问控制、请求日志、管理端 metrics、bounded health history、统一错误 JSON，以及可执行 shaded jar。 |
+| `runtime-app` | 0.13.0 planning | Standalone collector 装配层，支持 properties 配置、app 级协议选择、TCP/HTTP/Kafka/MQTT 装配、JDK logging/file/in-memory sink、sink 失败隔离、file sink 状态、sink-failure-triggered backpressure、app-local health/readiness 快照、可解释状态输出、JDK HTTP 管理端点、管理端访问控制、请求日志、管理端 metrics、bounded health history、统一错误 JSON、可执行 shaded jar，以及计划中的生产部署治理。 |
 | `runtime-smoke-tests` | Test-only | 跨模块 smoke test，验证 ingress、runtime-core、protocol binding 可以组合工作，同时避免把这些组合变成 production 依赖。 |
 
-未来可能补充 pipeline、更多 sink 和更完整的可部署运行时应用。这些依赖都属于
-runtime 仓库，不应反向进入 `protocol-sdk`。
+未来可能补充 pipeline、更多 sink、更完整的可部署运行时应用，以及专门的 app/adapter
+部署辅助模块。这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+
+## `0.13.0` 生产部署治理规划
+
+`0.13.0` 从已发布的 `0.12.0` 管理面生产化基线继续推进，并保持生产部署治理只在
+app/adapter 边界内演进：
+
+- `runtime-core` 继续不引入 Spring、Netty、Kafka、MQTT、HTTP、数据库、Redis、
+  observability exporter、access-control、request-logging、deployment wrapper、
+  service-manager 和 filesystem-layout 依赖。
+- 部署治理属于 `runtime-app` 或未来 dedicated app/adapter 模块，不能进入 parser
+  binding 或 SDK 模块。
+- 配置 profile 用于描述 local、test、staging 和 production-style 配置姿态，不引入
+  应用框架。
+- 运行目录约定覆盖 `conf`、`logs`、`data`、`run` 和临时路径。
+- 日志文件策略、PID/stop 脚本、systemd/launchd 示例、配置校验 CLI、启动前
+  dry-run、运行状态导出和故障排查文档都归属 app-owned 运维表面。
+- smoke 覆盖应验证配置校验、dry-run、启动失败、优雅停止、状态导出和常见部署失败路径。
+
+详细规划维护在 [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)。
 
 ## `0.12.0` 管理面生产化规划
 
-`0.12.0` 从已发布的 `0.11.0` 管理面 baseline 继续推进，并保持管理能力只在
-app/adapter 边界内演进：
+`0.12.0` 已在 `0.11.0` 管理面 baseline 之后发布，并保持管理能力只在 app/adapter
+边界内演进：
 
 - `runtime-core` 继续不引入 Spring、Netty、Kafka、MQTT、HTTP、数据库、Redis
   和 observability exporter 依赖。
@@ -420,9 +445,9 @@ server.bind();
 
 ## Standalone Collector App
 
-`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。`0.12.0` 候选发布版本继续
-保留已发布的 `0.11.0` TCP/Netty、JDK HTTP、Kafka、MQTT 和 management endpoint
-路径，并接到同一个 app-owned pipeline：
+`runtime-app` 提供 `0.2.0` 引入的可运行采集器边界。已发布的 `0.12.0` 继续保留
+TCP/Netty、JDK HTTP、Kafka、MQTT 和 management endpoint 路径，并接到同一个
+app-owned pipeline：
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -799,6 +824,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.10.0.md`](docs/roadmap-0.10.0.md)
 - [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
+- [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
 - [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
@@ -824,3 +850,4 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/release-notes-0.10.0.md`](docs/release-notes-0.10.0.md)
 - [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)
 - [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)
+- [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)
