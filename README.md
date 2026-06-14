@@ -40,11 +40,11 @@ logging, expanded JSON metrics, health history snapshots, error response
 rules, configuration examples, and smoke coverage.
 
 The Maven reactor is open at `0.13.0-SNAPSHOT` after the published `0.12.0`
-release. The `0.13.0` line plans production deployment governance for the
-standalone collector, including configuration profiles, runtime directory
-conventions, log file policy, PID and stop-script behavior, systemd/launchd
-examples, configuration validation CLI, startup dry-run, status export,
-troubleshooting docs, and smoke coverage.
+release. The `0.13.0` line now contains the first production deployment
+governance baseline for the standalone collector, including configuration
+profiles, runtime directory conventions, log file policy, PID and stop-script
+behavior, systemd/launchd examples, configuration validation CLI, startup
+dry-run, status export, troubleshooting docs, and smoke coverage.
 
 The `0.13.0` scope is tracked in
 [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md), and release notes are
@@ -162,14 +162,14 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.13.0 planning | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, and planned deployment governance. |
+| `runtime-app` | 0.13.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, and app-owned deployment governance. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, richer deployable
 runtime applications, and dedicated app/adapter deployment helpers. Those
 dependencies belong here, not in `protocol-sdk`.
 
-## `0.13.0` Production Deployment Governance Planning
+## `0.13.0` Production Deployment Governance Baseline
 
 `0.13.0` starts after the published `0.12.0` management productionization
 baseline and keeps production deployment governance inside the app/adapter
@@ -186,12 +186,30 @@ boundary:
   temporary paths
 - log file policy, PID and stop-script behavior, systemd/launchd examples,
   configuration validation CLI, startup dry-run, status export, and
-  troubleshooting docs are planned as app-owned operator surfaces
-- smoke coverage should prove validation, dry-run, startup failure, graceful
-  shutdown, status export, and common deployment failure paths
+  troubleshooting docs are app-owned operator surfaces
+- smoke coverage proves validation, dry-run, PID file creation, status export,
+  management HTTP checks, and graceful stop through the standalone jar
 
 The detailed plan is maintained in
-[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md).
+[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md), and the deployment guide is
+maintained in [`docs/deployment-governance.md`](docs/deployment-governance.md).
+
+Example deployment commands:
+
+```sh
+java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+  --validate --config examples/collector.properties
+
+java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+  --dry-run --config examples/collector.properties \
+  --status-export target/runtime-status.json
+
+java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+  --config examples/collector.properties
+
+java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+  --stop --pid-file target/protocol-runtime/run/protocol-runtime.pid
+```
 
 ## `0.12.0` Management Productionization Baseline
 

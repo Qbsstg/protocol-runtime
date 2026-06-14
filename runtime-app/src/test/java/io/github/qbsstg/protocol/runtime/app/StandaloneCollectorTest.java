@@ -33,7 +33,9 @@ import io.github.qbsstg.protocol.runtime.ingress.mqtt.MqttSourceIdMode;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpConnectionAttributes;
 import io.github.qbsstg.protocol.runtime.ingress.tcp.netty.TcpNettyServerConfig;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.ServerSocket;
@@ -1514,6 +1516,150 @@ class StandaloneCollectorTest {
                 + " must be between");
         assertContainsError(validation, StandaloneCollectorConfig.BACKPRESSURE_SINK_FAILURE_DECISION
                 + " must be RETRY_LATER or DROP");
+    }
+
+    @Test
+    void loadsProfileSpecificConfigBetweenBaseConfigAndCommandLineOverrides() throws Exception {
+        Path config = tempDir.resolve("collector.properties");
+        Path profileConfig = tempDir.resolve("collector-staging.properties");
+        Path runtimeDir = tempDir.resolve("runtime");
+        Files.writeString(
+                config,
+                String.join(
+                        System.lineSeparator(),
+                        StandaloneCollectorConfig.TCP_HOST + "=127.0.0.1",
+                        StandaloneCollectorConfig.TCP_PORT + "=2404",
+                        StandaloneCollectorConfig.SOURCE_ID + "=iec104:base",
+                        StandaloneCollectorConfig.SINK_TYPE + "=in-memory",
+                        StandaloneCollectorConfig.PROFILE + "=staging",
+                        ""));
+        Files.writeString(
+                profileConfig,
+                String.join(
+                        System.lineSeparator(),
+                        StandaloneCollectorConfig.TCP_PORT + "=0",
+                        StandaloneCollectorConfig.SOURCE_ID + "=iec104:staging",
+                        StandaloneCollectorConfig.RUNTIME_DIR + "=" + runtimeDir,
+                        StandaloneCollectorConfig.RUNTIME_PID_FILE + "=run/runtime.pid",
+                        ""));
+
+        Properties properties = StandaloneCollectorConfig.propertiesFromArgs(new String[] {
+                "--config",
+                config.toString(),
+                "--" + StandaloneCollectorConfig.SOURCE_ID + "=iec104:cli"
+        });
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertEquals("staging", properties.getProperty(StandaloneCollectorConfig.PROFILE));
+        assertEquals("0", properties.getProperty(StandaloneCollectorConfig.TCP_PORT));
+        assertEquals("iec104:cli", properties.getProperty(StandaloneCollectorConfig.SOURCE_ID));
+        assertEquals("staging", appConfig.deployment().profile());
+        assertEquals(runtimeDir.resolve("run/runtime.pid").normalize(), appConfig.deployment().pidFile());
+        assertEquals(0, appConfig.tcpListeners().get(0).tcp().port());
+        assertEquals("iec104:cli", appConfig.sources().get(0).sourceId().qualifiedValue());
+    }
+
+    @Test
+    void resolvesRuntimeDirectoriesAndPreparesConfiguredDeploymentPaths() throws Exception {
+        Path runtimeDir = tempDir.resolve("runtime-home");
+        Properties properties = baseProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.PROFILE, "production");
+        properties.setProperty(StandaloneCollectorConfig.RUNTIME_DIR, runtimeDir.toString());
+        properties.setProperty(StandaloneCollectorConfig.RUNTIME_STATUS_FILE, "run/status.json");
+        properties.setProperty(StandaloneCollectorConfig.RUNTIME_CREATE_DIRECTORIES, "true");
+
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+        CollectorDeploymentConfig deployment = appConfig.deployment();
+
+        assertEquals("production", deployment.profile());
+        assertEquals(runtimeDir.resolve("conf").normalize(), deployment.confDir());
+        assertEquals(runtimeDir.resolve("logs").normalize(), deployment.logsDir());
+        assertEquals(runtimeDir.resolve("data").normalize(), deployment.dataDir());
+        assertEquals(runtimeDir.resolve("run").normalize(), deployment.runDir());
+        assertEquals(runtimeDir.resolve("tmp").normalize(), deployment.tmpDir());
+        assertEquals(runtimeDir.resolve("run/status.json").normalize(), deployment.statusFile());
+        assertTrue(deployment.createDirectories());
+
+        deployment.prepareDirectories();
+
+        assertTrue(Files.isDirectory(deployment.confDir()));
+        assertTrue(Files.isDirectory(deployment.logsDir()));
+        assertTrue(Files.isDirectory(deployment.dataDir()));
+        assertTrue(Files.isDirectory(deployment.runDir()));
+        assertTrue(Files.isDirectory(deployment.tmpDir()));
+    }
+
+    @Test
+    void dryRunValidatesAndExportsConfiguredStatusWithoutBindingPorts() throws Exception {
+        Path status = tempDir.resolve("status/dry-run.json");
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        int exitCode = StandaloneCollectorMain.run(
+                new String[] {
+                        "--dry-run",
+                        "--" + StandaloneCollectorConfig.TCP_PORT + "=0",
+                        "--" + StandaloneCollectorConfig.SOURCE_ID + "=iec104:dry-run",
+                        "--" + StandaloneCollectorConfig.SINK_TYPE + "=in-memory",
+                        "--status-export",
+                        status.toString()
+                },
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(0, exitCode, stderr::toString);
+        assertTrue(stdout.toString().contains("dry-run status=VALID"));
+        assertTrue(stdout.toString().contains("profile=local"));
+        String exported = Files.readString(status);
+        assertTrue(exported.contains("\"lifecycle\":\"CONFIGURED\""));
+        assertTrue(exported.contains("\"sourceId\":\"iec104:dry-run\""));
+        assertTrue(exported.contains("\"running\":false"));
+    }
+
+    @Test
+    void validateCommandReportsInvalidConfigurationWithoutStarting() throws Exception {
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        int exitCode = StandaloneCollectorMain.run(
+                new String[] {
+                        "--validate",
+                        "--" + StandaloneCollectorConfig.TCP_PORT + "=70000"
+                },
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(2, exitCode);
+        assertTrue(stdout.toString().isBlank());
+        assertTrue(stderr.toString().contains("config validation status=INVALID"));
+        assertTrue(stderr.toString().contains(StandaloneCollectorConfig.TCP_PORT + " must be between"));
+    }
+
+    @Test
+    void stopCommandTreatsMissingPidAsRepeatedStopAndReportsInvalidPidFiles() throws Exception {
+        Path pidFile = tempDir.resolve("protocol-runtime.pid");
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        int exitCode = StandaloneCollectorMain.run(
+                new String[] {"--stop", "--pid-file", pidFile.toString()},
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(0, exitCode, stderr::toString);
+        assertTrue(stdout.toString().contains("status=NOT_RUNNING"));
+
+        Files.writeString(pidFile, "not-a-pid");
+        stdout.reset();
+        stderr.reset();
+
+        exitCode = StandaloneCollectorMain.run(
+                new String[] {"--stop", "--pid-file", pidFile.toString()},
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(2, exitCode);
+        assertTrue(stdout.toString().contains("status=INVALID_PID_FILE"));
     }
 
     @Test

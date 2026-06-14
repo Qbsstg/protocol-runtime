@@ -102,6 +102,17 @@ public record StandaloneCollectorConfig(
             "collector.management.requestLogging.enabled";
     public static final String MANAGEMENT_HEALTH_HISTORY_MAX_ENTRIES =
             "collector.management.healthHistory.maxEntries";
+    public static final String PROFILE = "collector.profile";
+    public static final String RUNTIME_DIR = "collector.runtime.dir";
+    public static final String RUNTIME_CONF_DIR = "collector.runtime.confDir";
+    public static final String RUNTIME_LOGS_DIR = "collector.runtime.logsDir";
+    public static final String RUNTIME_DATA_DIR = "collector.runtime.dataDir";
+    public static final String RUNTIME_RUN_DIR = "collector.runtime.runDir";
+    public static final String RUNTIME_TMP_DIR = "collector.runtime.tmpDir";
+    public static final String RUNTIME_PID_FILE = "collector.runtime.pidFile";
+    public static final String RUNTIME_STATUS_FILE = "collector.runtime.statusFile";
+    public static final String RUNTIME_LOG_FILE = "collector.runtime.logFile";
+    public static final String RUNTIME_CREATE_DIRECTORIES = "collector.runtime.createDirectories";
     public static final String SOURCES = "collector.sources";
     public static final String SOURCE_ID = "collector.source.id";
     public static final String SOURCE_PREFIX = "collector.source.";
@@ -181,9 +192,10 @@ public record StandaloneCollectorConfig(
     }
 
     public static Properties propertiesFromArgs(String[] args) {
-        Properties properties = new Properties();
+        List<Path> configPaths = new ArrayList<>();
+        Properties inlineProperties = new Properties();
         if (args == null) {
-            return properties;
+            return inlineProperties;
         }
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -191,20 +203,51 @@ public record StandaloneCollectorConfig(
                 if (i + 1 >= args.length) {
                     throw new IllegalArgumentException("--config requires a file path");
                 }
-                properties.putAll(loadProperties(Path.of(args[++i])));
+                configPaths.add(Path.of(args[++i]));
                 continue;
             }
             if (arg.startsWith("--config=")) {
-                properties.putAll(loadProperties(Path.of(arg.substring("--config=".length()))));
+                configPaths.add(Path.of(arg.substring("--config=".length())));
+                continue;
+            }
+            if ("--profile".equals(arg)) {
+                if (i + 1 >= args.length) {
+                    throw new IllegalArgumentException("--profile requires a profile name");
+                }
+                inlineProperties.setProperty(PROFILE, args[++i]);
+                continue;
+            }
+            if (arg.startsWith("--profile=")) {
+                inlineProperties.setProperty(PROFILE, arg.substring("--profile=".length()));
                 continue;
             }
             if (arg.startsWith("--") && arg.contains("=")) {
                 int separator = arg.indexOf('=');
-                properties.setProperty(arg.substring(2, separator), arg.substring(separator + 1));
+                inlineProperties.setProperty(arg.substring(2, separator), arg.substring(separator + 1));
                 continue;
             }
             throw new IllegalArgumentException("Unsupported argument: " + arg);
         }
+        Properties properties = new Properties();
+        for (Path configPath : configPaths) {
+            properties.putAll(loadProperties(configPath));
+        }
+        String profile = property(inlineProperties, PROFILE, property(properties, PROFILE, null));
+        if (profile != null) {
+            if (!CollectorDeploymentConfig.isValidProfile(profile)) {
+                throw new IllegalArgumentException(
+                        PROFILE + " must contain only letters, digits, dash, underscore, or dot");
+            }
+            properties.setProperty(PROFILE, profile);
+            for (Path configPath : configPaths) {
+                Path profilePath = profileConfigPath(configPath, profile);
+                if (Files.exists(profilePath)) {
+                    properties.putAll(loadProperties(profilePath));
+                }
+            }
+            properties.setProperty(PROFILE, profile);
+        }
+        properties.putAll(inlineProperties);
         return properties;
     }
 
@@ -264,6 +307,7 @@ public record StandaloneCollectorConfig(
                 errors);
         boolean strictAsduParsing = parseBoolean(properties, IEC104_STRICT_ASDU, defaults.strictAsduParsing(), errors);
         ManagementServerConfig management = parseManagementConfig(properties, errors);
+        CollectorDeploymentConfig deployment = parseDeploymentConfig(properties, errors);
 
         SourceParseResult sourceResult = parseSources(properties, defaults, protocol, errors);
         boolean httpListenersDeclared = rawProperty(properties, HTTP_LISTENERS) != null;
@@ -307,8 +351,49 @@ public record StandaloneCollectorConfig(
                         sinkFile,
                         fileSinkRotation,
                         strictAsduParsing,
-                        management),
+                        management,
+                        deployment),
                 CollectorConfigValidation.valid());
+    }
+
+    private static CollectorDeploymentConfig parseDeploymentConfig(Properties properties, List<String> errors) {
+        CollectorDeploymentConfig defaults = CollectorDeploymentConfig.defaults();
+        String profile = property(properties, PROFILE, defaults.profile());
+        if (!CollectorDeploymentConfig.isValidProfile(profile)) {
+            errors.add(PROFILE + " must contain only letters, digits, dash, underscore, or dot");
+            profile = defaults.profile();
+        }
+        Path runtimeDir = pathProperty(properties, RUNTIME_DIR, defaults.runtimeDir(), errors);
+        Path confDir = pathProperty(properties, RUNTIME_CONF_DIR, runtimeDir, runtimeDir.resolve("conf"), errors);
+        Path logsDir = pathProperty(properties, RUNTIME_LOGS_DIR, runtimeDir, runtimeDir.resolve("logs"), errors);
+        Path dataDir = pathProperty(properties, RUNTIME_DATA_DIR, runtimeDir, runtimeDir.resolve("data"), errors);
+        Path runDir = pathProperty(properties, RUNTIME_RUN_DIR, runtimeDir, runtimeDir.resolve("run"), errors);
+        Path tmpDir = pathProperty(properties, RUNTIME_TMP_DIR, runtimeDir, runtimeDir.resolve("tmp"), errors);
+        Path pidFile = optionalPathProperty(properties, RUNTIME_PID_FILE, runtimeDir, errors);
+        Path statusFile = optionalPathProperty(properties, RUNTIME_STATUS_FILE, runtimeDir, errors);
+        Path logFile = pathProperty(properties, RUNTIME_LOG_FILE, runtimeDir, logsDir.resolve("protocol-runtime.log"), errors);
+        boolean createDirectories = parseBoolean(
+                properties,
+                RUNTIME_CREATE_DIRECTORIES,
+                defaults.createDirectories(),
+                errors);
+        try {
+            return new CollectorDeploymentConfig(
+                    profile,
+                    runtimeDir,
+                    confDir,
+                    logsDir,
+                    dataDir,
+                    runDir,
+                    tmpDir,
+                    pidFile,
+                    statusFile,
+                    logFile,
+                    createDirectories);
+        } catch (IllegalArgumentException ex) {
+            errors.add("collector.runtime is invalid: " + ex.getMessage());
+            return defaults;
+        }
     }
 
     private static ManagementServerConfig parseManagementConfig(Properties properties, List<String> errors) {
@@ -837,6 +922,18 @@ public record StandaloneCollectorConfig(
         }
     }
 
+    private static Path profileConfigPath(Path configPath, String profile) {
+        Path fileName = configPath.getFileName();
+        if (fileName == null) {
+            throw new IllegalArgumentException("--config must point to a file path");
+        }
+        String name = fileName.toString();
+        String stem = name.endsWith(".properties")
+                ? name.substring(0, name.length() - ".properties".length())
+                : name;
+        return configPath.resolveSibling(stem + "-" + profile + ".properties");
+    }
+
     private static SourceId parseSourceId(String key, String value, List<String> errors) {
         String trimmed = value == null ? null : value.trim();
         int separator = trimmed == null ? -1 : trimmed.indexOf(':');
@@ -986,6 +1083,43 @@ public record StandaloneCollectorConfig(
             }
         }
         return sinkFile;
+    }
+
+    private static Path pathProperty(Properties properties, String key, Path defaultValue, List<String> errors) {
+        return pathProperty(properties, key, null, defaultValue, errors);
+    }
+
+    private static Path pathProperty(
+            Properties properties,
+            String key,
+            Path baseDir,
+            Path defaultValue,
+            List<String> errors) {
+        String value = property(properties, key, null);
+        if (value == null) {
+            return defaultValue;
+        }
+        try {
+            Path path = Path.of(value);
+            return baseDir != null && !path.isAbsolute() ? baseDir.resolve(path) : path;
+        } catch (InvalidPathException ex) {
+            errors.add(key + " must be a valid path");
+            return defaultValue;
+        }
+    }
+
+    private static Path optionalPathProperty(Properties properties, String key, Path baseDir, List<String> errors) {
+        String value = property(properties, key, null);
+        if (value == null) {
+            return null;
+        }
+        try {
+            Path path = Path.of(value);
+            return baseDir != null && !path.isAbsolute() ? baseDir.resolve(path) : path;
+        } catch (InvalidPathException ex) {
+            errors.add(key + " must be a valid path");
+            return null;
+        }
     }
 
     private static FileSinkRotationConfig parseFileSinkRotation(

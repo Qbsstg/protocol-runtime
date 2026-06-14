@@ -314,21 +314,20 @@ Not allowed:
 
 ## `0.13.0` Production Deployment Governance Boundary
 
-The Maven reactor moves to `0.13.0-SNAPSHOT` after the published `0.12.0`
-management-plane productionization release. The development boundary is
-production deployment governance for the standalone collector without widening
-`runtime-core` or `protocol-sdk`.
+The Maven reactor moved to `0.13.0-SNAPSHOT` after the published `0.12.0`
+management-plane productionization release. The development boundary is now an
+app-owned production deployment governance baseline for the standalone
+collector without widening `runtime-core` or `protocol-sdk`.
 
 Allowed:
 
-- `runtime-app` may own configuration profile selection, profile-specific
-  config loading, runtime directory conventions, log file policy, PID/stop
-  behavior, status export, startup dry-run, and configuration validation CLI
-  behavior.
+- `runtime-app` owns configuration profile selection, profile-specific config
+  loading, runtime directory conventions, log file policy, PID/stop behavior,
+  status export, startup dry-run, and configuration validation CLI behavior.
 - deployment examples such as systemd units, launchd plists, shell snippets,
   and operator runbooks may live in docs or app-owned examples.
-- smoke tests may verify config validation, startup dry-run, status export,
-  startup failure, and graceful shutdown paths.
+- smoke tests may verify config validation, startup dry-run, PID file creation,
+  status export, startup failure, and graceful shutdown paths.
 - future deployment or observability dependencies must live in `runtime-app` or
   a dedicated deployment/observability adapter module after their boundaries are
   explicit.

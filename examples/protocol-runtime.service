@@ -1,0 +1,28 @@
+[Unit]
+Description=Protocol Runtime standalone collector
+Documentation=https://github.com/Qbsstg/protocol-runtime
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=protocol-runtime
+Group=protocol-runtime
+WorkingDirectory=/opt/protocol-runtime
+ExecStart=/usr/bin/java -jar /opt/protocol-runtime/runtime-app-0.13.0-SNAPSHOT-standalone.jar --config /opt/protocol-runtime/conf/collector.properties --profile production
+ExecStop=/usr/bin/java -jar /opt/protocol-runtime/runtime-app-0.13.0-SNAPSHOT-standalone.jar --stop --pid-file /opt/protocol-runtime/run/protocol-runtime.pid
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=143
+StandardOutput=append:/opt/protocol-runtime/logs/protocol-runtime.log
+StandardError=append:/opt/protocol-runtime/logs/protocol-runtime.log
+
+# Keep management bound to 127.0.0.1 unless the host firewall and
+# collector.management.access policy are explicitly reviewed.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/protocol-runtime
+
+[Install]
+WantedBy=multi-user.target
