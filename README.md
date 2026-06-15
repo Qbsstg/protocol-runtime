@@ -39,8 +39,8 @@ explicit security boundaries, configurable access control, management request
 logging, expanded JSON metrics, health history snapshots, error response
 rules, configuration examples, and smoke coverage.
 
-The Maven reactor is open at `0.13.0-SNAPSHOT` after the published `0.12.0`
-release. The `0.13.0` line now contains the first production deployment
+The release branch fixes the Maven reactor at `0.13.0` after the published
+`0.12.0` release. The `0.13.0` line contains the first production deployment
 governance baseline for the standalone collector, including configuration
 profiles, runtime directory conventions, log file policy, PID and stop-script
 behavior, systemd/launchd examples, configuration validation CLI, startup
@@ -49,6 +49,8 @@ dry-run, status export, troubleshooting docs, and smoke coverage.
 The `0.13.0` scope is tracked in
 [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md), and release notes are
 tracked in [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md).
+The release-readiness audit is tracked in
+[`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md).
 
 The published `0.12.0` release scope is tracked in
 [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md), release notes are tracked
@@ -197,17 +199,17 @@ maintained in [`docs/deployment-governance.md`](docs/deployment-governance.md).
 Example deployment commands:
 
 ```sh
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --validate --config examples/collector.properties
 
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --dry-run --config examples/collector.properties \
   --status-export target/runtime-status.json
 
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --config examples/collector.properties
 
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --stop --pid-file target/protocol-runtime/run/protocol-runtime.pid
 ```
 
@@ -919,6 +921,7 @@ verified.
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
 - [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
 - [`docs/release-readiness-0.10.0.md`](docs/release-readiness-0.10.0.md)

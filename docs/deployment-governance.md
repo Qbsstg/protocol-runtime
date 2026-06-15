@@ -10,10 +10,10 @@ The standalone jar accepts the existing config arguments plus deployment
 commands:
 
 ```sh
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --validate --config conf/collector.properties
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --dry-run --config conf/collector.properties --status-export run/status.json
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --config conf/collector.properties
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --stop --pid-file run/protocol-runtime.pid
+java -jar runtime-app-0.13.0-standalone.jar --validate --config conf/collector.properties
+java -jar runtime-app-0.13.0-standalone.jar --dry-run --config conf/collector.properties --status-export run/status.json
+java -jar runtime-app-0.13.0-standalone.jar --config conf/collector.properties
+java -jar runtime-app-0.13.0-standalone.jar --stop --pid-file run/protocol-runtime.pid
 ```
 
 - `--validate` checks configuration and exits without creating a collector.
