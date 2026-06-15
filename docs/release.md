@@ -87,8 +87,8 @@ release-readiness audit is tracked in
 `0.13.0` was tagged as `v0.13.0`, uploaded in Central deployment
 `6bd50b51-e4af-4774-b1fa-6a120e7f41f6`, published, and verified from Maven
 Central with an isolated local Maven repository, including the
-`runtime-app:standalone` classifier. GitHub release notes are pending local
-GitHub CLI authentication or another authenticated release path.
+`runtime-app:standalone` classifier. GitHub release notes are published at
+<https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.13.0>.
 
 `0.12.0` was tagged as `v0.12.0`, uploaded in Central deployment
 `eec1ab98-8186-4332-bd66-4819bef9c1ad`, published, and verified from Maven

@@ -83,4 +83,4 @@ operator-facing deployment details are tracked in
 - Tag: `v0.13.0`
 - Central deployment: `6bd50b51-e4af-4774-b1fa-6a120e7f41f6`
 - Central state: published and verified from an isolated local Maven repository
-- GitHub Release: pending local GitHub CLI authentication or another authenticated release path
+- GitHub Release: https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.13.0
