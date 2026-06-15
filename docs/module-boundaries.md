@@ -314,9 +314,9 @@ Not allowed:
 
 ## `0.14.0` Runtime Package Distribution Governance Boundary
 
-The Maven reactor moved to `0.14.0-SNAPSHOT` after the published `0.13.0`
-production deployment governance release. The development boundary is runtime
-package distribution governance for the standalone collector without widening
+The Maven reactor is fixed at `0.14.0` on the release branch after the
+published `0.13.0` production deployment governance release. The boundary is
+runtime package distribution governance for the standalone collector without widening
 `runtime-core` or `protocol-sdk`.
 
 Allowed:

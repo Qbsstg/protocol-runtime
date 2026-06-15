@@ -53,11 +53,11 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.14.0` Development Posture
+## `0.14.0` Release Posture
 
 The `0.14.0` runtime line starts from the published `0.13.0` production
-deployment governance release and opens the Maven reactor at
-`0.14.0-SNAPSHOT`.
+deployment governance release. The release branch fixes the Maven reactor at
+`0.14.0`.
 
 The goal is runtime package distribution governance for the standalone
 collector without moving package layout, install, script, service-manager,
