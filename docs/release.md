@@ -7,9 +7,9 @@ Central Portal.
 
 The latest published runtime release is `0.12.0`.
 
-The Maven reactor is open at `0.13.0-SNAPSHOT` after the published `0.12.0`
-management-plane productionization release. No `v0.13.0` tag has been created,
-and no real Maven Central upload is part of the development line.
+The release branch fixes the Maven reactor at `0.13.0` after the published
+`0.12.0` management-plane productionization release. No `v0.13.0` tag has been
+created, and no real Maven Central upload is part of the release branch PR.
 
 The published `0.12.0` release includes:
 
@@ -31,8 +31,10 @@ onward.
 
 The `0.13.0` roadmap is maintained in
 [`roadmap-0.13.0.md`](roadmap-0.13.0.md), and release notes are maintained in
-[`release-notes-0.13.0.md`](release-notes-0.13.0.md). The published `0.12.0`
-roadmap is maintained in
+[`release-notes-0.13.0.md`](release-notes-0.13.0.md). The `0.13.0`
+release-readiness audit is tracked in
+[`release-readiness-0.13.0.md`](release-readiness-0.13.0.md). The published
+`0.12.0` roadmap is maintained in
 [`roadmap-0.12.0.md`](roadmap-0.12.0.md), and release notes are maintained in
 [`release-notes-0.12.0.md`](release-notes-0.12.0.md). The `0.12.0`
 release-readiness audit is tracked in

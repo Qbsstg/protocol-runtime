@@ -1,10 +1,10 @@
 # Protocol Runtime 0.13.0 Release Notes
 
-Release notes draft for the `0.13.0` runtime development line.
+Release notes draft for the `0.13.0` runtime release.
 
-The Maven reactor is open at `0.13.0-SNAPSHOT` after the published `0.12.0`
-management-plane productionization release. No `v0.13.0` tag has been created,
-and no real Maven Central upload is part of the development line.
+The release branch fixes the Maven reactor at `0.13.0` after the published
+`0.12.0` management-plane productionization release. No `v0.13.0` tag has been
+created, and no real Maven Central upload is part of the release branch PR.
 
 ## Highlights
 
@@ -36,9 +36,9 @@ future dedicated deployment/app adapter modules.
 ## Runtime-App Deployment Commands
 
 ```sh
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --validate --config conf/collector.properties
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --dry-run --config conf/collector.properties --status-export run/status.json
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --stop --pid-file run/protocol-runtime.pid
+java -jar runtime-app-0.13.0-standalone.jar --validate --config conf/collector.properties
+java -jar runtime-app-0.13.0-standalone.jar --dry-run --config conf/collector.properties --status-export run/status.json
+java -jar runtime-app-0.13.0-standalone.jar --stop --pid-file run/protocol-runtime.pid
 ```
 
 Profile-specific config loading is deterministic: defaults, explicit config
@@ -70,6 +70,7 @@ The release must pass before publication:
 - dependency boundary checks proving new dependencies do not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
 - GitHub CI on the release PR
+- Release readiness audit in [`release-readiness-0.13.0.md`](release-readiness-0.13.0.md)
 
 The detailed plan is tracked in [`roadmap-0.13.0.md`](roadmap-0.13.0.md), and
 operator-facing deployment details are tracked in

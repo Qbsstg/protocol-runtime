@@ -56,7 +56,8 @@ dependencies into `runtime-core` or `protocol-sdk`.
 ## `0.13.0` Development Posture
 
 The `0.13.0` runtime line starts from the published `0.12.0` management-plane
-productionization release and opens the Maven reactor at `0.13.0-SNAPSHOT`.
+productionization release. The release branch fixes the Maven reactor at
+`0.13.0`.
 
 The goal is production deployment governance for the standalone collector
 without moving deployment, service-manager, filesystem-layout, or observability

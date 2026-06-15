@@ -314,10 +314,11 @@ Not allowed:
 
 ## `0.13.0` Production Deployment Governance Boundary
 
-The Maven reactor moved to `0.13.0-SNAPSHOT` after the published `0.12.0`
-management-plane productionization release. The development boundary is now an
-app-owned production deployment governance baseline for the standalone
-collector without widening `runtime-core` or `protocol-sdk`.
+The Maven reactor moved from `0.13.0-SNAPSHOT` to the release branch version
+`0.13.0` after the published `0.12.0` management-plane productionization
+release. The release boundary is an app-owned production deployment governance
+baseline for the standalone collector without widening `runtime-core` or
+`protocol-sdk`.
 
 Allowed:
 

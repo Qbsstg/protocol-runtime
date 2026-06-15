@@ -34,14 +34,16 @@ HTTP 管理面，通过独立管理端口暴露 health、readiness 和 status JS
 management request logging、JSON metrics 扩展、健康状态历史快照、管理端错误
 响应规范、配置示例和 smoke 覆盖。
 
-`0.12.0` 发布完成后，Maven reactor 已打开到 `0.13.0-SNAPSHOT`。当前
+`0.12.0` 发布完成后，release 分支已将 Maven reactor 固定到 `0.13.0`。当前
 `0.13.0` 已加入 standalone collector 的第一轮生产部署治理 baseline，包括配置
 profile、运行目录约定、日志文件策略、PID/stop 脚本、systemd/launchd 示例、配置
 校验 CLI、启动前 dry-run、运行状态导出、故障排查文档和 smoke 覆盖。
 
 当前 `0.13.0` 范围记录在
 [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)，release notes 记录在
-[`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)。
+[`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)，release-readiness
+audit 记录在
+[`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)。
 
 已发布的 `0.12.0` 范围记录在
 [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)，release notes 记录在
@@ -184,17 +186,17 @@ app/adapter 边界内演进：
 部署命令示例：
 
 ```sh
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --validate --config examples/collector.properties
 
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --dry-run --config examples/collector.properties \
   --status-export target/runtime-status.json
 
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --config examples/collector.properties
 
-java -jar runtime-app/target/runtime-app-0.13.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --stop --pid-file target/protocol-runtime/run/protocol-runtime.pid
 ```
 
@@ -845,6 +847,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
 - [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
 - [`docs/release-readiness-0.10.0.md`](docs/release-readiness-0.10.0.md)

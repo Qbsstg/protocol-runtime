@@ -1,7 +1,8 @@
 # Protocol Runtime 0.13.0 Roadmap
 
 `0.13.0` starts after the published `0.12.0` management-plane
-productionization baseline. The Maven reactor is open at `0.13.0-SNAPSHOT`.
+productionization baseline. The release branch fixes the Maven reactor at
+`0.13.0`.
 
 The release target is production deployment governance for the standalone
 collector. The work should make a released `runtime-app` jar easier to run,
@@ -89,8 +90,11 @@ preserving the existing module boundaries.
 - [x] status export output is documented and smoke covered.
 - [x] troubleshooting docs cover common startup, shutdown, config, sink,
   management, and backpressure failures.
-- [ ] `git diff --check` passes.
-- [ ] `mvn -q verify` passes.
-- [ ] dependency boundary checks prove new dependencies stay out of
+- [x] release branch fixes the Maven reactor at `0.13.0`.
+- [x] `git diff --check` passes on the release branch.
+- [x] `mvn -q verify` passes on the release branch.
+- [x] central-release dry run with publishing disabled passes.
+- [x] standalone TCP and HTTP smoke scripts pass with JDK 21+.
+- [x] dependency boundary checks prove new dependencies stay out of
   `runtime-core`, `runtime-protocol-*`, and `protocol-sdk`.
 - [ ] GitHub CI passes before merge.

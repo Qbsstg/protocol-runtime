@@ -11,7 +11,7 @@
     <array>
         <string>/usr/bin/java</string>
         <string>-jar</string>
-        <string>/opt/protocol-runtime/runtime-app-0.13.0-SNAPSHOT-standalone.jar</string>
+        <string>/opt/protocol-runtime/runtime-app-0.13.0-standalone.jar</string>
         <string>--config</string>
         <string>/opt/protocol-runtime/conf/collector.properties</string>
         <string>--profile</string>

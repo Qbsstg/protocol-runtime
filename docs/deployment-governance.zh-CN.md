@@ -9,10 +9,10 @@
 standalone jar 支持原有配置参数，也支持部署治理命令：
 
 ```sh
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --validate --config conf/collector.properties
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --dry-run --config conf/collector.properties --status-export run/status.json
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --config conf/collector.properties
-java -jar runtime-app-0.13.0-SNAPSHOT-standalone.jar --stop --pid-file run/protocol-runtime.pid
+java -jar runtime-app-0.13.0-standalone.jar --validate --config conf/collector.properties
+java -jar runtime-app-0.13.0-standalone.jar --dry-run --config conf/collector.properties --status-export run/status.json
+java -jar runtime-app-0.13.0-standalone.jar --config conf/collector.properties
+java -jar runtime-app-0.13.0-standalone.jar --stop --pid-file run/protocol-runtime.pid
 ```
 
 - `--validate`：只做配置校验，不创建 collector。
