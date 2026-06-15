@@ -1,10 +1,11 @@
 # Protocol Runtime 0.13.0 Release Notes
 
-Release notes draft for the `0.13.0` runtime release.
+Release notes for the published `0.13.0` runtime release.
 
-The release branch fixes the Maven reactor at `0.13.0` after the published
-`0.12.0` management-plane productionization release. No `v0.13.0` tag has been
-created, and no real Maven Central upload is part of the release branch PR.
+`0.13.0` was published after the `0.12.0` management-plane productionization
+release. The release branch fixed the Maven reactor at `0.13.0`, tag
+`v0.13.0` points at the release commit, and Maven Central deployment
+`6bd50b51-e4af-4774-b1fa-6a120e7f41f6` reached `PUBLISHED`.
 
 ## Highlights
 
@@ -79,7 +80,7 @@ operator-facing deployment details are tracked in
 
 ## Publication
 
-- Tag: not created
-- Central deployment: not started
-- Central state: not published
-- GitHub Release: not created
+- Tag: `v0.13.0`
+- Central deployment: `6bd50b51-e4af-4774-b1fa-6a120e7f41f6`
+- Central state: published and verified from an isolated local Maven repository
+- GitHub Release: pending local GitHub CLI authentication or another authenticated release path

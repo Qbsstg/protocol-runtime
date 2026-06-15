@@ -312,13 +312,52 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
+## `0.14.0` Runtime Package Distribution Governance Boundary
+
+The Maven reactor moved to `0.14.0-SNAPSHOT` after the published `0.13.0`
+production deployment governance release. The development boundary is runtime
+package distribution governance for the standalone collector without widening
+`runtime-core` or `protocol-sdk`.
+
+Allowed:
+
+- `runtime-app`, build configuration, examples, docs, or a future dedicated
+  app/distribution module may own zip/tar distribution package assembly.
+- package templates may define `bin`, `conf`, `logs`, `data`, `run`, and `tmp`
+  directory layout for operator-owned installations.
+- default configuration templates, startup scripts, stop scripts, upgrade
+  notes, JDK 21 checks, default Java troubleshooting, package smoke, and
+  operator install guides may live in docs, examples, app-owned resources, or
+  build-owned distribution assembly.
+- smoke tests may verify unpack, config validation, dry-run, startup,
+  management endpoints, status export, graceful stop, and package layout
+  sanity.
+- future packaging or installer dependencies must live in `runtime-app`, build
+  configuration, or a dedicated app/distribution module after their boundaries
+  are explicit.
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage,
+  service-manager, shell-wrapper, deployment-wrapper, filesystem-layout,
+  distribution-packaging, or observability exporter dependencies to
+  `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as the management API, package distribution API,
+  or deployment API; it remains the protocol payload ingestion adapter
+- moving package layout, default config templates, script behavior, JDK
+  discovery, install guides, upgrade policy, or package smoke policy into
+  `runtime-protocol-*`
+- requiring database, Redis, service registry, external scheduler, installer
+  daemon, or external observability exporters for the first package
+  distribution governance baseline
+
 ## `0.13.0` Production Deployment Governance Boundary
 
-The Maven reactor moved from `0.13.0-SNAPSHOT` to the release branch version
-`0.13.0` after the published `0.12.0` management-plane productionization
-release. The release boundary is an app-owned production deployment governance
-baseline for the standalone collector without widening `runtime-core` or
-`protocol-sdk`.
+The `0.13.0` line was published after the `0.12.0` management-plane
+productionization release. The release boundary is an app-owned production
+deployment governance baseline for the standalone collector without widening
+`runtime-core` or `protocol-sdk`.
 
 Allowed:
 

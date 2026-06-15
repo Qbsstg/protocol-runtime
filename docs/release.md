@@ -5,13 +5,13 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.12.0`.
+The latest published runtime release is `0.13.0`.
 
-The release branch fixes the Maven reactor at `0.13.0` after the published
-`0.12.0` management-plane productionization release. No `v0.13.0` tag has been
-created, and no real Maven Central upload is part of the release branch PR.
+The Maven reactor is open at `0.14.0-SNAPSHOT` after the published `0.13.0`
+production deployment governance release. The `0.14.0` line plans runtime
+package distribution governance for the standalone collector.
 
-The published `0.12.0` release includes:
+The published `0.13.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -29,10 +29,12 @@ The published `0.12.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.13.0` roadmap is maintained in
-[`roadmap-0.13.0.md`](roadmap-0.13.0.md), and release notes are maintained in
-[`release-notes-0.13.0.md`](release-notes-0.13.0.md). The `0.13.0`
-release-readiness audit is tracked in
+The `0.14.0` roadmap is maintained in
+[`roadmap-0.14.0.md`](roadmap-0.14.0.md), and release notes are maintained in
+[`release-notes-0.14.0.md`](release-notes-0.14.0.md). The published `0.13.0`
+roadmap is maintained in [`roadmap-0.13.0.md`](roadmap-0.13.0.md), release
+notes are maintained in [`release-notes-0.13.0.md`](release-notes-0.13.0.md),
+and the `0.13.0` release-readiness audit is tracked in
 [`release-readiness-0.13.0.md`](release-readiness-0.13.0.md). The published
 `0.12.0` roadmap is maintained in
 [`roadmap-0.12.0.md`](roadmap-0.12.0.md), and release notes are maintained in
@@ -81,6 +83,12 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.13.0` was tagged as `v0.13.0`, uploaded in Central deployment
+`6bd50b51-e4af-4774-b1fa-6a120e7f41f6`, published, and verified from Maven
+Central with an isolated local Maven repository, including the
+`runtime-app:standalone` classifier. GitHub release notes are pending local
+GitHub CLI authentication or another authenticated release path.
 
 `0.12.0` was tagged as `v0.12.0`, uploaded in Central deployment
 `eec1ab98-8186-4332-bd66-4819bef9c1ad`, published, and verified from Maven

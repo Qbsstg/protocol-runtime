@@ -37,19 +37,26 @@ with independent health, readiness, and status endpoints on a separate
 management port. `0.12.0` published management-plane productionization with
 explicit security boundaries, configurable access control, management request
 logging, expanded JSON metrics, health history snapshots, error response
-rules, configuration examples, and smoke coverage.
+rules, configuration examples, and smoke coverage. `0.13.0` published the first
+production deployment governance baseline for the standalone collector,
+including configuration profiles, runtime directory conventions, log file
+policy, PID and stop-script behavior, systemd/launchd examples, configuration
+validation CLI, startup dry-run, status export, troubleshooting docs, and smoke
+coverage.
 
-The release branch fixes the Maven reactor at `0.13.0` after the published
-`0.12.0` release. The `0.13.0` line contains the first production deployment
-governance baseline for the standalone collector, including configuration
-profiles, runtime directory conventions, log file policy, PID and stop-script
-behavior, systemd/launchd examples, configuration validation CLI, startup
-dry-run, status export, troubleshooting docs, and smoke coverage.
+The `0.14.0-SNAPSHOT` line is open after the published `0.13.0` release. It
+plans runtime package distribution governance for the standalone collector:
+zip/tar packages, `bin`/`conf`/`logs`/`data`/`run`/`tmp` layout templates,
+default config templates, script hardening, upgrade notes, package smoke, JDK
+21 checks, default Java troubleshooting, and an operator install guide.
 
-The `0.13.0` scope is tracked in
-[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md), and release notes are
-tracked in [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md).
-The release-readiness audit is tracked in
+The `0.14.0` scope is tracked in
+[`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md), and release notes are
+tracked in [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md).
+The published `0.13.0` release scope is tracked in
+[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md), release notes are tracked
+in [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md), and the
+release-readiness audit is tracked in
 [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md).
 
 The published `0.12.0` release scope is tracked in
@@ -97,14 +104,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime version is `0.12.0`. Runtime modules are JDK 21
+The latest published runtime version is `0.13.0`. Runtime modules are JDK 21
 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -112,7 +119,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -120,7 +127,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -128,7 +135,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -136,7 +143,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -144,7 +151,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -920,6 +927,7 @@ verified.
 - [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
+- [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
@@ -947,3 +955,4 @@ verified.
 - [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)
 - [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)
 - [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)
+- [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)
