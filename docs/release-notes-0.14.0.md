@@ -1,10 +1,11 @@
 # Protocol Runtime 0.14.0 Release Notes
 
-Release notes draft for the future `0.14.0` runtime release.
+Release notes for the pending `0.14.0` runtime release.
 
-The `0.14.0-SNAPSHOT` line opens after the published `0.13.0` production
-deployment governance release. No `v0.14.0` tag has been created, and no real
-Maven Central upload is part of this planning line.
+`0.14.0` follows the published `0.13.0` production deployment governance
+release. The release branch fixes the Maven reactor at `0.14.0`. No
+`v0.14.0` tag is created and no real Maven Central upload is part of the
+release branch PR.
 
 ## Highlights
 
@@ -30,7 +31,7 @@ Maven Central upload is part of this planning line.
   filesystem-layout, access-control, request-logging, or external
   observability dependencies.
 
-## Planned Scope
+## Scope
 
 `0.14.0` focuses on making the standalone collector easier to distribute and
 install without turning `runtime-core`, protocol bindings, or parser SDK
@@ -40,8 +41,8 @@ dedicated app/distribution module.
 
 The current baseline attaches:
 
-- `runtime-app-0.14.0-SNAPSHOT-distribution.zip`
-- `runtime-app-0.14.0-SNAPSHOT-distribution.tar.gz`
+- `runtime-app-0.14.0-distribution.zip`
+- `runtime-app-0.14.0-distribution.tar.gz`
 
 The package install and upgrade guide is maintained in
 [`distribution-package.md`](distribution-package.md).
@@ -59,7 +60,7 @@ API.
 
 ## Verification Targets
 
-The future release should pass before publication:
+The release must pass before publication:
 
 - `git diff --check`
 - `mvn -q verify`
@@ -71,7 +72,7 @@ The future release should pass before publication:
 - dependency boundary checks proving packaging work does not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
 - GitHub CI on the release PR
-- release readiness audit for `0.14.0`
+- Release readiness audit in [`release-readiness-0.14.0.md`](release-readiness-0.14.0.md)
 
 Current baseline local verification has passed:
 

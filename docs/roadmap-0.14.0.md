@@ -1,7 +1,7 @@
 # Protocol Runtime 0.14.0 Roadmap
 
 `0.14.0` starts after the published `0.13.0` production deployment
-governance release. The Maven reactor is open at `0.14.0-SNAPSHOT`.
+governance release. The release branch fixes the Maven reactor at `0.14.0`.
 
 The release target is runtime package distribution governance for the
 standalone collector. The work should make a released `runtime-app` easier to
@@ -100,4 +100,6 @@ servers while preserving the existing module boundaries.
 - [x] distribution package smoke passes with JDK 21+.
 - [x] dependency boundary checks prove new packaging work stays out of
   `runtime-core`, `runtime-protocol-*`, and `protocol-sdk`.
+- [x] release branch fixes the Maven reactor at `0.14.0`.
+- [x] central-release dry run with publishing disabled passes on the release branch.
 - [ ] GitHub CI passes before merge.

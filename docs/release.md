@@ -7,10 +7,11 @@ Central Portal.
 
 The latest published runtime release is `0.13.0`.
 
-The Maven reactor is open at `0.14.0-SNAPSHOT` after the published `0.13.0`
-production deployment governance release. The `0.14.0` line now contains the
-first runtime package distribution governance baseline for the standalone
-collector.
+The Maven reactor is fixed at `0.14.0` on the release branch after the
+published `0.13.0` production deployment governance release. The `0.14.0` line
+contains the first runtime package distribution governance baseline for the
+standalone collector. No tag is created and no real Maven Central upload is
+performed during the release branch PR.
 
 The published `0.13.0` release includes:
 
@@ -31,8 +32,10 @@ dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
 The `0.14.0` roadmap is maintained in
-[`roadmap-0.14.0.md`](roadmap-0.14.0.md), and release notes are maintained in
-[`release-notes-0.14.0.md`](release-notes-0.14.0.md). The package install and
+[`roadmap-0.14.0.md`](roadmap-0.14.0.md), release notes are maintained in
+[`release-notes-0.14.0.md`](release-notes-0.14.0.md), and the `0.14.0`
+release-readiness audit is tracked in
+[`release-readiness-0.14.0.md`](release-readiness-0.14.0.md). The package install and
 upgrade guide is maintained in
 [`distribution-package.md`](distribution-package.md). The published `0.13.0`
 roadmap is maintained in [`roadmap-0.13.0.md`](roadmap-0.13.0.md), release

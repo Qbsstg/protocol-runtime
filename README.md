@@ -44,16 +44,18 @@ policy, PID and stop-script behavior, systemd/launchd examples, configuration
 validation CLI, startup dry-run, status export, troubleshooting docs, and smoke
 coverage.
 
-The `0.14.0-SNAPSHOT` line is open after the published `0.13.0` release. It
-now contains the first runtime package distribution governance baseline for
-the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/`data`/`run`/
+The `0.14.0` release branch is fixed after the published `0.13.0`
+release. It contains the first runtime package distribution governance baseline
+for the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/`data`/`run`/
 `tmp` layout templates, default config templates, script hardening, upgrade
 notes, package smoke, JDK 21 checks, default Java troubleshooting, and an
 operator install guide.
 
 The `0.14.0` scope is tracked in
 [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md), and release notes are
-tracked in [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md).
+tracked in [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md),
+and the release-readiness audit is tracked in
+[`docs/release-readiness-0.14.0.md`](docs/release-readiness-0.14.0.md).
 The package install and upgrade guide is
 [`docs/distribution-package.md`](docs/distribution-package.md).
 The published `0.13.0` release scope is tracked in
@@ -225,9 +227,11 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
 
 ## `0.14.0` Runtime Package Distribution Baseline
 
-`0.14.0-SNAPSHOT` adds deployable package artifacts for the standalone
+`0.14.0` adds deployable package artifacts for the standalone
 collector while keeping package governance in `runtime-app`, build
-configuration, examples, and docs.
+configuration, examples, and docs. The release branch fixes the Maven reactor
+at `0.14.0` and does not create a tag or perform a real Central upload until
+after the release PR merges.
 
 Build the standalone jar and distribution packages:
 
@@ -237,14 +241,14 @@ mvn -q -pl runtime-app -am package
 
 The build creates:
 
-- `runtime-app/target/runtime-app-0.14.0-SNAPSHOT-standalone.jar`
-- `runtime-app/target/runtime-app-0.14.0-SNAPSHOT-distribution.zip`
-- `runtime-app/target/runtime-app-0.14.0-SNAPSHOT-distribution.tar.gz`
+- `runtime-app/target/runtime-app-0.14.0-standalone.jar`
+- `runtime-app/target/runtime-app-0.14.0-distribution.zip`
+- `runtime-app/target/runtime-app-0.14.0-distribution.tar.gz`
 
 The distribution package unpacks to a predictable layout:
 
 ```text
-protocol-runtime-0.14.0-SNAPSHOT/
+protocol-runtime-0.14.0/
   bin/
   conf/
   lib/
@@ -259,8 +263,8 @@ protocol-runtime-0.14.0-SNAPSHOT/
 Basic package flow:
 
 ```sh
-tar -xzf runtime-app/target/runtime-app-0.14.0-SNAPSHOT-distribution.tar.gz -C target
-cd target/protocol-runtime-0.14.0-SNAPSHOT
+tar -xzf runtime-app/target/runtime-app-0.14.0-distribution.tar.gz -C target
+cd target/protocol-runtime-0.14.0
 
 bin/protocol-runtime java-check
 bin/protocol-runtime validate
@@ -608,8 +612,8 @@ Build the executable jar:
 mvn -q -pl runtime-app -am package
 ```
 
-The same command also builds the `0.14.0-SNAPSHOT` distribution package under
-`runtime-app/target/` when run on the current development line.
+The same command also builds the `0.14.0` distribution package under
+`runtime-app/target/` on the release branch.
 
 Run with the example property file:
 
@@ -1007,6 +1011,7 @@ verified.
 - [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
 - [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.14.0.md`](docs/release-readiness-0.14.0.md)
 - [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
 - [`docs/release-readiness-0.11.0.md`](docs/release-readiness-0.11.0.md)
