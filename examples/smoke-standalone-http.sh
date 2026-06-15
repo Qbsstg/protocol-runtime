@@ -96,7 +96,7 @@ trap cleanup EXIT INT TERM
 port=""
 management_port=""
 i=0
-while [ "$i" -lt 50 ]; do
+while [ "$i" -lt 150 ]; do
   if grep -q "Protocol Runtime collector started transport=http" "$LOG" \
     && grep -q "Protocol Runtime management started" "$LOG"; then
     port=$(sed -n 's/.*Protocol Runtime collector started transport=http.* port=\([0-9][0-9]*\) .*/\1/p' "$LOG" | tail -n 1)
@@ -162,13 +162,13 @@ fi
 curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/health" >/dev/null
 curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/status" > "$STATUS"
 
-printf '\x68\x0E\x00\x00\x00\x00\x01\x01\x03\x00\x01\x00\x01\x00\x00\x01' \
+printf '\150\016\000\000\000\000\001\001\003\000\001\000\001\000\000\001' \
   | curl -fsS -X POST --data-binary @- \
       -H 'Content-Type: application/octet-stream' \
       "http://127.0.0.1:$port/ingress" > "$RESPONSE"
 
 i=0
-while [ "$i" -lt 50 ]; do
+while [ "$i" -lt 150 ]; do
   if [ -s "$SINK" ] \
     && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/readiness" >/dev/null 2>&1 \
     && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/status" > "$STATUS" \

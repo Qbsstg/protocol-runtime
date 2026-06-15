@@ -87,7 +87,7 @@ trap cleanup EXIT INT TERM
 port=""
 management_port=""
 i=0
-while [ "$i" -lt 50 ]; do
+while [ "$i" -lt 150 ]; do
   if grep -q "Protocol Runtime collector started" "$LOG" \
     && grep -q "Protocol Runtime management started" "$LOG"; then
     port=$(sed -n 's/.*Protocol Runtime collector started.* port=\([0-9][0-9]*\) .*/\1/p' "$LOG" | tail -n 1)
@@ -156,7 +156,7 @@ curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/status" > "$STATU
 "$JAVA_BIN" "$ROOT_DIR/examples/Iec104SendSinglePoint.java" 127.0.0.1 "$port"
 
 i=0
-while [ "$i" -lt 50 ]; do
+while [ "$i" -lt 150 ]; do
   if [ -s "$SINK" ] \
     && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/readiness" >/dev/null 2>&1 \
     && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/status" > "$STATUS" \

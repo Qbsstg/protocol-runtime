@@ -9,8 +9,10 @@ Type=simple
 User=protocol-runtime
 Group=protocol-runtime
 WorkingDirectory=/opt/protocol-runtime
-ExecStart=/usr/bin/java -jar /opt/protocol-runtime/runtime-app-0.13.0-standalone.jar --config /opt/protocol-runtime/conf/collector.properties --profile production
-ExecStop=/usr/bin/java -jar /opt/protocol-runtime/runtime-app-0.13.0-standalone.jar --stop --pid-file /opt/protocol-runtime/run/protocol-runtime.pid
+Environment=JAVA_BIN=/usr/bin/java
+Environment=PROFILE=production
+ExecStart=/opt/protocol-runtime/bin/protocol-runtime start --config /opt/protocol-runtime/conf/collector.properties
+ExecStop=/opt/protocol-runtime/bin/protocol-runtime stop --pid-file /opt/protocol-runtime/run/protocol-runtime.pid
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=143

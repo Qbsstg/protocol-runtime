@@ -9,13 +9,10 @@
     <string>/opt/protocol-runtime</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/bin/java</string>
-        <string>-jar</string>
-        <string>/opt/protocol-runtime/runtime-app-0.13.0-standalone.jar</string>
+        <string>/opt/protocol-runtime/bin/protocol-runtime</string>
+        <string>start</string>
         <string>--config</string>
         <string>/opt/protocol-runtime/conf/collector.properties</string>
-        <string>--profile</string>
-        <string>production</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -32,6 +29,8 @@
     <dict>
         <key>JAVA_HOME</key>
         <string>/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home</string>
+        <key>PROFILE</key>
+        <string>production</string>
     </dict>
 </dict>
 </plist>

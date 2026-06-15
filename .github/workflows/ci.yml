@@ -25,3 +25,12 @@ jobs:
 
       - name: Verify
         run: mvn -q verify
+
+      - name: Standalone TCP smoke
+        run: sh examples/smoke-standalone.sh
+
+      - name: Standalone HTTP smoke
+        run: sh examples/smoke-standalone-http.sh
+
+      - name: Distribution package smoke
+        run: sh examples/smoke-distribution-package.sh
