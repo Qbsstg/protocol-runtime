@@ -53,11 +53,40 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.13.0` Development Posture
+## `0.14.0` Development Posture
 
-The `0.13.0` runtime line starts from the published `0.12.0` management-plane
-productionization release. The release branch fixes the Maven reactor at
-`0.13.0`.
+The `0.14.0` runtime line starts from the published `0.13.0` production
+deployment governance release and opens the Maven reactor at
+`0.14.0-SNAPSHOT`.
+
+The goal is runtime package distribution governance for the standalone
+collector without moving package layout, install, script, service-manager,
+filesystem-layout, or observability dependencies into core contracts:
+
+| Module | 0.14.0 goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, distribution-packaging, deployment wrapper, shell-wrapper, service-manager, filesystem-layout, access-control, request-logging, or observability exporter dependencies. |
+| `runtime-app` | Own the executable standalone jar, package-facing config templates, script expectations, runtime directory assumptions, validate/dry-run/status-export behavior, JDK 21 checks, and operator install guidance. |
+| Build configuration | May assemble zip/tar distribution artifacts from app outputs and examples; packaging work must not leak into runtime-core or protocol bindings. |
+| `examples` and `docs` | Own package directory templates, default config templates, startup/stop script examples, upgrade notes, default Java troubleshooting, package smoke instructions, and operator install guide. |
+| `runtime-ingress-*` | Preserve published ingress behavior and avoid owning package layout, installation, service management, or deployment API behavior. |
+| `runtime-protocol-*` | Continue to parse payloads without transport, app, packaging, service-manager, filesystem-layout, status-export, or sink dependencies. |
+| `runtime-smoke-tests` | Keep repository-only cross-module smoke coverage; add package smoke only as verification, not as a supported dependency surface. |
+
+Any future non-JDK packaging, installer, service-wrapper, deployment, or
+observability dependency must stay in `runtime-app`, build configuration, or a
+dedicated app/distribution adapter module until its boundary is explicit.
+
+The first `0.14.0` planning line is documentation and boundary design only. It
+does not introduce Spring, database, Redis, external observability exporters,
+service managers, distribution dependencies in `runtime-core`, or reverse
+dependencies into `protocol-sdk`.
+
+## `0.13.0` Published Posture
+
+The `0.13.0` runtime line started from the published `0.12.0` management-plane
+productionization release and has since been published as the production
+deployment governance release.
 
 The goal is production deployment governance for the standalone collector
 without moving deployment, service-manager, filesystem-layout, or observability

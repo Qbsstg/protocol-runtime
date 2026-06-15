@@ -32,15 +32,20 @@ health smoke 覆盖。`0.11.0` 已发布 standalone collector 的 app-owned JDK
 HTTP 管理面，通过独立管理端口暴露 health、readiness 和 status JSON 查询。
 `0.12.0` 已发布管理面生产化基线，包括管理端安全边界、可配置访问控制、
 management request logging、JSON metrics 扩展、健康状态历史快照、管理端错误
-响应规范、配置示例和 smoke 覆盖。
+响应规范、配置示例和 smoke 覆盖。`0.13.0` 已发布 standalone collector 的第一轮
+生产部署治理 baseline，包括配置 profile、运行目录约定、日志文件策略、PID/stop
+脚本、systemd/launchd 示例、配置校验 CLI、启动前 dry-run、运行状态导出、故障排查
+文档和 smoke 覆盖。
 
-`0.12.0` 发布完成后，release 分支已将 Maven reactor 固定到 `0.13.0`。当前
-`0.13.0` 已加入 standalone collector 的第一轮生产部署治理 baseline，包括配置
-profile、运行目录约定、日志文件策略、PID/stop 脚本、systemd/launchd 示例、配置
-校验 CLI、启动前 dry-run、运行状态导出、故障排查文档和 smoke 覆盖。
+`0.14.0-SNAPSHOT` 已在 `0.13.0` 发布后打开，规划 standalone collector 的运行包
+分发治理能力，包括 zip/tar 分发包、`bin`/`conf`/`logs`/`data`/`run`/`tmp` 目录
+模板、默认配置模板、启动/停止脚本增强、升级说明、部署包 smoke、JDK 21 检查、
+默认 java 版本排查和 operator install guide。
 
-当前 `0.13.0` 范围记录在
-[`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)，release notes 记录在
+当前 `0.14.0` 范围记录在
+[`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)，release notes 记录在
+[`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)。已发布的 `0.13.0`
+范围记录在 [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)，release notes 记录在
 [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)，release-readiness
 audit 记录在
 [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)。
@@ -89,14 +94,14 @@ release notes 记录在
 
 ## Maven 坐标
 
-最新已发布运行时版本是 `0.12.0`。Runtime 模块是 JDK 21 artifact。应用侧应按需
+最新已发布运行时版本是 `0.13.0`。Runtime 模块是 JDK 21 artifact。应用侧应按需
 直接依赖具体模块：
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -104,7 +109,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -112,7 +117,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -120,7 +125,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -128,7 +133,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -136,7 +141,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.12.0</version>
+    <version>0.13.0</version>
 </dependency>
 ```
 
@@ -846,6 +851,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.11.0.md`](docs/roadmap-0.11.0.md)
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
+- [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
@@ -873,3 +879,4 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/release-notes-0.11.0.md`](docs/release-notes-0.11.0.md)
 - [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)
 - [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)
+- [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)
