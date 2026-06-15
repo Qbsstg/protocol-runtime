@@ -45,14 +45,17 @@ validation CLI, startup dry-run, status export, troubleshooting docs, and smoke
 coverage.
 
 The `0.14.0-SNAPSHOT` line is open after the published `0.13.0` release. It
-plans runtime package distribution governance for the standalone collector:
-zip/tar packages, `bin`/`conf`/`logs`/`data`/`run`/`tmp` layout templates,
-default config templates, script hardening, upgrade notes, package smoke, JDK
-21 checks, default Java troubleshooting, and an operator install guide.
+now contains the first runtime package distribution governance baseline for
+the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/`data`/`run`/
+`tmp` layout templates, default config templates, script hardening, upgrade
+notes, package smoke, JDK 21 checks, default Java troubleshooting, and an
+operator install guide.
 
 The `0.14.0` scope is tracked in
 [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md), and release notes are
 tracked in [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md).
+The package install and upgrade guide is
+[`docs/distribution-package.md`](docs/distribution-package.md).
 The published `0.13.0` release scope is tracked in
 [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md), release notes are tracked
 in [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md), and the
@@ -219,6 +222,64 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
 java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --stop --pid-file target/protocol-runtime/run/protocol-runtime.pid
 ```
+
+## `0.14.0` Runtime Package Distribution Baseline
+
+`0.14.0-SNAPSHOT` adds deployable package artifacts for the standalone
+collector while keeping package governance in `runtime-app`, build
+configuration, examples, and docs.
+
+Build the standalone jar and distribution packages:
+
+```sh
+mvn -q -pl runtime-app -am package
+```
+
+The build creates:
+
+- `runtime-app/target/runtime-app-0.14.0-SNAPSHOT-standalone.jar`
+- `runtime-app/target/runtime-app-0.14.0-SNAPSHOT-distribution.zip`
+- `runtime-app/target/runtime-app-0.14.0-SNAPSHOT-distribution.tar.gz`
+
+The distribution package unpacks to a predictable layout:
+
+```text
+protocol-runtime-0.14.0-SNAPSHOT/
+  bin/
+  conf/
+  lib/
+  logs/
+  data/
+  run/
+  tmp/
+  docs/
+  examples/
+```
+
+Basic package flow:
+
+```sh
+tar -xzf runtime-app/target/runtime-app-0.14.0-SNAPSHOT-distribution.tar.gz -C target
+cd target/protocol-runtime-0.14.0-SNAPSHOT
+
+bin/protocol-runtime java-check
+bin/protocol-runtime validate
+bin/protocol-runtime dry-run
+bin/protocol-runtime start
+bin/protocol-runtime status
+bin/protocol-runtime stop
+```
+
+The package smoke verifies unpack, JDK 21 checks, config validation, dry-run,
+status export, startup, management health/readiness/status, file sink output,
+duplicate start handling, TCP port conflict handling, and graceful stop:
+
+```sh
+sh examples/smoke-distribution-package.sh
+```
+
+Install, upgrade, and operator guidance is maintained in
+[`docs/distribution-package.md`](docs/distribution-package.md).
 
 ## `0.12.0` Management Productionization Baseline
 
@@ -547,6 +608,9 @@ Build the executable jar:
 mvn -q -pl runtime-app -am package
 ```
 
+The same command also builds the `0.14.0-SNAPSHOT` distribution package under
+`runtime-app/target/` when run on the current development line.
+
 Run with the example property file:
 
 ```bash
@@ -570,6 +634,13 @@ You can also run the full local smoke flow:
 
 ```bash
 sh examples/smoke-standalone.sh
+```
+
+The distribution package smoke exercises the packaged `bin/`, `conf/`, `lib`,
+and runtime directory layout:
+
+```bash
+sh examples/smoke-distribution-package.sh
 ```
 
 The HTTP collector smoke starts an HTTP-only app, posts a raw IEC104 APDU with
@@ -838,6 +909,12 @@ configured threshold.
 
 - `UnsupportedClassVersionError`: run the standalone jar with JDK 21 or newer.
   The runtime artifacts are compiled with Java release 21.
+- `JDK 21 or newer is required`: the packaged `bin/protocol-runtime` script is
+  using an older default `java`. Set `JAVA_HOME` or `JAVA_BIN` to a JDK 21+
+  installation.
+- `collector already appears to be running`: the packaged start script found a
+  live process in the configured PID file. Stop it first or choose a different
+  runtime directory.
 - `Address already in use`: change `collector.tcp.port` or stop the process
   currently using that port.
 - No file output: confirm `collector.sink.type=file`, `collector.sink.file` is
@@ -912,6 +989,7 @@ verified.
 
 - [`docs/module-plan.md`](docs/module-plan.md)
 - [`docs/module-boundaries.md`](docs/module-boundaries.md)
+- [`docs/distribution-package.md`](docs/distribution-package.md)
 - [`docs/runtime-ingress-http-design.md`](docs/runtime-ingress-http-design.md)
 - [`docs/runtime-ingress-kafka-design.md`](docs/runtime-ingress-kafka-design.md)
 - [`docs/runtime-ingress-mqtt-design.md`](docs/runtime-ingress-mqtt-design.md)

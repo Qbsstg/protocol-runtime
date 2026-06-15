@@ -77,10 +77,11 @@ Any future non-JDK packaging, installer, service-wrapper, deployment, or
 observability dependency must stay in `runtime-app`, build configuration, or a
 dedicated app/distribution adapter module until its boundary is explicit.
 
-The first `0.14.0` planning line is documentation and boundary design only. It
-does not introduce Spring, database, Redis, external observability exporters,
-service managers, distribution dependencies in `runtime-core`, or reverse
-dependencies into `protocol-sdk`.
+The first `0.14.0` baseline implements package distribution through
+`runtime-app` build configuration, package-owned `bin` scripts, config
+templates, docs, and smoke coverage. It does not introduce Spring, database,
+Redis, external observability exporters, service managers, distribution
+dependencies in `runtime-core`, or reverse dependencies into `protocol-sdk`.
 
 ## `0.13.0` Published Posture
 

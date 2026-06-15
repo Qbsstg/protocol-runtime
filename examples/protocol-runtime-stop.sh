@@ -3,7 +3,11 @@ set -eu
 
 APP_HOME=${APP_HOME:-/opt/protocol-runtime}
 JAVA_BIN=${JAVA_BIN:-java}
-JAR=${JAR:-"$APP_HOME/runtime-app-0.13.0-standalone.jar"}
 PID_FILE=${PID_FILE:-"$APP_HOME/run/protocol-runtime.pid"}
 
+if [ -x "$APP_HOME/bin/protocol-runtime" ]; then
+  exec "$APP_HOME/bin/protocol-runtime" stop --pid-file "$PID_FILE" "$@"
+fi
+
+JAR=${JAR:-"$APP_HOME/lib/runtime-app-0.14.0-SNAPSHOT-standalone.jar"}
 exec "$JAVA_BIN" -jar "$JAR" --stop --pid-file "$PID_FILE"

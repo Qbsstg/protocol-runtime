@@ -79,24 +79,25 @@ servers while preserving the existing module boundaries.
 
 ## Readiness Checklist
 
-- [ ] README and Chinese README describe the `0.14.0` distribution governance
+- [x] README and Chinese README describe the `0.14.0` distribution governance
   line.
-- [ ] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
+- [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
   package distribution boundary.
-- [ ] zip/tar package layout is documented with `bin`, `conf`, `logs`, `data`,
+- [x] zip/tar package layout is documented with `bin`, `conf`, `logs`, `data`,
   `run`, and `tmp` directory templates.
-- [ ] default configuration templates are documented and smoke covered.
-- [ ] startup and stop script expectations cover JDK 21 checks, PID behavior,
+- [x] default configuration templates are documented and smoke covered.
+- [x] startup and stop script expectations cover JDK 21 checks, PID behavior,
   stale PID handling, and repeated stop behavior.
-- [ ] upgrade notes preserve operator-owned config, logs, data, run, and tmp
+- [x] upgrade notes preserve operator-owned config, logs, data, run, and tmp
   directories.
-- [ ] package smoke proves unpack, validate, dry-run, startup, management
+- [x] package smoke proves unpack, validate, dry-run, startup, management
   status, status export, and graceful stop.
-- [ ] operator install guide covers local install, JDK selection, config
+- [x] operator install guide covers local install, JDK selection, config
   validation, startup, stop, smoke, and rollback.
-- [ ] `git diff --check` passes.
-- [ ] `mvn -q verify` passes.
-- [ ] standalone TCP and HTTP smoke scripts continue to pass with JDK 21+.
-- [ ] dependency boundary checks prove new packaging work stays out of
+- [x] `git diff --check` passes.
+- [x] `mvn -q verify` passes.
+- [x] standalone TCP and HTTP smoke scripts continue to pass with JDK 21+.
+- [x] distribution package smoke passes with JDK 21+.
+- [x] dependency boundary checks prove new packaging work stays out of
   `runtime-core`, `runtime-protocol-*`, and `protocol-sdk`.
 - [ ] GitHub CI passes before merge.

@@ -323,6 +323,9 @@ Allowed:
 
 - `runtime-app`, build configuration, examples, docs, or a future dedicated
   app/distribution module may own zip/tar distribution package assembly.
+- `runtime-app` may attach `distribution` classifier zip and tar.gz artifacts
+  assembled from the standalone jar, package scripts, package config
+  templates, docs, and examples.
 - package templates may define `bin`, `conf`, `logs`, `data`, `run`, and `tmp`
   directory layout for operator-owned installations.
 - default configuration templates, startup scripts, stop scripts, upgrade

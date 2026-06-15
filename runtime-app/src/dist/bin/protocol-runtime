@@ -1,0 +1,220 @@
+#!/usr/bin/env sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+APP_HOME=${APP_HOME:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
+
+if [ -z "${JAVA_BIN:-}" ]; then
+  if [ -n "${JAVA_HOME:-}" ]; then
+    JAVA_BIN="$JAVA_HOME/bin/java"
+  else
+    JAVA_BIN=java
+  fi
+fi
+
+CONFIG=${CONFIG:-"$APP_HOME/conf/collector.properties"}
+PROFILE=${PROFILE:-}
+PID_FILE=${PID_FILE:-"$APP_HOME/run/protocol-runtime.pid"}
+STATUS_FILE=${STATUS_FILE:-"$APP_HOME/run/status.json"}
+LOG_FILE=${LOG_FILE:-"$APP_HOME/logs/protocol-runtime.log"}
+
+usage() {
+  cat <<USAGE
+Usage: protocol-runtime <command> [options] [-- app-options]
+
+Commands:
+  start       Start the collector in the foreground.
+  validate    Validate configuration without binding ports.
+  dry-run     Validate and export a configured status snapshot.
+  status      Print the latest status export JSON.
+  stop        Stop the collector by PID file.
+  java-check  Verify that the selected Java runtime is JDK 21 or newer.
+
+Options:
+  --config FILE         Configuration file. Default: conf/collector.properties.
+  --profile NAME       Optional profile name.
+  --pid-file FILE      PID file for start/stop duplicate handling.
+  --status-file FILE   Status JSON file for dry-run/status.
+
+Environment:
+  APP_HOME, JAVA_HOME, JAVA_BIN, CONFIG, PROFILE, PID_FILE, STATUS_FILE, LOG_FILE, JAR
+USAGE
+}
+
+fail() {
+  echo "protocol-runtime: $*" >&2
+  exit 2
+}
+
+resolve_jar() {
+  if [ -n "${JAR:-}" ]; then
+    [ -f "$JAR" ] || fail "configured JAR does not exist: $JAR"
+    return
+  fi
+
+  jar_count=0
+  for candidate in "$APP_HOME"/lib/runtime-app-*-standalone.jar; do
+    [ -f "$candidate" ] || continue
+    JAR=$candidate
+    jar_count=$((jar_count + 1))
+  done
+
+  if [ "$jar_count" -eq 0 ]; then
+    fail "standalone jar not found under $APP_HOME/lib"
+  fi
+  if [ "$jar_count" -gt 1 ]; then
+    fail "multiple standalone jars found under $APP_HOME/lib; set JAR explicitly"
+  fi
+}
+
+check_java() {
+  case "$JAVA_BIN" in
+    */*) [ -x "$JAVA_BIN" ] || fail "JAVA_BIN is not executable: $JAVA_BIN" ;;
+    *) command -v "$JAVA_BIN" >/dev/null 2>&1 || fail "JAVA_BIN not found on PATH: $JAVA_BIN" ;;
+  esac
+
+  if ! version_output=$("$JAVA_BIN" -version 2>&1); then
+    echo "$version_output" >&2
+    fail "unable to run Java: $JAVA_BIN"
+  fi
+  version=$(printf '%s\n' "$version_output" | sed -n 's/.*version "\([^"]*\)".*/\1/p' | head -n 1)
+  case "$version" in
+    1.*) major=$(printf '%s' "$version" | cut -d. -f2) ;;
+    *) major=$(printf '%s' "$version" | sed 's/[^0-9].*//') ;;
+  esac
+  case "$major" in
+    ''|*[!0-9]*) fail "unable to parse Java version from: $version" ;;
+  esac
+  if [ "$major" -lt 21 ]; then
+    fail "JDK 21 or newer is required; selected Java reports version $version"
+  fi
+}
+
+ensure_runtime_dirs() {
+  mkdir -p "$APP_HOME/conf" "$APP_HOME/logs" "$APP_HOME/data" "$APP_HOME/run" "$APP_HOME/tmp"
+  mkdir -p "$(dirname -- "$PID_FILE")" "$(dirname -- "$STATUS_FILE")" "$(dirname -- "$LOG_FILE")"
+}
+
+reject_running_pid() {
+  [ -f "$PID_FILE" ] || return 0
+  raw_pid=$(sed -n '1p' "$PID_FILE" | tr -d '[:space:]')
+  case "$raw_pid" in
+    ''|*[!0-9]*) fail "invalid pid file exists: $PID_FILE" ;;
+  esac
+  if kill -0 "$raw_pid" >/dev/null 2>&1; then
+    fail "collector already appears to be running with pid $raw_pid"
+  fi
+  rm -f "$PID_FILE"
+}
+
+command=${1:-}
+if [ -z "$command" ] || [ "$command" = "--help" ] || [ "$command" = "-h" ]; then
+  usage
+  exit 0
+fi
+shift
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --config)
+      [ "$#" -ge 2 ] || fail "--config requires a file path"
+      CONFIG=$2
+      shift 2
+      ;;
+    --config=*)
+      CONFIG=${1#--config=}
+      shift
+      ;;
+    --profile)
+      [ "$#" -ge 2 ] || fail "--profile requires a profile name"
+      PROFILE=$2
+      shift 2
+      ;;
+    --profile=*)
+      PROFILE=${1#--profile=}
+      shift
+      ;;
+    --pid-file)
+      [ "$#" -ge 2 ] || fail "--pid-file requires a file path"
+      PID_FILE=$2
+      shift 2
+      ;;
+    --pid-file=*)
+      PID_FILE=${1#--pid-file=}
+      shift
+      ;;
+    --status-file|--status-export)
+      [ "$#" -ge 2 ] || fail "$1 requires a file path"
+      STATUS_FILE=$2
+      shift 2
+      ;;
+    --status-file=*|--status-export=*)
+      STATUS_FILE=${1#*=}
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+case "$command" in
+  start|validate|dry-run|stop|java-check)
+    check_java
+    resolve_jar
+    ;;
+esac
+
+case "$command" in
+  start)
+    ensure_runtime_dirs
+    reject_running_pid
+    cd "$APP_HOME"
+    if [ -n "$PROFILE" ]; then
+      set -- --config "$CONFIG" --profile "$PROFILE" "$@"
+    else
+      set -- --config "$CONFIG" "$@"
+    fi
+    exec "$JAVA_BIN" -jar "$JAR" "$@"
+    ;;
+  validate)
+    cd "$APP_HOME"
+    if [ -n "$PROFILE" ]; then
+      set -- --validate --config "$CONFIG" --profile "$PROFILE" "$@"
+    else
+      set -- --validate --config "$CONFIG" "$@"
+    fi
+    exec "$JAVA_BIN" -jar "$JAR" "$@"
+    ;;
+  dry-run)
+    ensure_runtime_dirs
+    cd "$APP_HOME"
+    if [ -n "$PROFILE" ]; then
+      set -- --dry-run --config "$CONFIG" --profile "$PROFILE" --status-export "$STATUS_FILE" "$@"
+    else
+      set -- --dry-run --config "$CONFIG" --status-export "$STATUS_FILE" "$@"
+    fi
+    exec "$JAVA_BIN" -jar "$JAR" "$@"
+    ;;
+  status)
+    if [ -s "$STATUS_FILE" ]; then
+      cat "$STATUS_FILE"
+      exit 0
+    fi
+    fail "status file does not exist or is empty: $STATUS_FILE"
+    ;;
+  stop)
+    exec "$JAVA_BIN" -jar "$JAR" --stop --pid-file "$PID_FILE"
+    ;;
+  java-check)
+    echo "protocol-runtime: Java runtime is compatible: $JAVA_BIN"
+    ;;
+  *)
+    usage >&2
+    fail "unknown command: $command"
+    ;;
+esac
