@@ -314,7 +314,7 @@ Not allowed:
 
 ## `0.15.0` Distribution Package Productionization Boundary
 
-The `0.15.0-SNAPSHOT` line is opened after the published `0.14.0` runtime
+The `0.15.0` line is opened after the published `0.14.0` runtime
 package distribution governance release. The boundary is distribution package
 productionization for the standalone collector without widening `runtime-core`
 or `protocol-sdk`.

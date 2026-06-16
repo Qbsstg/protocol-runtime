@@ -7,13 +7,13 @@ Central Portal.
 
 The latest published runtime release is `0.14.0`.
 
-The Maven reactor is open at `0.15.0-SNAPSHOT` after the published `0.14.0`
-runtime package distribution governance release. The `0.15.0` planning line
-targets distribution package productionization: package integrity checks,
-checksum/signature policy, cross-platform script compatibility, configuration
-migration notes, upgrade rollback strategy, offline deployment guidance,
-package-embedded version information, release artifact smoke, and operator
-troubleshooting improvements.
+The Maven reactor is fixed at `0.15.0` on the release branch after the
+published `0.14.0` runtime package distribution governance release. The
+`0.15.0` release targets distribution package productionization: package
+metadata, version diagnostics, package integrity checks, checksum/signature
+policy, cross-platform script compatibility, configuration migration notes,
+upgrade rollback strategy, offline deployment guidance, release artifact
+smoke, and operator troubleshooting improvements.
 
 The published `0.14.0` release includes:
 
@@ -38,8 +38,10 @@ onward.
 
 The `0.15.0` roadmap is maintained in
 [`roadmap-0.15.0.md`](roadmap-0.15.0.md), and release notes are maintained in
-[`release-notes-0.15.0.md`](release-notes-0.15.0.md). The published `0.14.0`
-roadmap is maintained in
+[`release-notes-0.15.0.md`](release-notes-0.15.0.md). The `0.15.0`
+release-readiness audit is tracked in
+[`release-readiness-0.15.0.md`](release-readiness-0.15.0.md). The published
+`0.14.0` roadmap is maintained in
 [`roadmap-0.14.0.md`](roadmap-0.14.0.md), release notes are maintained in
 [`release-notes-0.14.0.md`](release-notes-0.14.0.md), and the `0.14.0`
 release-readiness audit is tracked in

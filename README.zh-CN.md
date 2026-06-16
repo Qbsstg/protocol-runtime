@@ -40,13 +40,14 @@ baseline，包括 zip/tar 分发包、`bin`/`conf`/`logs`/`data`/`run`/`tmp` 目
 默认配置模板、启动/停止脚本增强、升级说明、部署包 smoke、JDK 21 检查、默认 java
 版本排查和 operator install guide。
 
-`0.15.0-SNAPSHOT` 开发线已加入第一轮 standalone collector 运行包生产化 baseline：
+`0.15.0` release 分支已加入第一轮 standalone collector 运行包生产化 baseline：
 包内元数据、版本诊断、archive checksum 校验、checksum/signature 策略、跨平台脚本兼容、
 配置迁移说明、升级回滚策略、离线部署说明、release artifact smoke 和运维排障增强。
 
 当前 `0.15.0` 范围记录在
 [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)，release notes 记录在
-[`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md)。已发布的 `0.14.0`
+[`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md)，release-readiness
+audit 记录在 [`docs/release-readiness-0.15.0.md`](docs/release-readiness-0.15.0.md)。已发布的 `0.14.0`
 范围记录在
 [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)，release notes 记录在
 [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)，release-readiness audit 记录在
@@ -214,7 +215,7 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
 
 ## `0.15.0` 运行包生产化 Baseline
 
-`0.15.0-SNAPSHOT` 用于推进下一轮运行包生产化增强，第一轮 baseline 包括：
+`0.15.0` 用于推进下一轮运行包生产化增强，第一轮 baseline 包括：
 
 - 运行包根目录 `package.properties`
 - `bin/protocol-runtime version`，输出 runtime、artifact、Java、layout、app home 和
@@ -585,7 +586,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -632,7 +633,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -671,7 +672,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

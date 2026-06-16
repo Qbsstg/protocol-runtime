@@ -4,7 +4,7 @@
 governance release. The release target is distribution package
 productionization for the standalone collector.
 
-The first `0.15.0-SNAPSHOT` implementation baseline adds package metadata,
+The first `0.15.0` implementation baseline adds package metadata,
 checksum verification, release artifact smoke, upgrade migration notes,
 rollback guidance, offline deployment guidance, script diagnostics, and
 operator troubleshooting while keeping the work in `runtime-app`, build
@@ -94,7 +94,7 @@ configuration, examples, and docs.
 
 - [x] `0.14.0` release artifacts are published and verified from Maven Central.
 - [x] GitHub Release `v0.14.0` is published.
-- [x] Maven reactor is opened at `0.15.0-SNAPSHOT`.
+- [x] Maven reactor was opened at `0.15.0-SNAPSHOT` for development.
 - [x] README and Chinese README describe the `0.15.0` distribution package
   productionization planning line.
 - [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
@@ -109,6 +109,9 @@ configuration, examples, and docs.
 - [x] package version metadata boundary is implemented.
 - [x] release artifact smoke design is implemented.
 - [x] operator troubleshooting additions are documented.
-- [ ] implementation PRs keep `runtime-core`, `runtime-protocol-*`, and
+- [x] implementation PRs keep `runtime-core`, `runtime-protocol-*`, and
   `protocol-sdk` free of packaging, checksum/signing, installer, service
   manager, database, Redis, and exporter dependencies.
+- [x] release branch fixes the Maven reactor at `0.15.0`.
+- [x] release branch verification passes.
+- [ ] `v0.15.0` is tagged and published after release branch merge.
