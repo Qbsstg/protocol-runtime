@@ -1617,6 +1617,179 @@ class StandaloneCollectorTest {
     }
 
     @Test
+    void selfCheckReportsRuntimeOperationsEvidenceWithoutBindingPorts() throws Exception {
+        Path appHome = tempDir.resolve("package");
+        Path config = appHome.resolve("conf/collector.properties");
+        Path metadata = appHome.resolve("package.properties");
+        createPackageLayout(appHome);
+        Files.writeString(
+                metadata,
+                String.join(
+                        System.lineSeparator(),
+                        "runtime.version=0.16.0-SNAPSHOT",
+                        "artifact.name=runtime-app-0.16.0-SNAPSHOT",
+                        "package.layout=protocol-runtime-0.16.0-SNAPSHOT",
+                        "package.layout.version=1",
+                        ""));
+        Files.writeString(
+                config,
+                String.join(
+                        System.lineSeparator(),
+                        StandaloneCollectorConfig.RUNTIME_DIR + "=" + appHome,
+                        StandaloneCollectorConfig.RUNTIME_PID_FILE + "=run/protocol-runtime.pid",
+                        StandaloneCollectorConfig.RUNTIME_STATUS_FILE + "=run/status.json",
+                        StandaloneCollectorConfig.TCP_PORT + "=0",
+                        StandaloneCollectorConfig.SOURCE_ID + "=iec104:self-check",
+                        StandaloneCollectorConfig.SINK_TYPE + "=file",
+                        StandaloneCollectorConfig.SINK_FILE + "=data/records.ndjson",
+                        StandaloneCollectorConfig.MANAGEMENT_ENABLED + "=true",
+                        StandaloneCollectorConfig.MANAGEMENT_PORT + "=0",
+                        StandaloneCollectorConfig.MANAGEMENT_ACCESS + "=token",
+                        StandaloneCollectorConfig.MANAGEMENT_TOKEN + "=secret-token",
+                        ""));
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        int exitCode = StandaloneCollectorMain.run(
+                new String[] {
+                        "--self-check",
+                        "--config",
+                        config.toString(),
+                        "--operation-app-home",
+                        appHome.toString(),
+                        "--operation-package-metadata",
+                        metadata.toString(),
+                        "--operation-package-integrity",
+                        "verified"
+                },
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(0, exitCode, stderr::toString);
+        String report = stdout.toString(StandardCharsets.UTF_8);
+        assertTrue(report.contains("\"command\":\"self-check\""));
+        assertTrue(report.contains("\"status\":\"PASS\""));
+        assertTrue(report.contains("\"runtimeVersion\":\"0.16.0-SNAPSHOT\""));
+        assertTrue(report.contains("\"sourceId\":\"iec104:self-check\""));
+        assertTrue(report.contains("\"bindAttempted\":false"));
+        assertTrue(report.contains("\"tokenConfigured\":true"));
+        assertTrue(report.contains("\"integrity\":\"verified\""));
+        assertTrue(stderr.toString(StandardCharsets.UTF_8).isBlank());
+    }
+
+    @Test
+    void selfCheckReportsInvalidConfigurationAsJson() throws Exception {
+        Path config = tempDir.resolve("collector-invalid.properties");
+        Files.writeString(
+                config,
+                String.join(
+                        System.lineSeparator(),
+                        StandaloneCollectorConfig.TCP_PORT + "=70000",
+                        StandaloneCollectorConfig.SOURCE_ID + "=iec104:invalid",
+                        ""));
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        int exitCode = StandaloneCollectorMain.run(
+                new String[] {"--self-check", "--config", config.toString()},
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(2, exitCode);
+        String report = stdout.toString(StandardCharsets.UTF_8);
+        assertTrue(report.contains("\"command\":\"self-check\""));
+        assertTrue(report.contains("\"status\":\"FAIL\""));
+        assertTrue(report.contains("\"valid\":false"));
+        assertTrue(report.contains(StandaloneCollectorConfig.TCP_PORT + " must be between"));
+        assertTrue(stderr.toString(StandardCharsets.UTF_8).isBlank());
+    }
+
+    @Test
+    void hotCheckDetectsConfigChangesWithoutHotReloadingCollector() throws Exception {
+        Path appHome = tempDir.resolve("runtime");
+        Path config = tempDir.resolve("collector.properties");
+        Path baseline = tempDir.resolve("run/config.hotcheck.properties");
+        Files.writeString(
+                config,
+                String.join(
+                        System.lineSeparator(),
+                        StandaloneCollectorConfig.RUNTIME_DIR + "=" + appHome,
+                        StandaloneCollectorConfig.TCP_PORT + "=0",
+                        StandaloneCollectorConfig.SOURCE_ID + "=iec104:hot-check",
+                        StandaloneCollectorConfig.SINK_TYPE + "=in-memory",
+                        ""));
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        int exitCode = StandaloneCollectorMain.run(
+                new String[] {
+                        "--hot-check",
+                        "--config",
+                        config.toString(),
+                        "--hot-check-baseline",
+                        baseline.toString()
+                },
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(0, exitCode, stderr::toString);
+        assertTrue(Files.isRegularFile(baseline));
+        String firstReport = stdout.toString(StandardCharsets.UTF_8);
+        assertTrue(firstReport.contains("\"command\":\"hot-check\""));
+        assertTrue(firstReport.contains("\"baselinePresent\":false"));
+        assertTrue(firstReport.contains("\"status\":\"BASELINE_CREATED\""));
+        assertTrue(firstReport.contains("\"hotReloaded\":false"));
+
+        stdout.reset();
+        stderr.reset();
+        exitCode = StandaloneCollectorMain.run(
+                new String[] {
+                        "--hot-check",
+                        "--config",
+                        config.toString(),
+                        "--hot-check-baseline",
+                        baseline.toString()
+                },
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(0, exitCode, stderr::toString);
+        String unchangedReport = stdout.toString(StandardCharsets.UTF_8);
+        assertTrue(unchangedReport.contains("\"baselinePresent\":true"));
+        assertTrue(unchangedReport.contains("\"changed\":false"));
+        assertTrue(unchangedReport.contains("\"restartRequired\":false"));
+        assertTrue(unchangedReport.contains("\"status\":\"UNCHANGED\""));
+
+        Files.writeString(
+                config,
+                String.join(
+                        System.lineSeparator(),
+                        StandaloneCollectorConfig.RUNTIME_DIR + "=" + appHome,
+                        StandaloneCollectorConfig.TCP_PORT + "=0",
+                        StandaloneCollectorConfig.SOURCE_ID + "=iec104:hot-check-updated",
+                        StandaloneCollectorConfig.SINK_TYPE + "=in-memory",
+                        ""));
+        stdout.reset();
+        stderr.reset();
+        exitCode = StandaloneCollectorMain.run(
+                new String[] {
+                        "--hot-check",
+                        "--config",
+                        config.toString(),
+                        "--hot-check-baseline",
+                        baseline.toString()
+                },
+                new PrintStream(stdout),
+                new PrintStream(stderr));
+
+        assertEquals(0, exitCode, stderr::toString);
+        String changedReport = stdout.toString(StandardCharsets.UTF_8);
+        assertTrue(changedReport.contains("\"changed\":true"));
+        assertTrue(changedReport.contains("\"restartRequired\":true"));
+        assertTrue(changedReport.contains("\"hotReloaded\":false"));
+    }
+
+    @Test
     void validateCommandReportsInvalidConfigurationWithoutStarting() throws Exception {
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
@@ -1778,6 +1951,12 @@ class StandaloneCollectorTest {
         properties.setProperty(StandaloneCollectorConfig.SINK_TYPE, sinkType);
         properties.setProperty(StandaloneCollectorConfig.BACKPRESSURE, BackpressureDecision.ACCEPT.name());
         return properties;
+    }
+
+    private static void createPackageLayout(Path appHome) throws IOException {
+        for (String path : List.of("bin", "conf", "lib", "logs", "data", "run", "tmp", "docs", "examples")) {
+            Files.createDirectories(appHome.resolve(path));
+        }
     }
 
     private static Properties managementProperties(int collectorPort, String sinkType, int managementPort) {

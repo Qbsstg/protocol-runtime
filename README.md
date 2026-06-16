@@ -53,11 +53,11 @@ guidance, configuration migration notes, upgrade rollback strategy, offline
 deployment guidance, release artifact smoke, and operator troubleshooting
 improvements.
 
-The `0.16.0-SNAPSHOT` development line plans the next production runtime
-operations hardening pass: long-running stability, runtime self-checks,
-configuration hot-check without hot-reload, stronger logging and status
-evidence, failure recovery runbooks, long-running smoke, release artifact
-regression smoke, operator runbooks, and production issue diagnostics.
+The `0.16.0-SNAPSHOT` development line adds the first production runtime
+operations baseline: runtime self-checks, configuration hot-check without
+hot-reload, stronger runtime status evidence, failure recovery and operator
+runbooks, long-running smoke, release artifact regression smoke, and
+production issue diagnostics.
 
 The `0.16.0` scope is tracked in
 [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md), and release notes are
@@ -192,30 +192,30 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.15.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, app-owned deployment governance, zip/tar distribution package governance, package metadata, version diagnostics, package integrity verification, checksum sidecars, release artifact smoke, and operator troubleshooting. |
+| `runtime-app` | 0.16.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, app-owned deployment governance, zip/tar distribution package governance, package metadata, version diagnostics, package integrity verification, runtime self-check, config hot-check without hot-reload, checksum sidecars, long-running smoke, release artifact smoke/regression smoke, and operator troubleshooting/runbooks. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, richer deployable
 runtime applications, and dedicated app/adapter deployment helpers. Those
 dependencies belong here, not in `protocol-sdk`.
 
-## `0.16.0` Production Runtime Operations Planning
+## `0.16.0` Production Runtime Operations Baseline
 
 `0.16.0` starts after the published `0.15.0` distribution package
-productionization release. The planning line focuses on making the standalone
+productionization release. The baseline focuses on making the standalone
 collector easier to operate during long-running production use without adding a
 runtime supervisor, service manager, database, Redis, external observability
 exporter, or framework dependency.
 
-The first planning scope includes:
+The first baseline scope includes:
 
-- long-running stability expectations and evidence to collect during extended
-  smoke runs
-- runtime self-check output for configuration, Java version, package layout,
-  writable directories, sink paths, listener bind readiness, and management
-  endpoint posture
-- configuration hot-check support that can detect changed config files and
-  report validation results without hot-reloading a running collector
+- `bin/protocol-runtime self-check`, which emits JSON evidence for
+  configuration, Java version, package layout, writable directories, sink
+  paths, listener bind readiness, management endpoint posture, and package
+  integrity state
+- `bin/protocol-runtime hot-check`, which detects config file changes,
+  re-runs validation, and reports whether restart is required without
+  hot-reloading a running collector
 - stronger logging and status evidence for startup, shutdown, listener bind,
   sink health, parse failures, backpressure decisions, management requests, and
   package integrity state
@@ -227,7 +227,10 @@ The first planning scope includes:
   version, config validation, self-check, status export, logs, PID state,
   management snapshots, and package verification evidence
 
-The planning work must stay in `runtime-app`, examples, docs, CI/smoke, or a
+Operational details are maintained in
+[`docs/operations-runbook.md`](docs/operations-runbook.md).
+
+The operations work must stay in `runtime-app`, examples, docs, CI/smoke, or a
 future dedicated app/operations boundary. It must not add runtime-supervisor,
 service-manager, external exporter, database, Redis, Spring, installer, package
 manager, or reverse SDK dependencies.

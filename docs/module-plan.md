@@ -61,20 +61,22 @@ hardening without moving self-check, diagnostics, recovery, smoke, supervisor,
 service-manager, filesystem-layout, package management, or external
 observability concerns into core contracts:
 
-| Module | 0.16.0 planning goal |
+| Module | 0.16.0 baseline |
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, runtime-supervisor, service-manager, filesystem-layout, deployment wrapper, installer, package manager, access-control, request-logging, or observability exporter dependencies. |
-| `runtime-app` | Own production runtime self-check, config hot-check reporting without hot-reload, app-local diagnostics, richer status/log evidence, and operator-facing command surfaces if implementation starts. |
-| `examples` and `docs` | Own failure recovery runbooks, operator runbook, production issue diagnostics flow, long-running smoke guidance, and release artifact regression smoke guidance. |
+| `runtime-app` | Own production runtime self-check, config hot-check reporting without hot-reload, app-local diagnostics, richer status/log evidence, and operator-facing command surfaces. |
+| `examples` and `docs` | Own failure recovery runbooks, operator runbook, production issue diagnostics flow, long-running smoke, and release artifact regression smoke. |
 | CI/smoke | Own long-running smoke and release artifact regression smoke as verification only; do not turn smoke fixtures into supported application dependencies. |
 | `runtime-ingress-*` | Preserve ingress behavior; expose only app-consumable lifecycle/status evidence needed by diagnostics. |
 | `runtime-protocol-*` | Continue to parse payloads without transport, app, operations, supervisor, storage, status-export, or sink dependencies. |
 | `runtime-smoke-tests` | Keep repository-only cross-module verification and avoid becoming an application dependency. |
 
-The first `0.16.0` planning baseline is documentation and boundary design. It
-must not introduce Spring, database, Redis, external observability exporters,
-runtime supervisors, service managers, installers, package managers, or reverse
-dependencies into `protocol-sdk`.
+The first `0.16.0` implementation baseline adds `self-check`, `hot-check`,
+operations runbooks, long-running smoke, and release artifact regression smoke
+inside `runtime-app`, examples, and docs. It must not introduce Spring,
+database, Redis, external observability exporters, runtime supervisors,
+service managers, installers, package managers, or reverse dependencies into
+`protocol-sdk`.
 
 ## `0.15.0` Productionization Posture
 

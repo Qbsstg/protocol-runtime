@@ -314,18 +314,19 @@ Not allowed:
 
 ## `0.16.0` Production Runtime Operations Boundary
 
-The `0.16.0` line is opened after the published `0.15.0` distribution package
-productionization release. The boundary is production runtime operations
+The `0.16.0` line starts after the published `0.15.0` distribution package
+productionization release. The boundary is app-owned production runtime operations
 hardening for long-running standalone collectors without widening
 `runtime-core` or `protocol-sdk`.
 
 Allowed:
 
-- `runtime-app`, examples, docs, CI/smoke, or a future dedicated
-  app/operations module may own runtime self-check output, configuration
-  hot-check reporting, status/log evidence, failure recovery runbooks,
-  long-running smoke, release artifact regression smoke, operator runbooks,
-  and production issue diagnostics.
+- `runtime-app` owns `self-check`, configuration hot-check reporting, and
+  app-local runtime diagnostics.
+- examples, docs, CI/smoke, or a future dedicated app/operations module own
+  status/log evidence guidance, failure recovery runbooks, long-running smoke,
+  release artifact regression smoke, operator runbooks, and production issue
+  diagnostics.
 - config hot-check behavior may detect configuration file changes and report
   validation results, but this line does not hot-reload a running collector.
 - app-owned diagnostics may aggregate existing status, management, package

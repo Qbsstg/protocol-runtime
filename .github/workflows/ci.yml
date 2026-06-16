@@ -37,3 +37,9 @@ jobs:
 
       - name: Release artifact smoke
         run: sh examples/smoke-release-artifact.sh
+
+      - name: Long-running operations smoke
+        run: sh examples/smoke-long-running.sh
+
+      - name: Release artifact regression smoke
+        run: sh examples/smoke-release-artifact-regression.sh
