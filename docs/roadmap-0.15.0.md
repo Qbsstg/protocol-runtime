@@ -114,4 +114,4 @@ configuration, examples, and docs.
   manager, database, Redis, and exporter dependencies.
 - [x] release branch fixes the Maven reactor at `0.15.0`.
 - [x] release branch verification passes.
-- [ ] `v0.15.0` is tagged and published after release branch merge.
+- [x] `v0.15.0` is tagged and published after release branch merge.

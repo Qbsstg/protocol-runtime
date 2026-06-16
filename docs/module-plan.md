@@ -53,11 +53,35 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
+## `0.16.0` Production Runtime Operations Posture
+
+The `0.16.0` runtime line starts from the published `0.15.0` distribution
+package productionization release. The goal is production runtime operations
+hardening without moving self-check, diagnostics, recovery, smoke, supervisor,
+service-manager, filesystem-layout, package management, or external
+observability concerns into core contracts:
+
+| Module | 0.16.0 planning goal |
+| --- | --- |
+| `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, runtime-supervisor, service-manager, filesystem-layout, deployment wrapper, installer, package manager, access-control, request-logging, or observability exporter dependencies. |
+| `runtime-app` | Own production runtime self-check, config hot-check reporting without hot-reload, app-local diagnostics, richer status/log evidence, and operator-facing command surfaces if implementation starts. |
+| `examples` and `docs` | Own failure recovery runbooks, operator runbook, production issue diagnostics flow, long-running smoke guidance, and release artifact regression smoke guidance. |
+| CI/smoke | Own long-running smoke and release artifact regression smoke as verification only; do not turn smoke fixtures into supported application dependencies. |
+| `runtime-ingress-*` | Preserve ingress behavior; expose only app-consumable lifecycle/status evidence needed by diagnostics. |
+| `runtime-protocol-*` | Continue to parse payloads without transport, app, operations, supervisor, storage, status-export, or sink dependencies. |
+| `runtime-smoke-tests` | Keep repository-only cross-module verification and avoid becoming an application dependency. |
+
+The first `0.16.0` planning baseline is documentation and boundary design. It
+must not introduce Spring, database, Redis, external observability exporters,
+runtime supervisors, service managers, installers, package managers, or reverse
+dependencies into `protocol-sdk`.
+
 ## `0.15.0` Productionization Posture
 
-The `0.15.0` runtime line starts from the published `0.14.0` package
-distribution governance release. The goal is distribution package
-productionization without moving package integrity, signing, installer,
+The `0.15.0` runtime line started from the published `0.14.0` package
+distribution governance release and has since been published as the
+distribution package productionization release. The goal was distribution
+package productionization without moving package integrity, signing, installer,
 service-manager, filesystem-layout, deployment-wrapper, or external
 observability concerns into core contracts:
 

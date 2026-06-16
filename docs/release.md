@@ -5,17 +5,17 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.14.0`.
+The latest published runtime release is `0.15.0`.
 
-The Maven reactor is fixed at `0.15.0` on the release branch after the
-published `0.14.0` runtime package distribution governance release. The
-`0.15.0` release targets distribution package productionization: package
-metadata, version diagnostics, package integrity checks, checksum/signature
-policy, cross-platform script compatibility, configuration migration notes,
-upgrade rollback strategy, offline deployment guidance, release artifact
-smoke, and operator troubleshooting improvements.
+The Maven reactor is opened at `0.16.0-SNAPSHOT` after the published `0.15.0`
+distribution package productionization release. The `0.16.0` planning line
+targets production runtime operations hardening: long-running stability,
+runtime self-checks, configuration hot-check without hot-reload, stronger
+logging and status evidence, failure recovery runbooks, long-running smoke,
+release artifact regression smoke, operator runbooks, and production issue
+diagnostics.
 
-The published `0.14.0` release includes:
+The published `0.15.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -36,7 +36,10 @@ The published `0.14.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.15.0` roadmap is maintained in
+The `0.16.0` roadmap is maintained in
+[`roadmap-0.16.0.md`](roadmap-0.16.0.md), and release notes are maintained in
+[`release-notes-0.16.0.md`](release-notes-0.16.0.md). The published `0.15.0`
+roadmap is maintained in
 [`roadmap-0.15.0.md`](roadmap-0.15.0.md), and release notes are maintained in
 [`release-notes-0.15.0.md`](release-notes-0.15.0.md). The `0.15.0`
 release-readiness audit is tracked in
@@ -99,6 +102,13 @@ published `0.4.0` roadmap is maintained in
 [`release-notes-0.3.0.md`](release-notes-0.3.0.md), and the `0.3.0`
 release-readiness audit is tracked in
 [`release-readiness-0.3.0.md`](release-readiness-0.3.0.md).
+
+`0.15.0` was tagged as `v0.15.0`, uploaded in Central deployment
+`18a3b2bb-69bb-4932-8d21-a172736845f1`, published, and verified from Maven
+Central with isolated local Maven repositories, including the
+`runtime-app:standalone` classifier, `distribution` zip/tar.gz artifacts, and
+published signature/checksum sidecars. GitHub release notes are published at
+<https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.15.0>.
 
 `0.14.0` was tagged as `v0.14.0`, uploaded in Central deployment
 `fc95f451-5a0d-4d3c-8743-6a78374fa6d9`, published, and verified from Maven
