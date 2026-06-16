@@ -42,16 +42,23 @@ production deployment governance baseline for the standalone collector,
 including configuration profiles, runtime directory conventions, log file
 policy, PID and stop-script behavior, systemd/launchd examples, configuration
 validation CLI, startup dry-run, status export, troubleshooting docs, and smoke
-coverage.
+coverage. `0.14.0` published the first runtime package distribution governance
+baseline for the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/
+`data`/`run`/`tmp` layout templates, default config templates, script hardening,
+upgrade notes, package smoke, JDK 21 checks, default Java troubleshooting, and
+an operator install guide.
 
-The `0.14.0` release branch is fixed after the published `0.13.0`
-release. It contains the first runtime package distribution governance baseline
-for the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/`data`/`run`/
-`tmp` layout templates, default config templates, script hardening, upgrade
-notes, package smoke, JDK 21 checks, default Java troubleshooting, and an
-operator install guide.
+The `0.15.0-SNAPSHOT` development line is open for distribution package
+productionization planning: package integrity checks, checksum/signature
+policy, cross-platform script compatibility, configuration migration notes,
+upgrade rollback strategy, offline deployment guidance, package-embedded
+version information, release artifact smoke, and operator troubleshooting
+improvements.
 
-The `0.14.0` scope is tracked in
+The `0.15.0` scope is tracked in
+[`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md), and release notes are
+tracked in [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md).
+The published `0.14.0` release scope is tracked in
 [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md), and release notes are
 tracked in [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md),
 and the release-readiness audit is tracked in
@@ -109,14 +116,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime version is `0.13.0`. Runtime modules are JDK 21
+The latest published runtime version is `0.14.0`. Runtime modules are JDK 21
 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
 </dependency>
 ```
 
@@ -124,7 +131,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
 </dependency>
 ```
 
@@ -132,7 +139,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
 </dependency>
 ```
 
@@ -140,7 +147,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
 </dependency>
 ```
 
@@ -148,7 +155,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
 </dependency>
 ```
 
@@ -156,7 +163,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.13.0</version>
+    <version>0.14.0</version>
 </dependency>
 ```
 
@@ -176,7 +183,7 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.13.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, and app-owned deployment governance. |
+| `runtime-app` | 0.14.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, app-owned deployment governance, and zip/tar distribution package governance. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, richer deployable
@@ -225,13 +232,35 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --stop --pid-file target/protocol-runtime/run/protocol-runtime.pid
 ```
 
+## `0.15.0` Distribution Package Productionization Planning
+
+`0.15.0-SNAPSHOT` is open for the next distribution package hardening line. The
+planning scope is intentionally documentation and boundary design only:
+
+- package integrity checks and checksum/signature policy for release artifacts
+- cross-platform script compatibility for POSIX shells and operator-owned
+  Windows guidance
+- configuration migration notes for package upgrades
+- upgrade rollback strategy for failed package replacement
+- offline deployment guidance for servers without direct Maven Central access
+- package-embedded version information for support and smoke diagnostics
+- release artifact smoke coverage that can validate published package outputs
+- operator troubleshooting improvements for package install, upgrade, rollback,
+  Java discovery, PID files, and status checks
+
+The `0.15.0` line must keep package productionization in `runtime-app`, build
+configuration, examples, docs, or a future dedicated app/distribution boundary.
+It must not add package integrity, signing, installer, service-manager,
+filesystem-layout, deployment-wrapper, database, Redis, framework, or exporter
+dependencies to `runtime-core` or `protocol-sdk`.
+
 ## `0.14.0` Runtime Package Distribution Baseline
 
-`0.14.0` adds deployable package artifacts for the standalone
+`0.14.0` published deployable package artifacts for the standalone
 collector while keeping package governance in `runtime-app`, build
-configuration, examples, and docs. The release branch fixes the Maven reactor
-at `0.14.0` and does not create a tag or perform a real Central upload until
-after the release PR merges.
+configuration, examples, and docs. Tag `v0.14.0` points at the release commit,
+and the runtime artifacts, standalone classifier, and distribution zip/tar.gz
+packages are available from Maven Central.
 
 Build the standalone jar and distribution packages:
 
@@ -596,8 +625,8 @@ TLS, and command/session policy around this baseline.
 ## Standalone Collector App
 
 `runtime-app` assembles the runnable collector boundary introduced in `0.2.0`.
-The published `0.12.0` release preserves the TCP/Netty, JDK HTTP, Kafka, MQTT,
-and management endpoint paths through the same app-owned pipeline:
+The standalone app preserves the TCP/Netty, JDK HTTP, Kafka, MQTT, and
+management endpoint paths through the same app-owned pipeline:
 
 ```text
 TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
@@ -612,13 +641,14 @@ Build the executable jar:
 mvn -q -pl runtime-app -am package
 ```
 
-The same command also builds the `0.14.0` distribution package under
-`runtime-app/target/` on the release branch.
+The same command builds the current development-line distribution package under
+`runtime-app/target/`. Published `0.14.0` package artifacts are available from
+Maven Central.
 
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -658,7 +688,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -698,7 +728,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.12.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -1010,6 +1040,7 @@ verified.
 - [`docs/roadmap-0.12.0.md`](docs/roadmap-0.12.0.md)
 - [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
 - [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)
+- [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.14.0.md`](docs/release-readiness-0.14.0.md)
 - [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
@@ -1039,3 +1070,4 @@ verified.
 - [`docs/release-notes-0.12.0.md`](docs/release-notes-0.12.0.md)
 - [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)
 - [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)
+- [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md)

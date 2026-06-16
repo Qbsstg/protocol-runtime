@@ -9,5 +9,5 @@ if [ -x "$APP_HOME/bin/protocol-runtime" ]; then
   exec "$APP_HOME/bin/protocol-runtime" stop --pid-file "$PID_FILE" "$@"
 fi
 
-JAR=${JAR:-"$APP_HOME/lib/runtime-app-0.14.0-standalone.jar"}
+JAR=${JAR:-"$APP_HOME/lib/runtime-app-0.15.0-SNAPSHOT-standalone.jar"}
 exec "$JAVA_BIN" -jar "$JAR" --stop --pid-file "$PID_FILE"
