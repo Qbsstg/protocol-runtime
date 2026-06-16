@@ -55,7 +55,7 @@ dependencies into `runtime-core` or `protocol-sdk`.
 
 ## `0.15.0` Productionization Posture
 
-The `0.15.0-SNAPSHOT` runtime line starts from the published `0.14.0` package
+The `0.15.0` runtime line starts from the published `0.14.0` package
 distribution governance release. The goal is distribution package
 productionization without moving package integrity, signing, installer,
 service-manager, filesystem-layout, deployment-wrapper, or external

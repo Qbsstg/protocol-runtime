@@ -48,7 +48,7 @@ baseline for the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/
 upgrade notes, package smoke, JDK 21 checks, default Java troubleshooting, and
 an operator install guide.
 
-The `0.15.0-SNAPSHOT` development line adds the first distribution package
+The `0.15.0` release branch adds the first distribution package
 productionization baseline: package metadata, version diagnostics, archive
 checksum verification, checksum/signature policy, cross-platform script
 guidance, configuration migration notes, upgrade rollback strategy, offline
@@ -58,6 +58,8 @@ improvements.
 The `0.15.0` scope is tracked in
 [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md), and release notes are
 tracked in [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md).
+The `0.15.0` release-readiness audit is tracked in
+[`docs/release-readiness-0.15.0.md`](docs/release-readiness-0.15.0.md).
 The published `0.14.0` release scope is tracked in
 [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md), and release notes are
 tracked in [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md),
@@ -234,7 +236,7 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
 
 ## `0.15.0` Distribution Package Productionization Baseline
 
-`0.15.0-SNAPSHOT` is the next distribution package hardening line. The first
+`0.15.0` is the next distribution package hardening line. The first
 baseline includes:
 
 - package metadata through distribution-root `package.properties`
@@ -656,7 +658,7 @@ Maven Central.
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -705,7 +707,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -745,7 +747,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

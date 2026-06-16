@@ -1,11 +1,11 @@
 # Protocol Runtime 0.15.0 Release Notes
 
-Release notes draft for the future `0.15.0` runtime release.
+Release notes draft for the `0.15.0` runtime release.
 
 `0.15.0` follows the published `0.14.0` runtime package distribution
-governance release. The development line is opened at `0.15.0-SNAPSHOT` for
-distribution package productionization. No `v0.15.0` tag is created and no real
-Maven Central upload is part of this implementation baseline.
+governance release. The release branch fixes the Maven reactor version at
+`0.15.0` for distribution package productionization. No `v0.15.0` tag is
+created and no real Maven Central upload is part of the release branch PR.
 
 ## Baseline Highlights
 
@@ -71,6 +71,12 @@ Implementation and future release PRs must pass:
 - dependency boundary checks proving package productionization work does not
   enter `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
 - GitHub CI on release PRs
+
+## Release Branch Checks
+
+The release branch checks are tracked in
+[`release-readiness-0.15.0.md`](release-readiness-0.15.0.md). They must pass
+before the release branch is merged to `main`.
 
 ## Publication
 
