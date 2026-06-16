@@ -110,6 +110,70 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>${maven.antrun.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>write-package-metadata</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/dist-metadata"/>
+                                <echo file="${project.build.directory}/dist-metadata/package.properties">runtime.version=${project.version}
+artifact.group=${project.groupId}
+artifact.id=${project.artifactId}
+artifact.version=${project.version}
+artifact.name=runtime-app-${project.version}
+standalone.jar=lib/runtime-app-${project.version}-standalone.jar
+package.layout=protocol-runtime-${project.version}
+package.layout.version=1
+build.java=${java.version}
+</echo>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>write-release-artifact-checksums</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <checksum file="${project.build.directory}/${project.build.finalName}-standalone.jar"
+                                          algorithm="SHA-256"
+                                          fileext=".sha256"
+                                          forceOverwrite="yes"/>
+                                <checksum file="${project.build.directory}/${project.build.finalName}-standalone.jar"
+                                          algorithm="SHA-512"
+                                          fileext=".sha512"
+                                          forceOverwrite="yes"/>
+                                <checksum file="${project.build.directory}/${project.build.finalName}-distribution.zip"
+                                          algorithm="SHA-256"
+                                          fileext=".sha256"
+                                          forceOverwrite="yes"/>
+                                <checksum file="${project.build.directory}/${project.build.finalName}-distribution.zip"
+                                          algorithm="SHA-512"
+                                          fileext=".sha512"
+                                          forceOverwrite="yes"/>
+                                <checksum file="${project.build.directory}/${project.build.finalName}-distribution.tar.gz"
+                                          algorithm="SHA-256"
+                                          fileext=".sha256"
+                                          forceOverwrite="yes"/>
+                                <checksum file="${project.build.directory}/${project.build.finalName}-distribution.tar.gz"
+                                          algorithm="SHA-512"
+                                          fileext=".sha512"
+                                          forceOverwrite="yes"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

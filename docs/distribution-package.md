@@ -1,9 +1,11 @@
 # Protocol Runtime Distribution Package
 
-`0.14.0` adds an operator-facing distribution package for the standalone
-collector. The package is assembled by `runtime-app` build configuration and
-does not move packaging, service management, filesystem layout, or Java
-discovery concerns into `runtime-core` or protocol parser modules.
+`0.15.0` hardens the standalone collector distribution package for operator
+install, verification, upgrade, rollback, offline deployment, and support
+diagnostics. The work stays in `runtime-app`, build configuration, examples,
+and docs. It does not move packaging, checksum/signing, service management,
+filesystem layout, or installer concerns into `runtime-core` or protocol
+parser modules.
 
 ## Build
 
@@ -11,15 +13,22 @@ discovery concerns into `runtime-core` or protocol parser modules.
 mvn -q -pl runtime-app -am package
 ```
 
-The build attaches both artifacts:
+The build attaches these release artifacts:
 
+- `runtime-app-<version>-standalone.jar`
 - `runtime-app-<version>-distribution.zip`
 - `runtime-app-<version>-distribution.tar.gz`
+- `.sha256` and `.sha512` sidecars for the standalone jar, zip, and tar.gz
 
-Both packages contain the same top-level layout:
+Maven Central also publishes repository-managed checksum and signature sidecars
+for released artifacts. The package scripts verify checksum files but do not
+own GPG keys or signing dependencies.
+
+Both distribution archives contain the same top-level layout:
 
 ```text
 protocol-runtime-<version>/
+  package.properties
   bin/
     protocol-runtime
     protocol-runtime-stop
@@ -36,20 +45,24 @@ protocol-runtime-<version>/
   examples/
 ```
 
+`package.properties` records the runtime version, artifact id/version,
+standalone jar path, package layout name, package layout version, and build
+Java version.
+
 ## Install
 
 Unpack the archive into an operator-owned directory:
 
 ```sh
 mkdir -p /opt/protocol-runtime
-tar -xzf runtime-app-0.14.0-distribution.tar.gz -C /opt
-cd /opt/protocol-runtime-0.14.0
+tar -xzf runtime-app-0.15.0-distribution.tar.gz -C /opt
+cd /opt/protocol-runtime-0.15.0
 ```
 
 For a stable path, use a symlink owned by your deployment process:
 
 ```sh
-ln -sfn /opt/protocol-runtime-0.14.0 /opt/protocol-runtime
+ln -sfn /opt/protocol-runtime-0.15.0 /opt/protocol-runtime
 cd /opt/protocol-runtime
 ```
 
@@ -71,6 +84,58 @@ Set one of these when the system default `java` is too old:
 JAVA_HOME=/path/to/jdk-21 bin/protocol-runtime java-check
 JAVA_BIN=/path/to/jdk-21/bin/java bin/protocol-runtime java-check
 ```
+
+The scripts are POSIX `sh` scripts. Windows use is operator-owned: use WSL,
+Git Bash, Cygwin, or invoke the standalone jar directly with an explicit JDK 21
+runtime.
+
+## Version Diagnostics
+
+Use `version` when opening support tickets, comparing deployed packages, or
+confirming a rollback target:
+
+```sh
+bin/protocol-runtime version
+```
+
+The output includes:
+
+- `runtime.version`
+- `artifact`
+- `java.version`
+- `java.bin`
+- `package.layout`
+- `package.layout.version`
+- `app.home`
+- `standalone.jar`
+
+## Package Integrity
+
+Verify an unpacked package layout:
+
+```sh
+bin/protocol-runtime verify-package
+```
+
+Verify a release archive with a checksum sidecar:
+
+```sh
+bin/protocol-runtime verify-package \
+  --artifact runtime-app-0.15.0-distribution.tar.gz \
+  --checksum runtime-app-0.15.0-distribution.tar.gz.sha256
+
+bin/protocol-runtime verify-package \
+  --artifact runtime-app-0.15.0-distribution.zip \
+  --checksum runtime-app-0.15.0-distribution.zip.sha512
+```
+
+The checksum file may contain raw hex or the common `hex filename` format. The
+script supports SHA-256 and SHA-512 through `sha256sum`, `sha512sum`, `shasum`,
+or `openssl`.
+
+Signature policy remains release-owned: use Maven Central `.asc` artifacts and
+your organization key trust policy for signature verification. No signing or
+checksum dependency is introduced into `runtime-core`.
 
 ## Configuration
 
@@ -124,17 +189,68 @@ bin/protocol-runtime stop
 Repeated stop against a missing or stale PID file is treated as already
 stopped by the application.
 
-## Upgrade
+## Configuration Migration
 
-Keep operator-owned state outside the application jar:
+Treat `conf/` as operator-owned after first install.
 
-- preserve `conf/` unless a release note explicitly requires config changes
-- preserve `logs/`, `data/`, `run/`, and `tmp/`
-- unpack the new package beside the old package
-- review new config templates before copying settings forward
-- run `java-check`, `validate`, and `dry-run`
-- switch the stable symlink only after validation succeeds
-- keep the old package until the new package passes startup smoke
+Recommended upgrade flow:
+
+1. Unpack the new package beside the old package.
+2. Keep the old `conf/`, `logs/`, `data/`, `run/`, and `tmp/` directories
+   until the new version passes smoke.
+3. Compare the new `conf/collector.properties` and
+   `conf/collector-production.properties` templates with the deployed config.
+4. Copy only intentional new keys or changed defaults into the operator-owned
+   config.
+5. Run `java-check`, `version`, `verify-package`, `validate`, and `dry-run`.
+6. Switch the stable symlink only after validation succeeds.
+
+Do not blindly overwrite production config templates. Keep any local
+management token, source id, listener port, sink path, runtime directory, PID
+file, and profile overrides under operator control.
+
+## Rollback
+
+Use package directories and symlinks to make rollback predictable:
+
+```text
+/opt/protocol-runtime-0.14.0/
+/opt/protocol-runtime-0.15.0/
+/opt/protocol-runtime -> /opt/protocol-runtime-0.15.0
+```
+
+Rollback flow:
+
+1. Stop the current collector and confirm the PID file is gone or stale.
+2. Switch `/opt/protocol-runtime` back to the previous package directory.
+3. Reuse the preserved operator-owned `conf/`, `logs/`, `data/`, `run/`, and
+   `tmp/` policy from your deployment process.
+4. Run `bin/protocol-runtime java-check`, `version`, `verify-package`,
+   `validate`, and `dry-run`.
+5. Start the old package and verify `status`, management health/readiness when
+   enabled, file sink output, and listener bind logs.
+
+If rollback follows a failed start, clear only stale PID files after confirming
+the process is no longer running. Preserve logs from both package versions.
+
+## Offline Deployment
+
+For servers without Maven Central access, download and move these files through
+your approved artifact channel:
+
+- `runtime-app-<version>-distribution.tar.gz`
+- `runtime-app-<version>-distribution.tar.gz.sha256`
+- `runtime-app-<version>-distribution.tar.gz.sha512`
+- `runtime-app-<version>-distribution.tar.gz.asc`
+- `runtime-app-<version>-distribution.zip`
+- `runtime-app-<version>-distribution.zip.sha256`
+- `runtime-app-<version>-distribution.zip.sha512`
+- `runtime-app-<version>-distribution.zip.asc`
+- `runtime-app-<version>-standalone.jar` and its checksum/signature sidecars
+- release notes, distribution package docs, and approved config templates
+
+Verify checksums before and after transfer. Verify signatures according to your
+organization's GPG trust process before installing on restricted servers.
 
 ## Smoke
 
@@ -144,16 +260,52 @@ Run the package smoke from the repository checkout:
 JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-distribution-package.sh
 ```
 
-The smoke builds the package, unpacks the tarball, verifies the zip exists,
-runs Java discovery checks, validates config, performs dry-run and status
-export, starts the collector, checks management health/readiness/status, sends
-an IEC104 test frame, verifies file-sink output, checks duplicate start and TCP
-port conflict behavior, and stops cleanly.
+The distribution smoke builds the package, unpacks the tarball, verifies the
+zip exists, checks generated checksum sidecars, runs Java discovery, version,
+layout verification, checksum verification, config validation, dry-run, status
+export, collector startup, management health/readiness/status, IEC104 test
+frame ingestion, file-sink output, duplicate start, TCP port conflict, missing
+checksum, bad checksum, and clean stop behavior.
+
+Run the release artifact smoke for local build outputs or downloaded release
+artifacts:
+
+```sh
+JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-release-artifact.sh
+```
+
+To validate downloaded artifacts instead of local build output:
+
+```sh
+DIST_TAR=/path/runtime-app-0.15.0-distribution.tar.gz \
+DIST_ZIP=/path/runtime-app-0.15.0-distribution.zip \
+JAVA_BIN=/path/to/jdk-21/bin/java \
+sh examples/smoke-release-artifact.sh
+```
+
+The release artifact smoke verifies tar/zip checksum sidecars, unpacks the
+package, and runs `java-check`, `version`, `verify-package`, `validate`,
+`dry-run`, `start`, `status`, and `stop`.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Checksum mismatch | Re-download the artifact and checksum sidecar from the same release/version; confirm text transfer did not alter line endings. |
+| Signature missing | Fetch the `.asc` sidecar from Maven Central or the approved offline bundle; signature verification is release-owned. |
+| Package extraction incomplete | Re-run checksum verification, then unpack into an empty directory and confirm `package.properties`, `bin/`, `conf/`, `lib/`, `logs/`, `data/`, `run/`, `tmp/`, `docs/`, and `examples/` exist. |
+| Wrong Java version | Run `bin/protocol-runtime java-check`; set `JAVA_HOME` or `JAVA_BIN` to JDK 21+. |
+| Script permission denied | Restore executable bits with `chmod +x bin/protocol-runtime bin/protocol-runtime-stop`, or invoke with `sh bin/protocol-runtime ...`. |
+| Stale PID | Confirm the PID is not running, preserve the old PID file for investigation if needed, then remove only the stale file. |
+| Port conflict | Run `validate`, inspect listener ports, and check local processes before restarting. |
+| Config migration error | Compare old operator config against the new template and copy only intentional keys. |
+| Offline artifact missing | Verify the offline bundle includes zip/tar.gz, standalone jar, checksum, signature, docs, and approved config templates. |
+| Version mismatch | Compare `bin/protocol-runtime version`, `package.properties`, the artifact filename, and Maven Central coordinates. |
 
 ## Boundary
 
 Distribution package governance is allowed only in `runtime-app`, build
 configuration, examples, docs, or a future dedicated app/distribution module.
 It must not add framework, service-manager, filesystem-layout, deployment
-wrapper, or packaging dependencies to `runtime-core`, `runtime-protocol-*`, or
-`protocol-sdk`.
+wrapper, installer, checksum/signing, or packaging dependencies to
+`runtime-core`, `runtime-protocol-*`, or `protocol-sdk`.

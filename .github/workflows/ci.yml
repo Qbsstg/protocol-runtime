@@ -34,3 +34,6 @@ jobs:
 
       - name: Distribution package smoke
         run: sh examples/smoke-distribution-package.sh
+
+      - name: Release artifact smoke
+        run: sh examples/smoke-release-artifact.sh
