@@ -98,9 +98,9 @@ observability exporter, database, Redis, Spring, or reverse dependency into
 
 - [x] `0.15.0` release artifacts are published and verified from Maven Central.
 - [x] GitHub Release `v0.15.0` is published.
-- [x] Maven reactor is opened at `0.16.0-SNAPSHOT` for development.
+- [x] Maven reactor is fixed at `0.16.0` on the release branch.
 - [x] README and Chinese README describe the `0.16.0` production runtime
-  operations planning line.
+  operations release line.
 - [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
   `0.16.0` planning boundary.
 - [x] runtime self-check boundary is implemented in `runtime-app` and exposed
@@ -117,3 +117,5 @@ observability exporter, database, Redis, Spring, or reverse dependency into
 - [x] release artifact regression smoke is implemented in
   [`../examples/smoke-release-artifact-regression.sh`](../examples/smoke-release-artifact-regression.sh).
 - [x] operator runbook and production issue diagnostics flow are drafted.
+- [x] `docs/release-readiness-0.16.0.md` records the release branch audit,
+  verification checklist, and final publication gates.

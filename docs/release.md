@@ -7,9 +7,10 @@ Central Portal.
 
 The latest published runtime release is `0.15.0`.
 
-The Maven reactor is opened at `0.16.0-SNAPSHOT` after the published `0.15.0`
-distribution package productionization release. The `0.16.0` line targets the
-first production runtime operations baseline: runtime self-checks,
+The Maven reactor is fixed at `0.16.0` on the release branch after the
+published `0.15.0` distribution package productionization release. The
+`0.16.0` release targets the first production runtime operations baseline:
+runtime self-checks,
 configuration hot-check without hot-reload, stronger logging and status
 evidence, failure recovery runbooks, long-running smoke, release artifact
 regression smoke, operator runbooks, and production issue diagnostics.
@@ -38,7 +39,9 @@ onward.
 The `0.16.0` roadmap is maintained in
 [`roadmap-0.16.0.md`](roadmap-0.16.0.md), and release notes are maintained in
 [`release-notes-0.16.0.md`](release-notes-0.16.0.md). The operations runbook is
-maintained in [`operations-runbook.md`](operations-runbook.md). The published `0.15.0`
+maintained in [`operations-runbook.md`](operations-runbook.md), and the
+`0.16.0` release-readiness audit is tracked in
+[`release-readiness-0.16.0.md`](release-readiness-0.16.0.md). The published `0.15.0`
 roadmap is maintained in
 [`roadmap-0.15.0.md`](roadmap-0.15.0.md), and release notes are maintained in
 [`release-notes-0.15.0.md`](release-notes-0.15.0.md). The `0.15.0`

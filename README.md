@@ -53,15 +53,17 @@ guidance, configuration migration notes, upgrade rollback strategy, offline
 deployment guidance, release artifact smoke, and operator troubleshooting
 improvements.
 
-The `0.16.0-SNAPSHOT` development line adds the first production runtime
-operations baseline: runtime self-checks, configuration hot-check without
-hot-reload, stronger runtime status evidence, failure recovery and operator
-runbooks, long-running smoke, release artifact regression smoke, and
-production issue diagnostics.
+The `0.16.0` release branch adds the first production runtime operations
+baseline: runtime self-checks, configuration hot-check without hot-reload,
+stronger runtime status evidence, failure recovery and operator runbooks,
+long-running smoke, release artifact regression smoke, and production issue
+diagnostics.
 
 The `0.16.0` scope is tracked in
 [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md), and release notes are
 tracked in [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md).
+The `0.16.0` release-readiness audit is tracked in
+[`docs/release-readiness-0.16.0.md`](docs/release-readiness-0.16.0.md).
 The published `0.15.0` scope is tracked in
 [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md), and release notes are
 tracked in [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md).
@@ -701,7 +703,7 @@ Maven Central.
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -750,7 +752,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -790,7 +792,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -1105,6 +1107,7 @@ verified.
 - [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)
 - [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.16.0.md`](docs/release-readiness-0.16.0.md)
 - [`docs/release-readiness-0.15.0.md`](docs/release-readiness-0.15.0.md)
 - [`docs/release-readiness-0.14.0.md`](docs/release-readiness-0.14.0.md)
 - [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)

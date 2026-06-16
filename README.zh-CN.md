@@ -43,13 +43,14 @@ baseline，包括 zip/tar 分发包、`bin`/`conf`/`logs`/`data`/`run`/`tmp` 目
 checksum/signature 策略、跨平台脚本兼容、配置迁移说明、升级回滚策略、离线部署说明、
 release artifact smoke 和运维排障增强。
 
-当前 `0.16.0-SNAPSHOT` 开发线加入第一轮生产运行增强 baseline：运行时自检、配置
-hot-check 但不 hot-reload、运行状态证据增强、失败恢复和 operator runbook、长期运行
-smoke、release artifact 回归 smoke，以及生产问题诊断流程。
+当前 `0.16.0` release 分支加入第一轮生产运行增强 baseline：运行时自检、配置
+hot-check 但不 hot-reload、运行状态证据增强、失败恢复和 operator runbook、长期
+运行 smoke、release artifact 回归 smoke，以及生产问题诊断流程。
 
 当前 `0.16.0` 范围记录在
 [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md)，release notes 记录在
-[`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md)。已发布的 `0.15.0`
+[`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md)，release-readiness
+audit 记录在 [`docs/release-readiness-0.16.0.md`](docs/release-readiness-0.16.0.md)。已发布的 `0.15.0`
 范围记录在
 [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)，release notes 记录在
 [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md)，release-readiness
@@ -619,7 +620,7 @@ mvn -q -pl runtime-app -am package
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -666,7 +667,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -705,7 +706,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -1002,6 +1003,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)
 - [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.16.0.md`](docs/release-readiness-0.16.0.md)
 - [`docs/release-readiness-0.15.0.md`](docs/release-readiness-0.15.0.md)
 - [`docs/release-readiness-0.14.0.md`](docs/release-readiness-0.14.0.md)
 - [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
