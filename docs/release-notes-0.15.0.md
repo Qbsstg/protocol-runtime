@@ -1,11 +1,11 @@
 # Protocol Runtime 0.15.0 Release Notes
 
-Release notes draft for the `0.15.0` runtime release.
+Release notes for the published `0.15.0` runtime release.
 
 `0.15.0` follows the published `0.14.0` runtime package distribution
-governance release. The release branch fixes the Maven reactor version at
-`0.15.0` for distribution package productionization. No `v0.15.0` tag is
-created and no real Maven Central upload is part of the release branch PR.
+governance release. The release branch fixed the Maven reactor version at
+`0.15.0`, tag `v0.15.0` points at the release commit, and Maven Central
+deployment `18a3b2bb-69bb-4932-8d21-a172736845f1` reached `PUBLISHED`.
 
 ## Baseline Highlights
 
@@ -58,7 +58,7 @@ API, upgrade API, or status export API.
 
 ## Verification Targets
 
-Implementation and future release PRs must pass:
+The release passed:
 
 - `git diff --check`
 - `mvn -q verify`
@@ -70,17 +70,18 @@ Implementation and future release PRs must pass:
 - release artifact smoke for local build or downloaded package outputs
 - dependency boundary checks proving package productionization work does not
   enter `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
-- GitHub CI on release PRs
+- GitHub CI on the release PR
 
 ## Release Branch Checks
 
 The release branch checks are tracked in
-[`release-readiness-0.15.0.md`](release-readiness-0.15.0.md). They must pass
-before the release branch is merged to `main`.
+[`release-readiness-0.15.0.md`](release-readiness-0.15.0.md).
 
 ## Publication
 
-- Tag: not created
-- Central deployment: not started
-- Central state: not published
-- GitHub Release: not created
+- Tag: `v0.15.0`
+- Central deployment: `18a3b2bb-69bb-4932-8d21-a172736845f1`
+- Central state: published and verified from isolated local Maven repositories,
+  including standalone jar, distribution zip/tar.gz artifacts, and published
+  signature/checksum sidecars
+- GitHub Release: https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.15.0

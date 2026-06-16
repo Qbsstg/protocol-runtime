@@ -312,12 +312,53 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
+## `0.16.0` Production Runtime Operations Boundary
+
+The `0.16.0` line is opened after the published `0.15.0` distribution package
+productionization release. The boundary is production runtime operations
+hardening for long-running standalone collectors without widening
+`runtime-core` or `protocol-sdk`.
+
+Allowed:
+
+- `runtime-app`, examples, docs, CI/smoke, or a future dedicated
+  app/operations module may own runtime self-check output, configuration
+  hot-check reporting, status/log evidence, failure recovery runbooks,
+  long-running smoke, release artifact regression smoke, operator runbooks,
+  and production issue diagnostics.
+- config hot-check behavior may detect configuration file changes and report
+  validation results, but this line does not hot-reload a running collector.
+- app-owned diagnostics may aggregate existing status, management, package
+  verification, Java discovery, runtime directory, PID, listener, source, sink,
+  backpressure, and failure-counter evidence.
+- smoke tests may verify packaged collectors over longer runtime windows and
+  published release artifacts as repository verification only.
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage,
+  service-manager, shell-wrapper, deployment-wrapper, filesystem-layout,
+  distribution-packaging, checksum/signing, installer, package-manager,
+  runtime-supervisor, operations-agent, or observability exporter dependencies
+  to `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as a management API, deployment API, package
+  API, upgrade API, operations API, or diagnostics API; it remains the protocol
+  payload ingestion adapter
+- moving self-check, config hot-check, recovery runbooks, package diagnostics,
+  production issue workflows, long-running smoke, or release artifact
+  regression smoke policy into `runtime-protocol-*`
+- requiring database, Redis, service registry, external scheduler, installer
+  daemon, runtime supervisor, or external observability exporters for the first
+  production runtime operations baseline
+
 ## `0.15.0` Distribution Package Productionization Boundary
 
-The `0.15.0` line is opened after the published `0.14.0` runtime
-package distribution governance release. The boundary is distribution package
-productionization for the standalone collector without widening `runtime-core`
-or `protocol-sdk`.
+The `0.15.0` line was opened after the published `0.14.0` runtime package
+distribution governance release and has since been published as the
+distribution package productionization release. The boundary is distribution
+package productionization for the standalone collector without widening
+`runtime-core` or `protocol-sdk`.
 
 Allowed:
 

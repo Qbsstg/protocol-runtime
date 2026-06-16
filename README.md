@@ -46,16 +46,23 @@ coverage. `0.14.0` published the first runtime package distribution governance
 baseline for the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/
 `data`/`run`/`tmp` layout templates, default config templates, script hardening,
 upgrade notes, package smoke, JDK 21 checks, default Java troubleshooting, and
-an operator install guide.
-
-The `0.15.0` release branch adds the first distribution package
+an operator install guide. `0.15.0` published the first distribution package
 productionization baseline: package metadata, version diagnostics, archive
 checksum verification, checksum/signature policy, cross-platform script
 guidance, configuration migration notes, upgrade rollback strategy, offline
 deployment guidance, release artifact smoke, and operator troubleshooting
 improvements.
 
-The `0.15.0` scope is tracked in
+The `0.16.0-SNAPSHOT` development line plans the next production runtime
+operations hardening pass: long-running stability, runtime self-checks,
+configuration hot-check without hot-reload, stronger logging and status
+evidence, failure recovery runbooks, long-running smoke, release artifact
+regression smoke, operator runbooks, and production issue diagnostics.
+
+The `0.16.0` scope is tracked in
+[`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md), and release notes are
+tracked in [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md).
+The published `0.15.0` scope is tracked in
 [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md), and release notes are
 tracked in [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md).
 The `0.15.0` release-readiness audit is tracked in
@@ -118,14 +125,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime version is `0.14.0`. Runtime modules are JDK 21
+The latest published runtime version is `0.15.0`. Runtime modules are JDK 21
 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.14.0</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
@@ -133,7 +140,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.14.0</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
@@ -141,7 +148,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.14.0</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
@@ -149,7 +156,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.14.0</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
@@ -157,7 +164,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.14.0</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
@@ -165,7 +172,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.14.0</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
@@ -185,12 +192,45 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.14.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, app-owned deployment governance, and zip/tar distribution package governance. |
+| `runtime-app` | 0.15.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, app-owned deployment governance, zip/tar distribution package governance, package metadata, version diagnostics, package integrity verification, checksum sidecars, release artifact smoke, and operator troubleshooting. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, richer deployable
 runtime applications, and dedicated app/adapter deployment helpers. Those
 dependencies belong here, not in `protocol-sdk`.
+
+## `0.16.0` Production Runtime Operations Planning
+
+`0.16.0` starts after the published `0.15.0` distribution package
+productionization release. The planning line focuses on making the standalone
+collector easier to operate during long-running production use without adding a
+runtime supervisor, service manager, database, Redis, external observability
+exporter, or framework dependency.
+
+The first planning scope includes:
+
+- long-running stability expectations and evidence to collect during extended
+  smoke runs
+- runtime self-check output for configuration, Java version, package layout,
+  writable directories, sink paths, listener bind readiness, and management
+  endpoint posture
+- configuration hot-check support that can detect changed config files and
+  report validation results without hot-reloading a running collector
+- stronger logging and status evidence for startup, shutdown, listener bind,
+  sink health, parse failures, backpressure decisions, management requests, and
+  package integrity state
+- failure recovery runbooks for stale PID files, port conflicts, sink path
+  failures, malformed config, management token errors, parse failures,
+  backpressure, package verification failures, and interrupted upgrades
+- long-running smoke and release artifact regression smoke coverage
+- operator runbooks and production issue diagnostics flow for collecting
+  version, config validation, self-check, status export, logs, PID state,
+  management snapshots, and package verification evidence
+
+The planning work must stay in `runtime-app`, examples, docs, CI/smoke, or a
+future dedicated app/operations boundary. It must not add runtime-supervisor,
+service-manager, external exporter, database, Redis, Spring, installer, package
+manager, or reverse SDK dependencies.
 
 ## `0.13.0` Production Deployment Governance Baseline
 
@@ -236,8 +276,8 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
 
 ## `0.15.0` Distribution Package Productionization Baseline
 
-`0.15.0` is the next distribution package hardening line. The first
-baseline includes:
+`0.15.0` published the first distribution package hardening line. The baseline
+includes:
 
 - package metadata through distribution-root `package.properties`
 - `bin/protocol-runtime version` for runtime, artifact, Java, layout, app home,
@@ -652,13 +692,13 @@ mvn -q -pl runtime-app -am package
 ```
 
 The same command builds the current development-line distribution package under
-`runtime-app/target/`. Published `0.14.0` package artifacts are available from
+`runtime-app/target/`. Published `0.15.0` package artifacts are available from
 Maven Central.
 
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -707,7 +747,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -747,7 +787,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.15.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.16.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -1060,7 +1100,9 @@ verified.
 - [`docs/roadmap-0.13.0.md`](docs/roadmap-0.13.0.md)
 - [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)
 - [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)
+- [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md)
 - [`docs/release.md`](docs/release.md)
+- [`docs/release-readiness-0.15.0.md`](docs/release-readiness-0.15.0.md)
 - [`docs/release-readiness-0.14.0.md`](docs/release-readiness-0.14.0.md)
 - [`docs/release-readiness-0.13.0.md`](docs/release-readiness-0.13.0.md)
 - [`docs/release-readiness-0.12.0.md`](docs/release-readiness-0.12.0.md)
@@ -1090,3 +1132,4 @@ verified.
 - [`docs/release-notes-0.13.0.md`](docs/release-notes-0.13.0.md)
 - [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)
 - [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md)
+- [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md)

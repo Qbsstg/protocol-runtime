@@ -205,9 +205,12 @@ Final `0.15.0` publication is completed after the release branch merge:
 
 | Step | Result | Evidence |
 | --- | --- | --- |
-| Tag | Pending | Create `v0.15.0` from the merged release commit and push it to GitHub. |
-| Real Central upload | Pending | Run `mvn -Pcentral-release clean deploy` from the `v0.15.0` release commit. |
-| Manual Central publish | Pending | Publish the created Central deployment after repository validation completes. |
-| Public Maven Central verification | Pending | Verify `runtime-core:0.15.0` and `io.github.qbsstg:runtime-app:0.15.0:jar:standalone` from isolated local Maven repositories backed by Maven Central. |
-| Distribution package verification | Pending | Verify `io.github.qbsstg:runtime-app:0.15.0:zip:distribution` and `io.github.qbsstg:runtime-app:0.15.0:tar.gz:distribution` from isolated local Maven repositories backed by Maven Central. |
-| GitHub Release | Pending | Publish GitHub release notes at `https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.15.0`. |
+| Tag | Passed | `v0.15.0` points at release commit `7fcb83e`. |
+| Real Central upload | Passed | `mvn -Pcentral-release clean deploy` created Central deployment `18a3b2bb-69bb-4932-8d21-a172736845f1`. |
+| Manual Central publish | Passed | Deployment `18a3b2bb-69bb-4932-8d21-a172736845f1` reached `PUBLISHED`. |
+| Public Maven Central verification | Passed | `runtime-core:0.15.0`, published runtime modules, and `io.github.qbsstg:runtime-app:0.15.0:jar:standalone` resolved from an isolated local Maven repository backed by Maven Central. |
+| Distribution package verification | Passed | `io.github.qbsstg:runtime-app:0.15.0:zip:distribution`, `io.github.qbsstg:runtime-app:0.15.0:tar.gz:distribution`, `.asc`, and Maven Central checksum sidecars were verified from Maven Central. |
+| GitHub Release | Passed | GitHub release notes are published at `https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.15.0`. |
+
+`0.15.0` is now the latest published runtime release. The next development
+line opens at `0.16.0-SNAPSHOT` for production runtime operations planning.
