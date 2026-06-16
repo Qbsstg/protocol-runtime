@@ -80,6 +80,8 @@
                 <include>distribution-package.zh-CN.md</include>
                 <include>deployment-governance.md</include>
                 <include>deployment-governance.zh-CN.md</include>
+                <include>operations-runbook.md</include>
+                <include>operations-runbook.zh-CN.md</include>
                 <include>status-health-readiness.md</include>
                 <include>status-health-readiness.zh-CN.md</include>
             </includes>

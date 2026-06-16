@@ -42,13 +42,41 @@ public final class StandaloneCollectorMain {
         }
 
         CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+        StandaloneCollectorAppConfig config = null;
+        if (validation.isValid()) {
+            config = StandaloneCollectorConfig.appConfigFromProperties(properties);
+        }
+
+        if (command.selfCheck()) {
+            out.println(RuntimeOperationsChecks.selfCheck(
+                    command.operationsContext(),
+                    properties,
+                    validation,
+                    config));
+            return validation.isValid() ? 0 : 2;
+        }
+        if (command.hotCheck()) {
+            RuntimeOperationsChecks.HotCheckResult result = RuntimeOperationsChecks.hotCheck(
+                    command.operationsContext(),
+                    properties,
+                    validation,
+                    config);
+            out.println(result.json());
+            try {
+                result.writeBaselineIfPossible();
+            } catch (IOException ex) {
+                err.println("Unable to update hot-check baseline: " + ex.getMessage());
+                return 1;
+            }
+            return validation.isValid() ? 0 : 2;
+        }
+
         if (!validation.isValid()) {
             err.println("Protocol Runtime collector config validation status=INVALID");
             validation.errors().forEach(error -> err.println(" - " + error));
             return 2;
         }
 
-        StandaloneCollectorAppConfig config = StandaloneCollectorConfig.appConfigFromProperties(properties);
         if (command.validate()) {
             out.printf(
                     "Protocol Runtime collector config validation status=VALID profile=%s%n",
@@ -70,41 +98,42 @@ public final class StandaloneCollectorMain {
             return 0;
         }
 
+        final StandaloneCollectorAppConfig runtimeConfig = config;
         try {
-            config.deployment().prepareDirectories();
+            runtimeConfig.deployment().prepareDirectories();
         } catch (IOException ex) {
             err.println("Unable to prepare runtime directories: " + ex.getMessage());
             return 1;
         }
 
-        StandaloneCollector collector = StandaloneCollector.create(config);
+        StandaloneCollector collector = StandaloneCollector.create(runtimeConfig);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            stopCollector(collector, config, out, err);
+            stopCollector(collector, runtimeConfig, out, err);
         }, "protocol-runtime-shutdown"));
         try {
             collector.start();
-            StandaloneCollectorProcessControl.writePid(config.deployment().pidFile());
+            StandaloneCollectorProcessControl.writePid(runtimeConfig.deployment().pidFile());
         } catch (IOException ex) {
             err.println("Unable to write collector pid file: " + ex.getMessage());
             collector.stop();
             return 1;
         } catch (RuntimeException ex) {
             err.println("Unable to start Protocol Runtime collector: " + ex.getMessage());
-            exportStatus(config.deployment().statusFile(), collector.statusSnapshot(), err);
+            exportStatus(runtimeConfig.deployment().statusFile(), collector.statusSnapshot(), err);
             return 1;
         }
-        int listenerCount = config.tcpListeners().size() + config.httpListeners().size();
-        if (config.tcpListeners().size() == 1 && config.httpListeners().isEmpty()) {
-            TcpListenerConfig listener = config.tcpListeners().get(0);
+        int listenerCount = runtimeConfig.tcpListeners().size() + runtimeConfig.httpListeners().size();
+        if (runtimeConfig.tcpListeners().size() == 1 && runtimeConfig.httpListeners().isEmpty()) {
+            TcpListenerConfig listener = runtimeConfig.tcpListeners().get(0);
             out.printf(
                     "Protocol Runtime collector started transport=tcp protocol=%s host=%s port=%d sourceId=%s sink=%s%n",
                     listener.protocol().configValue(),
                     listener.tcp().host(),
                     collector.port(),
                     listener.sourceId().qualifiedValue(),
-                    config.sinkType().configValue());
-        } else if (config.httpListeners().size() == 1 && config.tcpListeners().isEmpty()) {
-            HttpListenerConfig listener = config.httpListeners().get(0);
+                    runtimeConfig.sinkType().configValue());
+        } else if (runtimeConfig.httpListeners().size() == 1 && runtimeConfig.tcpListeners().isEmpty()) {
+            HttpListenerConfig listener = runtimeConfig.httpListeners().get(0);
             out.printf(
                     "Protocol Runtime collector started transport=http protocol=%s host=%s port=%d path=%s sourceId=%s sink=%s%n",
                     listener.protocol().configValue(),
@@ -112,32 +141,32 @@ public final class StandaloneCollectorMain {
                     collector.httpPorts().get(0),
                     listener.http().path(),
                     listener.sourceId().qualifiedValue(),
-                    config.sinkType().configValue());
+                    runtimeConfig.sinkType().configValue());
         } else {
             out.printf(
                     "Protocol Runtime collector started listeners=%d sources=%d tcpPorts=%s httpPorts=%s sink=%s%n",
                     listenerCount,
-                    config.sources().size(),
+                    runtimeConfig.sources().size(),
                     collector.ports(),
                     collector.httpPorts(),
-                    config.sinkType().configValue());
+                    runtimeConfig.sinkType().configValue());
         }
-        if (config.management().enabled()) {
+        if (runtimeConfig.management().enabled()) {
             out.printf(
                     "Protocol Runtime management started host=%s port=%d health=%s readiness=%s status=%s access=%s requestLogging=%s%n",
-                    config.management().host(),
+                    runtimeConfig.management().host(),
                     collector.managementPort(),
-                    config.management().healthPath(),
-                    config.management().readinessPath(),
-                    config.management().statusPath(),
-                    config.management().accessMode().configValue(),
-                    config.management().requestLoggingEnabled());
+                    runtimeConfig.management().healthPath(),
+                    runtimeConfig.management().readinessPath(),
+                    runtimeConfig.management().statusPath(),
+                    runtimeConfig.management().accessMode().configValue(),
+                    runtimeConfig.management().requestLoggingEnabled());
         }
-        exportStatus(config.deployment().statusFile(), collector.statusSnapshot(), err);
+        exportStatus(runtimeConfig.deployment().statusFile(), collector.statusSnapshot(), err);
         out.println(CollectorStatusFormatter.format(collector.statusSnapshot()));
         collector.awaitShutdown();
-        StandaloneCollectorProcessControl.clearPid(config.deployment().pidFile());
-        exportStatus(config.deployment().statusFile(), collector.statusSnapshot(), err);
+        StandaloneCollectorProcessControl.clearPid(runtimeConfig.deployment().pidFile());
+        exportStatus(runtimeConfig.deployment().statusFile(), collector.statusSnapshot(), err);
         return 0;
     }
 
@@ -194,20 +223,69 @@ public final class StandaloneCollectorMain {
             boolean validate,
             boolean dryRun,
             boolean stop,
+            boolean selfCheck,
+            boolean hotCheck,
             Path pidFile,
+            Path configFile,
+            Path appHome,
+            Path packageMetadataFile,
+            String packageIntegrityStatus,
+            Path hotCheckBaselineFile,
             String[] configArgs) {
+
+        RuntimeOperationsChecks.RuntimeOperationsContext operationsContext() {
+            return new RuntimeOperationsChecks.RuntimeOperationsContext(
+                    configFile,
+                    appHome,
+                    packageMetadataFile,
+                    packageIntegrityStatus,
+                    hotCheckBaselineFile);
+        }
 
         static CliCommand parse(String[] args) {
             boolean validate = false;
             boolean dryRun = false;
             boolean stop = false;
+            boolean selfCheck = false;
+            boolean hotCheck = false;
             Path pidFile = null;
+            Path configFile = null;
+            Path appHome = null;
+            Path packageMetadataFile = null;
+            String packageIntegrityStatus = null;
+            Path hotCheckBaselineFile = null;
             List<String> configArgs = new ArrayList<>();
             if (args == null) {
-                return new CliCommand(false, false, false, null, new String[0]);
+                return new CliCommand(
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        new String[0]);
             }
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
+                if ("--config".equals(arg)) {
+                    if (i + 1 >= args.length) {
+                        throw new IllegalArgumentException("--config requires a file path");
+                    }
+                    configFile = Path.of(args[++i]);
+                    configArgs.add("--config");
+                    configArgs.add(configFile.toString());
+                    continue;
+                }
+                if (arg.startsWith("--config=")) {
+                    configFile = Path.of(arg.substring("--config=".length()));
+                    configArgs.add(arg);
+                    continue;
+                }
                 if ("--validate".equals(arg)) {
                     validate = true;
                     continue;
@@ -220,6 +298,14 @@ public final class StandaloneCollectorMain {
                     stop = true;
                     continue;
                 }
+                if ("--self-check".equals(arg)) {
+                    selfCheck = true;
+                    continue;
+                }
+                if ("--hot-check".equals(arg)) {
+                    hotCheck = true;
+                    continue;
+                }
                 if ("--pid-file".equals(arg)) {
                     if (i + 1 >= args.length) {
                         throw new IllegalArgumentException("--pid-file requires a file path");
@@ -229,6 +315,50 @@ public final class StandaloneCollectorMain {
                 }
                 if (arg.startsWith("--pid-file=")) {
                     pidFile = Path.of(arg.substring("--pid-file=".length()));
+                    continue;
+                }
+                if ("--operation-app-home".equals(arg)) {
+                    if (i + 1 >= args.length) {
+                        throw new IllegalArgumentException("--operation-app-home requires a directory path");
+                    }
+                    appHome = Path.of(args[++i]);
+                    continue;
+                }
+                if (arg.startsWith("--operation-app-home=")) {
+                    appHome = Path.of(arg.substring("--operation-app-home=".length()));
+                    continue;
+                }
+                if ("--operation-package-metadata".equals(arg)) {
+                    if (i + 1 >= args.length) {
+                        throw new IllegalArgumentException("--operation-package-metadata requires a file path");
+                    }
+                    packageMetadataFile = Path.of(args[++i]);
+                    continue;
+                }
+                if (arg.startsWith("--operation-package-metadata=")) {
+                    packageMetadataFile = Path.of(arg.substring("--operation-package-metadata=".length()));
+                    continue;
+                }
+                if ("--operation-package-integrity".equals(arg)) {
+                    if (i + 1 >= args.length) {
+                        throw new IllegalArgumentException("--operation-package-integrity requires a status value");
+                    }
+                    packageIntegrityStatus = args[++i];
+                    continue;
+                }
+                if (arg.startsWith("--operation-package-integrity=")) {
+                    packageIntegrityStatus = arg.substring("--operation-package-integrity=".length());
+                    continue;
+                }
+                if ("--hot-check-baseline".equals(arg)) {
+                    if (i + 1 >= args.length) {
+                        throw new IllegalArgumentException("--hot-check-baseline requires a file path");
+                    }
+                    hotCheckBaselineFile = Path.of(args[++i]);
+                    continue;
+                }
+                if (arg.startsWith("--hot-check-baseline=")) {
+                    hotCheckBaselineFile = Path.of(arg.substring("--hot-check-baseline=".length()));
                     continue;
                 }
                 if ("--status-export".equals(arg)) {
@@ -246,10 +376,29 @@ public final class StandaloneCollectorMain {
                 }
                 configArgs.add(arg);
             }
-            if (stop && (validate || dryRun)) {
-                throw new IllegalArgumentException("--stop cannot be combined with --validate or --dry-run");
+            int commandCount = 0;
+            commandCount += validate ? 1 : 0;
+            commandCount += dryRun ? 1 : 0;
+            commandCount += stop ? 1 : 0;
+            commandCount += selfCheck ? 1 : 0;
+            commandCount += hotCheck ? 1 : 0;
+            if (commandCount > 1) {
+                throw new IllegalArgumentException(
+                        "--validate, --dry-run, --stop, --self-check, and --hot-check cannot be combined");
             }
-            return new CliCommand(validate, dryRun, stop, pidFile, configArgs.toArray(String[]::new));
+            return new CliCommand(
+                    validate,
+                    dryRun,
+                    stop,
+                    selfCheck,
+                    hotCheck,
+                    pidFile,
+                    configFile,
+                    appHome,
+                    packageMetadataFile,
+                    packageIntegrityStatus,
+                    hotCheckBaselineFile,
+                    configArgs.toArray(String[]::new));
         }
     }
 }

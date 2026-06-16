@@ -3,20 +3,19 @@
 Release notes draft for the future `0.16.0` runtime release.
 
 `0.16.0` follows the published `0.15.0` standalone collector distribution
-package productionization release. The Maven reactor is opened at
-`0.16.0-SNAPSHOT` for production runtime operations planning.
+package productionization release. The Maven reactor is open at
+`0.16.0-SNAPSHOT` for the first production runtime operations baseline.
 
-## Planned Scope
+## Baseline Scope
 
-`0.16.0` is planned as a production runtime operations hardening release for
-standalone collector deployments. The goal is to improve long-running
+`0.16.0` is a production runtime operations hardening release for standalone
+collector deployments. The goal is to improve long-running
 operability, diagnostics, and recovery evidence while keeping operational
 concerns in `runtime-app`, examples, docs, CI/smoke, or a future dedicated
 app/operations boundary.
 
-Planned areas:
+Baseline areas:
 
-- Long-running stability expectations for packaged standalone collectors.
 - Runtime self-check output for Java version, package layout, writable runtime
   directories, sink paths, listener bind readiness, management endpoint
   posture, and package integrity evidence.
@@ -33,6 +32,9 @@ Planned areas:
 - Operator runbook and production issue diagnostics flow.
 
 The detailed plan is tracked in [`roadmap-0.16.0.md`](roadmap-0.16.0.md).
+Operational procedures are tracked in
+[`operations-runbook.md`](operations-runbook.md) and
+[`operations-runbook.zh-CN.md`](operations-runbook.zh-CN.md).
 
 ## Dependency Policy
 
@@ -61,8 +63,10 @@ Implementation and future release PRs should pass:
 - management HTTP smoke
 - distribution package smoke
 - release artifact smoke
-- long-running smoke when introduced
-- release artifact regression smoke when introduced
+- runtime self-check and config hot-check coverage inside distribution and
+  release artifact smoke
+- long-running smoke
+- release artifact regression smoke
 - dependency boundary checks proving production operations work does not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
 - GitHub CI on implementation and release PRs

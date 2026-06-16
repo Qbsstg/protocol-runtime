@@ -18,6 +18,7 @@ PID_FILE=${PID_FILE:-"$APP_HOME/run/protocol-runtime.pid"}
 STATUS_FILE=${STATUS_FILE:-"$APP_HOME/run/status.json"}
 LOG_FILE=${LOG_FILE:-"$APP_HOME/logs/protocol-runtime.log"}
 PACKAGE_METADATA=${PACKAGE_METADATA:-"$APP_HOME/package.properties"}
+HOT_CHECK_BASELINE=${HOT_CHECK_BASELINE:-"$APP_HOME/run/config.hotcheck.properties"}
 JAVA_VERSION=""
 
 usage() {
@@ -32,6 +33,8 @@ Commands:
   stop        Stop the collector by PID file.
   java-check  Verify that the selected Java runtime is JDK 21 or newer.
   version     Print package, artifact, layout, and Java runtime versions.
+  self-check  Print runtime, package, config, listener, sink, and management diagnostics.
+  hot-check   Revalidate config and report whether changes require a restart.
   verify-package
               Verify package layout or an archive checksum.
 
@@ -40,6 +43,8 @@ Options:
   --profile NAME       Optional profile name.
   --pid-file FILE      PID file for start/stop duplicate handling.
   --status-file FILE   Status JSON file for dry-run/status.
+  --hot-check-baseline FILE
+                       Hot-check baseline file. Default: run/config.hotcheck.properties.
 
 Verify package options:
   --artifact FILE       Distribution zip/tar.gz or standalone jar to verify.
@@ -47,7 +52,8 @@ Verify package options:
   --algorithm NAME      Optional sha256 or sha512 override.
 
 Environment:
-  APP_HOME, JAVA_HOME, JAVA_BIN, CONFIG, PROFILE, PID_FILE, STATUS_FILE, LOG_FILE, JAR
+  APP_HOME, JAVA_HOME, JAVA_BIN, CONFIG, PROFILE, PID_FILE, STATUS_FILE, LOG_FILE,
+  HOT_CHECK_BASELINE, PACKAGE_METADATA, JAR
 USAGE
 }
 
@@ -334,6 +340,15 @@ while [ "$#" -gt 0 ]; do
       STATUS_FILE=${1#*=}
       shift
       ;;
+    --hot-check-baseline)
+      [ "$#" -ge 2 ] || fail "--hot-check-baseline requires a file path"
+      HOT_CHECK_BASELINE=$2
+      shift 2
+      ;;
+    --hot-check-baseline=*)
+      HOT_CHECK_BASELINE=${1#--hot-check-baseline=}
+      shift
+      ;;
     --)
       shift
       break
@@ -345,7 +360,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$command" in
-  start|validate|dry-run|stop|java-check|version)
+  start|validate|dry-run|stop|java-check|version|self-check|hot-check)
     check_java
     resolve_jar
     ;;
@@ -397,6 +412,35 @@ case "$command" in
     ;;
   version)
     print_version
+    ;;
+  self-check)
+    verify_package_layout >/dev/null
+    cd "$APP_HOME"
+    if [ -n "$PROFILE" ]; then
+      set -- --self-check --config "$CONFIG" --profile "$PROFILE" "$@"
+    else
+      set -- --self-check --config "$CONFIG" "$@"
+    fi
+    set -- "$@" \
+      --operation-app-home "$APP_HOME" \
+      --operation-package-metadata "$PACKAGE_METADATA" \
+      --operation-package-integrity "layout-verified"
+    exec "$JAVA_BIN" -jar "$JAR" "$@"
+    ;;
+  hot-check)
+    verify_package_layout >/dev/null
+    cd "$APP_HOME"
+    if [ -n "$PROFILE" ]; then
+      set -- --hot-check --config "$CONFIG" --profile "$PROFILE" "$@"
+    else
+      set -- --hot-check --config "$CONFIG" "$@"
+    fi
+    set -- "$@" \
+      --operation-app-home "$APP_HOME" \
+      --operation-package-metadata "$PACKAGE_METADATA" \
+      --operation-package-integrity "layout-verified" \
+      --hot-check-baseline "$HOT_CHECK_BASELINE"
+    exec "$JAVA_BIN" -jar "$JAR" "$@"
     ;;
   verify-package)
     verify_external_checksum "$@"

@@ -12,6 +12,10 @@ CONFLICT_LOG="$OUT_DIR/port-conflict.log"
 MISSING_JAVA_LOG="$OUT_DIR/missing-java.log"
 STATUS_COPY="$OUT_DIR/status-from-script.json"
 VERSION_OUTPUT="$OUT_DIR/version.txt"
+SELF_CHECK_OUTPUT="$OUT_DIR/self-check.json"
+HOT_CHECK_FIRST="$OUT_DIR/hot-check-first.json"
+HOT_CHECK_UNCHANGED="$OUT_DIR/hot-check-unchanged.json"
+HOT_CHECK_CHANGED="$OUT_DIR/hot-check-changed.json"
 BAD_CHECKSUM="$OUT_DIR/bad.sha256"
 MISSING_CHECKSUM="$OUT_DIR/missing.sha256"
 BAD_CHECKSUM_LOG="$OUT_DIR/bad-checksum.log"
@@ -59,6 +63,7 @@ if [ -z "$APP_HOME" ]; then
   echo "distribution package did not unpack to protocol-runtime-* directory" >&2
   exit 1
 fi
+HOT_CHECK_BASELINE="$APP_HOME/run/config.hotcheck.properties"
 
 for path in bin/protocol-runtime bin/protocol-runtime-stop conf logs data run tmp lib docs examples; do
   if [ ! -e "$APP_HOME/$path" ]; then
@@ -149,6 +154,52 @@ if ! grep -q "checksum mismatch" "$BAD_CHECKSUM_LOG"; then
   exit 1
 fi
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" validate --config "$CONFIG" >/dev/null
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" self-check --config "$CONFIG" > "$SELF_CHECK_OUTPUT"
+if ! grep -q '"command":"self-check"' "$SELF_CHECK_OUTPUT" \
+    || ! grep -q '"status":"PASS"' "$SELF_CHECK_OUTPUT" \
+    || ! grep -q '"integrity":"layout-verified"' "$SELF_CHECK_OUTPUT"; then
+  cat "$SELF_CHECK_OUTPUT"
+  echo "distribution self-check did not report required runtime operations evidence" >&2
+  exit 1
+fi
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" hot-check \
+  --config "$CONFIG" \
+  --hot-check-baseline "$HOT_CHECK_BASELINE" \
+  > "$HOT_CHECK_FIRST"
+if ! grep -q '"command":"hot-check"' "$HOT_CHECK_FIRST" \
+    || ! grep -q '"baselinePresent":false' "$HOT_CHECK_FIRST" \
+    || ! grep -q '"status":"BASELINE_CREATED"' "$HOT_CHECK_FIRST" \
+    || ! grep -q '"hotReloaded":false' "$HOT_CHECK_FIRST"; then
+  cat "$HOT_CHECK_FIRST"
+  echo "distribution hot-check did not create the first baseline" >&2
+  exit 1
+fi
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" hot-check \
+  --config "$CONFIG" \
+  --hot-check-baseline "$HOT_CHECK_BASELINE" \
+  > "$HOT_CHECK_UNCHANGED"
+if ! grep -q '"baselinePresent":true' "$HOT_CHECK_UNCHANGED" \
+    || ! grep -q '"changed":false' "$HOT_CHECK_UNCHANGED" \
+    || ! grep -q '"restartRequired":false' "$HOT_CHECK_UNCHANGED" \
+    || ! grep -q '"status":"UNCHANGED"' "$HOT_CHECK_UNCHANGED"; then
+  cat "$HOT_CHECK_UNCHANGED"
+  echo "distribution hot-check did not report unchanged config" >&2
+  exit 1
+fi
+cat >> "$CONFIG" <<EOF
+# smoke change for hot-check restart evidence
+EOF
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" hot-check \
+  --config "$CONFIG" \
+  --hot-check-baseline "$HOT_CHECK_BASELINE" \
+  > "$HOT_CHECK_CHANGED"
+if ! grep -q '"changed":true' "$HOT_CHECK_CHANGED" \
+    || ! grep -q '"restartRequired":true' "$HOT_CHECK_CHANGED" \
+    || ! grep -q '"hotReloaded":false' "$HOT_CHECK_CHANGED"; then
+  cat "$HOT_CHECK_CHANGED"
+  echo "distribution hot-check did not detect the changed config" >&2
+  exit 1
+fi
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" dry-run --config "$CONFIG" --status-file "$STATUS" >/dev/null
 if ! grep -q '"lifecycle":"CONFIGURED"' "$STATUS"; then
   cat "$STATUS"

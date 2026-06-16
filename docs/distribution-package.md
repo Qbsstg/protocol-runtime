@@ -1,11 +1,14 @@
 # Protocol Runtime Distribution Package
 
-`0.15.0` hardens the standalone collector distribution package for operator
+`0.15.0` hardened the standalone collector distribution package for operator
 install, verification, upgrade, rollback, offline deployment, and support
-diagnostics. The work stays in `runtime-app`, build configuration, examples,
-and docs. It does not move packaging, checksum/signing, service management,
-filesystem layout, or installer concerns into `runtime-core` or protocol
-parser modules.
+diagnostics. `0.16.0` adds app-owned runtime operations checks on top of that
+package: `self-check`, `hot-check`, long-running smoke, release artifact
+regression smoke, and operator recovery runbooks. The work stays in
+`runtime-app`, build configuration, examples, and docs. It does not move
+packaging, checksum/signing, service management, filesystem layout,
+operations-agent, runtime-supervisor, or installer concerns into `runtime-core`
+or protocol parser modules.
 
 ## Build
 
@@ -137,6 +140,36 @@ Signature policy remains release-owned: use Maven Central `.asc` artifacts and
 your organization key trust policy for signature verification. No signing or
 checksum dependency is introduced into `runtime-core`.
 
+## Runtime Operations Checks
+
+Run `self-check` before first start, after upgrades, or during production
+triage:
+
+```sh
+bin/protocol-runtime self-check
+```
+
+The command prints JSON evidence for Java version, package metadata, package
+layout, config validation, runtime directory readability/writability, listener
+bind readiness, source mappings, sink paths, management configuration,
+backpressure policy, and package integrity state. It does not bind listener
+ports.
+
+Run `hot-check` when you need to know whether an operator-owned config file
+changed while the collector is running:
+
+```sh
+bin/protocol-runtime hot-check
+```
+
+`hot-check` hashes the configured properties file, re-runs validation, compares
+against `run/config.hotcheck.properties`, and reports whether restart is
+required. It never hot-reloads the running collector. Override the comparison
+file with `--hot-check-baseline FILE` or `HOT_CHECK_BASELINE`.
+
+The operational recovery flow is documented in
+[`operations-runbook.md`](operations-runbook.md).
+
 ## Configuration
 
 The default package config is `conf/collector.properties`. It keeps management
@@ -171,6 +204,13 @@ Run startup dry-run and export a configured status snapshot:
 ```sh
 bin/protocol-runtime dry-run
 bin/protocol-runtime status
+```
+
+Run production operations diagnostics:
+
+```sh
+bin/protocol-runtime self-check
+bin/protocol-runtime hot-check
 ```
 
 Start in the foreground:
@@ -262,10 +302,11 @@ JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-distribution-package.sh
 
 The distribution smoke builds the package, unpacks the tarball, verifies the
 zip exists, checks generated checksum sidecars, runs Java discovery, version,
-layout verification, checksum verification, config validation, dry-run, status
-export, collector startup, management health/readiness/status, IEC104 test
-frame ingestion, file-sink output, duplicate start, TCP port conflict, missing
-checksum, bad checksum, and clean stop behavior.
+layout verification, checksum verification, config validation, `self-check`,
+`hot-check`, dry-run, status export, collector startup, management
+health/readiness/status, IEC104 test frame ingestion, file-sink output,
+duplicate start, TCP port conflict, missing checksum, bad checksum, and clean
+stop behavior.
 
 Run the release artifact smoke for local build outputs or downloaded release
 artifacts:
@@ -285,7 +326,22 @@ sh examples/smoke-release-artifact.sh
 
 The release artifact smoke verifies tar/zip checksum sidecars, unpacks the
 package, and runs `java-check`, `version`, `verify-package`, `validate`,
-`dry-run`, `start`, `status`, and `stop`.
+`self-check`, `hot-check`, `dry-run`, `start`, `status`, and `stop`.
+
+Run long-running package smoke with a short default window:
+
+```sh
+JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-long-running.sh
+```
+
+Use `RUN_SECONDS=300` or a larger value for manual soak checks.
+
+Run release artifact regression smoke for standalone jar plus distribution
+artifacts:
+
+```sh
+JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-release-artifact-regression.sh
+```
 
 ## Troubleshooting
 

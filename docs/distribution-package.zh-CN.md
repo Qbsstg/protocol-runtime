@@ -1,9 +1,11 @@
 # Protocol Runtime 运行包分发说明
 
 `0.15.0` 对 standalone collector 运行包做第一轮生产化增强，重点覆盖安装校验、
-完整性验证、升级、回滚、离线部署和支持排障。相关能力仍放在 `runtime-app`、构建配置、
-examples 和 docs 中，不把打包、checksum/signing、服务管理、文件系统布局或 installer
-职责放进 `runtime-core` 或协议解析模块。
+完整性验证、升级、回滚、离线部署和支持排障。`0.16.0` 在此基础上增加 app-owned
+运行运维检查：`self-check`、`hot-check`、长期运行 smoke、release artifact 回归 smoke
+和 operator recovery runbook。相关能力仍放在 `runtime-app`、构建配置、examples 和
+docs 中，不把打包、checksum/signing、服务管理、文件系统布局、operations-agent、
+runtime-supervisor 或 installer 职责放进 `runtime-core` 或协议解析模块。
 
 ## 构建
 
@@ -128,6 +130,31 @@ checksum 文件可以是纯 hex，也可以是常见的 `hex filename` 格式。
 signature 仍属于发布流程策略：正式发布时复用 Maven Central `.asc` 文件，并按组织的
 GPG trust 策略验证。不把 checksum/signing 依赖引入 `runtime-core`。
 
+## 运行运维检查
+
+首次启动前、升级后或生产排障时执行 `self-check`：
+
+```sh
+bin/protocol-runtime self-check
+```
+
+该命令输出 JSON 证据，覆盖 Java 版本、包内元数据、包布局、配置校验、runtime 目录可读写、
+listener bind 准备状态、source 映射、sink 路径、management 配置、backpressure 策略和
+package integrity 状态。它不会绑定采集端口。
+
+如果需要判断运维自有配置是否已经变化，执行：
+
+```sh
+bin/protocol-runtime hot-check
+```
+
+`hot-check` 会计算配置文件 hash、重新校验配置、和 `run/config.hotcheck.properties`
+比较，并输出是否需要重启。它不会热加载运行中的 collector。可以用
+`--hot-check-baseline FILE` 或 `HOT_CHECK_BASELINE` 覆盖 baseline 文件。
+
+完整运维恢复流程见
+[`operations-runbook.zh-CN.md`](operations-runbook.zh-CN.md)。
+
 ## 配置
 
 默认配置是 `conf/collector.properties`。它默认把 management 绑定到 `127.0.0.1`，
@@ -161,6 +188,13 @@ bin/protocol-runtime validate
 ```sh
 bin/protocol-runtime dry-run
 bin/protocol-runtime status
+```
+
+执行生产运行诊断：
+
+```sh
+bin/protocol-runtime self-check
+bin/protocol-runtime hot-check
 ```
 
 前台启动：
@@ -244,9 +278,9 @@ JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-distribution-package.sh
 ```
 
 distribution smoke 会构建运行包、解压 tar 包、确认 zip 存在、检查生成的 checksum
-sidecar、验证 Java 发现、version 输出、包布局、checksum 校验、配置校验、dry-run、
-状态导出、collector 启动、management health/readiness/status、IEC104 测试帧、file
-sink 输出、重复启动、TCP 端口冲突、checksum 缺失、checksum 错误和优雅停止。
+sidecar、验证 Java 发现、version 输出、包布局、checksum 校验、配置校验、`self-check`、
+`hot-check`、dry-run、状态导出、collector 启动、management health/readiness/status、
+IEC104 测试帧、file sink 输出、重复启动、TCP 端口冲突、checksum 缺失、checksum 错误和优雅停止。
 
 本地构建产物或已下载 release artifact 可以运行：
 
@@ -264,7 +298,22 @@ sh examples/smoke-release-artifact.sh
 ```
 
 release artifact smoke 会验证 tar/zip checksum sidecar，解包后执行 `java-check`、
-`version`、`verify-package`、`validate`、`dry-run`、`start`、`status` 和 `stop`。
+`version`、`verify-package`、`validate`、`self-check`、`hot-check`、`dry-run`、`start`、
+`status` 和 `stop`。
+
+长期运行 smoke 默认使用较短窗口：
+
+```sh
+JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-long-running.sh
+```
+
+手工 soak 检查可以设置 `RUN_SECONDS=300` 或更大值。
+
+standalone jar 与 distribution artifact 的回归 smoke：
+
+```sh
+JAVA_BIN=/path/to/jdk-21/bin/java sh examples/smoke-release-artifact-regression.sh
+```
 
 ## 排障
 

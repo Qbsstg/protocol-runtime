@@ -11,6 +11,8 @@ UNPACK_DIR="$OUT_DIR/unpack"
 LOG="$OUT_DIR/collector.log"
 STATUS_COPY="$OUT_DIR/status.json"
 AUTHORITY_NOTE="$OUT_DIR/artifacts.txt"
+SELF_CHECK_OUTPUT="$OUT_DIR/self-check.json"
+HOT_CHECK_OUTPUT="$OUT_DIR/hot-check.json"
 
 rm -rf "$OUT_DIR"
 mkdir -p "$UNPACK_DIR"
@@ -84,6 +86,7 @@ CONFIG="$APP_HOME/conf/collector-release-smoke.properties"
 SINK="$APP_HOME/data/release-smoke-records.ndjson"
 STATUS="$APP_HOME/run/status.json"
 PID_FILE="$APP_HOME/run/protocol-runtime.pid"
+HOT_CHECK_BASELINE="$APP_HOME/run/config.hotcheck.properties"
 cp "$APP_HOME/conf/collector.properties" "$CONFIG"
 cat >> "$CONFIG" <<EOF
 collector.runtime.dir=$APP_HOME
@@ -95,6 +98,23 @@ collector.sink.file=$SINK
 EOF
 
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" validate --config "$CONFIG" >/dev/null
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" self-check --config "$CONFIG" > "$SELF_CHECK_OUTPUT"
+if ! grep -q '"command":"self-check"' "$SELF_CHECK_OUTPUT" \
+    || ! grep -q '"status":"PASS"' "$SELF_CHECK_OUTPUT"; then
+  cat "$SELF_CHECK_OUTPUT"
+  echo "release artifact self-check did not report PASS" >&2
+  exit 1
+fi
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" hot-check \
+  --config "$CONFIG" \
+  --hot-check-baseline "$HOT_CHECK_BASELINE" \
+  > "$HOT_CHECK_OUTPUT"
+if ! grep -q '"command":"hot-check"' "$HOT_CHECK_OUTPUT" \
+    || ! grep -q '"hotReloaded":false' "$HOT_CHECK_OUTPUT"; then
+  cat "$HOT_CHECK_OUTPUT"
+  echo "release artifact hot-check did not report non-reload diagnostics" >&2
+  exit 1
+fi
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" dry-run --config "$CONFIG" --status-file "$STATUS" >/dev/null
 
 collector_pid=""
