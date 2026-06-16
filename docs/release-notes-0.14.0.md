@@ -1,11 +1,11 @@
 # Protocol Runtime 0.14.0 Release Notes
 
-Release notes for the pending `0.14.0` runtime release.
+Release notes for the published `0.14.0` runtime release.
 
 `0.14.0` follows the published `0.13.0` production deployment governance
-release. The release branch fixes the Maven reactor at `0.14.0`. No
-`v0.14.0` tag is created and no real Maven Central upload is part of the
-release branch PR.
+release. The release branch fixed the Maven reactor at `0.14.0`, tag
+`v0.14.0` points at the release commit, and Maven Central deployment
+`fc95f451-5a0d-4d3c-8743-6a78374fa6d9` reached `PUBLISHED`.
 
 ## Highlights
 
@@ -88,7 +88,7 @@ The detailed plan is tracked in [`roadmap-0.14.0.md`](roadmap-0.14.0.md).
 
 ## Publication
 
-- Tag: not created
-- Central deployment: not started
-- Central state: not published
-- GitHub Release: not created
+- Tag: `v0.14.0`
+- Central deployment: `fc95f451-5a0d-4d3c-8743-6a78374fa6d9`
+- Central state: published and verified from isolated local Maven repositories
+- GitHub Release: https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.14.0

@@ -194,13 +194,13 @@ branch PR.
 
 ## Final Publication
 
-Final `0.14.0` publication happens after the release branch merges:
+Final `0.14.0` publication is complete after the release branch merge:
 
 | Step | Result | Evidence |
 | --- | --- | --- |
-| Tag | Pending | `v0.14.0` will be created from the merged release commit and pushed to GitHub. |
-| Real Central upload | Pending | `mvn -Pcentral-release clean deploy` will create a Central deployment. |
-| Manual Central publish | Pending | The deployment must be published after human confirmation and reach `PUBLISHED`. |
-| Public Maven Central verification | Pending | Runtime artifacts and `io.github.qbsstg:runtime-app:0.14.0:jar:standalone` must resolve from an isolated local Maven repository backed by Maven Central. |
-| Distribution package verification | Pending | `runtime-app:0.14.0` must build the standalone jar plus zip/tar.gz distribution artifacts from Central-resolved dependencies. |
-| GitHub Release | Pending | Release notes will be published at `https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.14.0`. |
+| Tag | Complete | `v0.14.0` was created from the merged release commit and pushed to GitHub. |
+| Real Central upload | Complete | `mvn -Pcentral-release clean deploy` created Central deployment `fc95f451-5a0d-4d3c-8743-6a78374fa6d9`. |
+| Manual Central publish | Complete | Central deployment `fc95f451-5a0d-4d3c-8743-6a78374fa6d9` reached `PUBLISHED`. |
+| Public Maven Central verification | Complete | `runtime-core:0.14.0` and `io.github.qbsstg:runtime-app:0.14.0:jar:standalone` resolved from isolated local Maven repositories backed by Maven Central. |
+| Distribution package verification | Complete | `io.github.qbsstg:runtime-app:0.14.0:zip:distribution` and `io.github.qbsstg:runtime-app:0.14.0:tar.gz:distribution` resolved from isolated local Maven repositories backed by Maven Central. |
+| GitHub Release | Complete | Release notes were published at `https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.14.0`. |

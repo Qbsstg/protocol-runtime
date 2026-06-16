@@ -312,12 +312,49 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
+## `0.15.0` Distribution Package Productionization Boundary
+
+The `0.15.0-SNAPSHOT` line is opened after the published `0.14.0` runtime
+package distribution governance release. The boundary is distribution package
+productionization planning for the standalone collector without widening
+`runtime-core` or `protocol-sdk`.
+
+Allowed:
+
+- `runtime-app`, build configuration, examples, docs, or a future dedicated
+  app/distribution module may own package integrity checks, checksum/signature
+  policy, embedded version metadata, release artifact smoke, upgrade migration
+  notes, rollback procedures, offline deployment guidance, and operator
+  troubleshooting.
+- build-owned packaging may attach or verify checksums and signatures for
+  release artifacts after the policy is explicit.
+- package smoke may validate published zip/tar outputs, version metadata,
+  startup scripts, status checks, Java discovery, and graceful stop behavior.
+- docs and examples may describe cross-platform script expectations without
+  requiring non-JDK service managers or installers.
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP, database, Redis, object storage,
+  service-manager, shell-wrapper, deployment-wrapper, filesystem-layout,
+  distribution-packaging, checksum/signing, installer, or observability
+  exporter dependencies to `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as a management API, package distribution API,
+  deployment API, upgrade API, or status export API; it remains the protocol
+  payload ingestion adapter
+- moving package integrity policy, signature policy, embedded version metadata,
+  config migration, rollback policy, offline deployment, install guides, or
+  release artifact smoke policy into `runtime-protocol-*`
+- requiring database, Redis, service registry, external scheduler, installer
+  daemon, external observability exporters, or platform service installation for
+  the first distribution package productionization planning baseline
+
 ## `0.14.0` Runtime Package Distribution Governance Boundary
 
-The Maven reactor is fixed at `0.14.0` on the release branch after the
-published `0.13.0` production deployment governance release. The boundary is
-runtime package distribution governance for the standalone collector without widening
-`runtime-core` or `protocol-sdk`.
+The `0.14.0` line was published after the `0.13.0` production deployment
+governance release. The boundary is runtime package distribution governance for
+the standalone collector without widening `runtime-core` or `protocol-sdk`.
 
 Allowed:
 
