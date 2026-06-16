@@ -1,12 +1,39 @@
 # Protocol Runtime 0.16.0 Release Notes
 
-Release notes draft for the future `0.16.0` runtime release.
+Release notes draft for the `0.16.0` runtime release.
 
 `0.16.0` follows the published `0.15.0` standalone collector distribution
-package productionization release. The Maven reactor is open at
-`0.16.0-SNAPSHOT` for the first production runtime operations baseline.
+package productionization release. The release branch fixes the Maven reactor
+version at `0.16.0` for the first production runtime operations baseline. No
+`v0.16.0` tag is created and no real Maven Central upload is part of the
+release branch PR.
 
-## Baseline Scope
+## Baseline Highlights
+
+- Adds `bin/protocol-runtime self-check` for Java version, runtime version,
+  package metadata, runtime directory writability, listener bind readiness,
+  sink paths, management posture, and package verification evidence.
+- Adds `bin/protocol-runtime hot-check` to detect configuration file changes,
+  re-run validation, and report whether a restart is required without
+  hot-reloading a live collector.
+- Strengthens status and log evidence for startup, shutdown, PID handling,
+  listener bind, active connections, sink health, parse failures,
+  backpressure decisions, management requests, package verification, and
+  version information.
+- Adds English and Chinese operations runbooks for self-check, hot-check,
+  failure recovery, long-running operation evidence, and production issue
+  diagnostics.
+- Adds long-running smoke coverage for packaged collector health/readiness,
+  status snapshots, file sink evidence, log evidence, PID state, and graceful
+  stop.
+- Adds release artifact regression smoke for local or published standalone jar
+  and distribution packages.
+- Preserves `runtime-core` as a dependency-light contract module with no
+  Spring, Netty, Kafka, MQTT, HTTP, database, Redis, operations-agent,
+  runtime-supervisor, service-manager, filesystem-layout, package-management,
+  checksum/signing, sink-adapter, or external observability dependencies.
+
+## Scope
 
 `0.16.0` is a production runtime operations hardening release for standalone
 collector deployments. The goal is to improve long-running
@@ -53,7 +80,7 @@ upgrade endpoint, operations endpoint, or diagnostics endpoint.
 
 ## Verification Targets
 
-Implementation and future release PRs should pass:
+Implementation and release PRs must pass:
 
 - `git diff --check`
 - `mvn -q verify`
@@ -69,7 +96,13 @@ Implementation and future release PRs should pass:
 - release artifact regression smoke
 - dependency boundary checks proving production operations work does not enter
   `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
-- GitHub CI on implementation and release PRs
+- GitHub CI on release PRs
+
+## Release Branch Checks
+
+The release branch checks are tracked in
+[`release-readiness-0.16.0.md`](release-readiness-0.16.0.md). They must pass
+before the release branch is merged to `main`.
 
 ## Publication
 

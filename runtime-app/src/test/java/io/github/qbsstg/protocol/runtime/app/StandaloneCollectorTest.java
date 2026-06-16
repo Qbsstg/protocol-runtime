@@ -1433,7 +1433,8 @@ class StandaloneCollectorTest {
         assertEquals(CollectorHealthState.FAILED, failed.health().health());
         assertEquals(CollectorReadinessState.NOT_READY, failed.health().readiness());
         assertTrue(failed.health().reasons().stream().anyMatch(reason -> reason.startsWith("startupFailure=")));
-        assertTrue(failed.startupFailureReason().contains("south"));
+        assertNotNull(failed.startupFailureReason());
+        assertTrue(failed.startupFailureReason().startsWith("Failed to start TCP listener "));
         assertNotNull(failed.lastExceptionType());
         assertNotNull(failed.lastExceptionMessage());
         assertEquals(0, failed.activeConnectionCount());
@@ -1626,9 +1627,9 @@ class StandaloneCollectorTest {
                 metadata,
                 String.join(
                         System.lineSeparator(),
-                        "runtime.version=0.16.0-SNAPSHOT",
-                        "artifact.name=runtime-app-0.16.0-SNAPSHOT",
-                        "package.layout=protocol-runtime-0.16.0-SNAPSHOT",
+                        "runtime.version=0.16.0",
+                        "artifact.name=runtime-app-0.16.0",
+                        "package.layout=protocol-runtime-0.16.0",
                         "package.layout.version=1",
                         ""));
         Files.writeString(
@@ -1669,7 +1670,7 @@ class StandaloneCollectorTest {
         String report = stdout.toString(StandardCharsets.UTF_8);
         assertTrue(report.contains("\"command\":\"self-check\""));
         assertTrue(report.contains("\"status\":\"PASS\""));
-        assertTrue(report.contains("\"runtimeVersion\":\"0.16.0-SNAPSHOT\""));
+        assertTrue(report.contains("\"runtimeVersion\":\"0.16.0\""));
         assertTrue(report.contains("\"sourceId\":\"iec104:self-check\""));
         assertTrue(report.contains("\"bindAttempted\":false"));
         assertTrue(report.contains("\"tokenConfigured\":true"));
