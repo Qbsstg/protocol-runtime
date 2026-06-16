@@ -11,6 +11,11 @@ DUPLICATE_LOG="$OUT_DIR/duplicate-start.log"
 CONFLICT_LOG="$OUT_DIR/port-conflict.log"
 MISSING_JAVA_LOG="$OUT_DIR/missing-java.log"
 STATUS_COPY="$OUT_DIR/status-from-script.json"
+VERSION_OUTPUT="$OUT_DIR/version.txt"
+BAD_CHECKSUM="$OUT_DIR/bad.sha256"
+MISSING_CHECKSUM="$OUT_DIR/missing.sha256"
+BAD_CHECKSUM_LOG="$OUT_DIR/bad-checksum.log"
+MISSING_CHECKSUM_LOG="$OUT_DIR/missing-checksum.log"
 AUTH_HEADER="Authorization: Bearer smoke-management-token"
 
 rm -rf "$OUT_DIR"
@@ -41,6 +46,12 @@ if [ -z "$DIST_ZIP" ] || [ ! -s "$DIST_ZIP" ]; then
   echo "distribution zip was not built" >&2
   exit 1
 fi
+for checksum in "$DIST_TAR.sha256" "$DIST_TAR.sha512" "$DIST_ZIP.sha256" "$DIST_ZIP.sha512"; do
+  if [ ! -s "$checksum" ]; then
+    echo "distribution checksum was not built: $checksum" >&2
+    exit 1
+  fi
+done
 
 tar -xzf "$DIST_TAR" -C "$UNPACK_DIR"
 APP_HOME=$(find "$UNPACK_DIR" -maxdepth 1 -type d -name 'protocol-runtime-*' -print | sort | tail -n 1)
@@ -57,6 +68,10 @@ for path in bin/protocol-runtime bin/protocol-runtime-stop conf logs data run tm
 done
 if [ ! -x "$APP_HOME/bin/protocol-runtime" ] || [ ! -x "$APP_HOME/bin/protocol-runtime-stop" ]; then
   echo "distribution bin scripts are not executable" >&2
+  exit 1
+fi
+if [ ! -s "$APP_HOME/package.properties" ]; then
+  echo "distribution package is missing package.properties" >&2
   exit 1
 fi
 
@@ -89,6 +104,50 @@ if ! grep -q "JAVA_BIN is not executable" "$MISSING_JAVA_LOG"; then
 fi
 
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" java-check >/dev/null
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" version > "$VERSION_OUTPUT"
+if ! grep -q '^runtime.version=' "$VERSION_OUTPUT" \
+    || ! grep -q '^java.version=' "$VERSION_OUTPUT" \
+    || ! grep -q '^package.layout=' "$VERSION_OUTPUT"; then
+  cat "$VERSION_OUTPUT"
+  echo "distribution version command did not print required diagnostics" >&2
+  exit 1
+fi
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" verify-package >/dev/null
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" verify-package \
+  --artifact "$DIST_TAR" \
+  --checksum "$DIST_TAR.sha256" \
+  >/dev/null
+JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" verify-package \
+  --artifact "$DIST_ZIP" \
+  --checksum "$DIST_ZIP.sha512" \
+  >/dev/null
+if JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" verify-package \
+    --artifact "$DIST_TAR" \
+    --checksum "$MISSING_CHECKSUM" \
+    > "$MISSING_CHECKSUM_LOG" 2>&1; then
+  cat "$MISSING_CHECKSUM_LOG"
+  echo "distribution verify-package accepted a missing checksum file" >&2
+  exit 1
+fi
+if ! grep -q "checksum file does not exist" "$MISSING_CHECKSUM_LOG"; then
+  cat "$MISSING_CHECKSUM_LOG"
+  echo "missing checksum did not produce a clear diagnostic" >&2
+  exit 1
+fi
+printf '%064d\n' 0 > "$BAD_CHECKSUM"
+if JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" verify-package \
+    --artifact "$DIST_TAR" \
+    --checksum "$BAD_CHECKSUM" \
+    > "$BAD_CHECKSUM_LOG" 2>&1; then
+  cat "$BAD_CHECKSUM_LOG"
+  echo "distribution verify-package accepted a bad checksum" >&2
+  exit 1
+fi
+if ! grep -q "checksum mismatch" "$BAD_CHECKSUM_LOG"; then
+  cat "$BAD_CHECKSUM_LOG"
+  echo "bad checksum did not produce a clear diagnostic" >&2
+  exit 1
+fi
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" validate --config "$CONFIG" >/dev/null
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" dry-run --config "$CONFIG" --status-file "$STATUS" >/dev/null
 if ! grep -q '"lifecycle":"CONFIGURED"' "$STATUS"; then

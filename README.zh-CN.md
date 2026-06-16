@@ -40,9 +40,9 @@ baseline，包括 zip/tar 分发包、`bin`/`conf`/`logs`/`data`/`run`/`tmp` 目
 默认配置模板、启动/停止脚本增强、升级说明、部署包 smoke、JDK 21 检查、默认 java
 版本排查和 operator install guide。
 
-`0.15.0-SNAPSHOT` 开发线已打开，规划 standalone collector 运行包生产化增强：
-包完整性校验、checksum/signature 策略、跨平台脚本兼容、配置迁移说明、升级回滚策略、
-离线部署说明、包内版本信息、release artifact smoke 和运维排障增强。
+`0.15.0-SNAPSHOT` 开发线已加入第一轮 standalone collector 运行包生产化 baseline：
+包内元数据、版本诊断、archive checksum 校验、checksum/signature 策略、跨平台脚本兼容、
+配置迁移说明、升级回滚策略、离线部署说明、release artifact smoke 和运维排障增强。
 
 当前 `0.15.0` 范围记录在
 [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)，release notes 记录在
@@ -212,18 +212,26 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --stop --pid-file target/protocol-runtime/run/protocol-runtime.pid
 ```
 
-## `0.15.0` 运行包生产化规划
+## `0.15.0` 运行包生产化 Baseline
 
-`0.15.0-SNAPSHOT` 用于规划下一轮运行包生产化增强，当前范围只做文档和边界设计：
+`0.15.0-SNAPSHOT` 用于推进下一轮运行包生产化增强，第一轮 baseline 包括：
 
-- release artifact 完整性校验和 checksum/signature 策略
+- 运行包根目录 `package.properties`
+- `bin/protocol-runtime version`，输出 runtime、artifact、Java、layout、app home 和
+  standalone jar 诊断信息
+- `bin/protocol-runtime verify-package`，支持解压包布局检查和 SHA-256/SHA-512 archive
+  checksum 校验
+- standalone jar、distribution zip、distribution tar.gz 本地构建 `.sha256` 和 `.sha512`
+  sidecar
+- checksum/signature 策略复用 Maven Central sidecar，不把 checksum/signing 依赖引入
+  `runtime-core`
 - POSIX shell 脚本兼容性和 operator-owned Windows 运行说明
 - 包升级时的配置迁移说明
 - 包替换失败后的升级回滚策略
 - 无法直连 Maven Central 的服务器离线部署说明
-- 包内版本信息，便于支持和 smoke 诊断
-- 可验证已发布包输出的 release artifact smoke
-- 安装、升级、回滚、Java 发现、PID 文件和状态检查排障增强
+- 可验证本地或已下载包输出的 release artifact smoke
+- 安装、升级、回滚、Java 发现、PID 文件、状态检查、脚本权限、完整性校验、离线
+  artifact 和版本不一致排障增强
 
 `0.15.0` 仍必须把运行包生产化限制在 `runtime-app`、构建配置、examples、docs 或未来
 dedicated app/distribution 边界中，不允许把 package integrity、signing、installer、
@@ -599,10 +607,18 @@ tail -f target/runtime-records.ndjson
 sh examples/smoke-standalone.sh
 ```
 
-分发包 smoke 会验证包内 `bin/`、`conf/`、`lib` 和运行目录布局：
+分发包 smoke 会验证包内 `bin/`、`conf/`、`lib`、运行目录布局、version 诊断和 archive
+checksum 校验：
 
 ```bash
 sh examples/smoke-distribution-package.sh
+```
+
+release artifact smoke 会验证本地或已下载运行包，并执行 `java-check`、`version`、
+`verify-package`、`validate`、`dry-run`、`start`、`status` 和 `stop`：
+
+```bash
+sh examples/smoke-release-artifact.sh
 ```
 
 HTTP collector smoke 会启动 HTTP-only app，通过 `curl` POST 一段 IEC104 原始

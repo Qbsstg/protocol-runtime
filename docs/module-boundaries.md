@@ -316,8 +316,8 @@ Not allowed:
 
 The `0.15.0-SNAPSHOT` line is opened after the published `0.14.0` runtime
 package distribution governance release. The boundary is distribution package
-productionization planning for the standalone collector without widening
-`runtime-core` or `protocol-sdk`.
+productionization for the standalone collector without widening `runtime-core`
+or `protocol-sdk`.
 
 Allowed:
 
@@ -326,10 +326,11 @@ Allowed:
   policy, embedded version metadata, release artifact smoke, upgrade migration
   notes, rollback procedures, offline deployment guidance, and operator
   troubleshooting.
-- build-owned packaging may attach or verify checksums and signatures for
-  release artifacts after the policy is explicit.
-- package smoke may validate published zip/tar outputs, version metadata,
-  startup scripts, status checks, Java discovery, and graceful stop behavior.
+- build-owned packaging may generate checksum sidecars for local release
+  artifacts; Maven Central remains the published checksum/signature authority.
+- package smoke may validate local or downloaded zip/tar outputs, version
+  metadata, startup scripts, status checks, Java discovery, checksum
+  verification, and graceful stop behavior.
 - docs and examples may describe cross-platform script expectations without
   requiring non-JDK service managers or installers.
 
@@ -348,7 +349,7 @@ Not allowed:
   release artifact smoke policy into `runtime-protocol-*`
 - requiring database, Redis, service registry, external scheduler, installer
   daemon, external observability exporters, or platform service installation for
-  the first distribution package productionization planning baseline
+  the first distribution package productionization baseline
 
 ## `0.14.0` Runtime Package Distribution Governance Boundary
 

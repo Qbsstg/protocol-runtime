@@ -17,6 +17,8 @@ PROFILE=${PROFILE:-}
 PID_FILE=${PID_FILE:-"$APP_HOME/run/protocol-runtime.pid"}
 STATUS_FILE=${STATUS_FILE:-"$APP_HOME/run/status.json"}
 LOG_FILE=${LOG_FILE:-"$APP_HOME/logs/protocol-runtime.log"}
+PACKAGE_METADATA=${PACKAGE_METADATA:-"$APP_HOME/package.properties"}
+JAVA_VERSION=""
 
 usage() {
   cat <<USAGE
@@ -29,12 +31,20 @@ Commands:
   status      Print the latest status export JSON.
   stop        Stop the collector by PID file.
   java-check  Verify that the selected Java runtime is JDK 21 or newer.
+  version     Print package, artifact, layout, and Java runtime versions.
+  verify-package
+              Verify package layout or an archive checksum.
 
 Options:
   --config FILE         Configuration file. Default: conf/collector.properties.
   --profile NAME       Optional profile name.
   --pid-file FILE      PID file for start/stop duplicate handling.
   --status-file FILE   Status JSON file for dry-run/status.
+
+Verify package options:
+  --artifact FILE       Distribution zip/tar.gz or standalone jar to verify.
+  --checksum FILE       Checksum file. Supports raw hex or "hex filename".
+  --algorithm NAME      Optional sha256 or sha512 override.
 
 Environment:
   APP_HOME, JAVA_HOME, JAVA_BIN, CONFIG, PROFILE, PID_FILE, STATUS_FILE, LOG_FILE, JAR
@@ -88,6 +98,7 @@ check_java() {
   if [ "$major" -lt 21 ]; then
     fail "JDK 21 or newer is required; selected Java reports version $version"
   fi
+  JAVA_VERSION=$version
 }
 
 ensure_runtime_dirs() {
@@ -105,6 +116,177 @@ reject_running_pid() {
     fail "collector already appears to be running with pid $raw_pid"
   fi
   rm -f "$PID_FILE"
+}
+
+metadata_value() {
+  key=$1
+  [ -f "$PACKAGE_METADATA" ] || return 0
+  sed -n "s/^$key=//p" "$PACKAGE_METADATA" | sed -n '1p'
+}
+
+print_version() {
+  runtime_version=$(metadata_value runtime.version)
+  if [ -z "$runtime_version" ]; then
+    runtime_version=$(basename "$JAR" | sed -n 's/^runtime-app-\(.*\)-standalone\.jar$/\1/p')
+  fi
+  artifact_name=$(metadata_value artifact.name)
+  [ -n "$artifact_name" ] || artifact_name="runtime-app-$runtime_version"
+  package_layout=$(metadata_value package.layout)
+  [ -n "$package_layout" ] || package_layout="protocol-runtime-$runtime_version"
+  layout_version=$(metadata_value package.layout.version)
+  [ -n "$layout_version" ] || layout_version="unknown"
+
+  printf 'runtime.version=%s\n' "$runtime_version"
+  printf 'artifact=%s\n' "$artifact_name"
+  printf 'java.version=%s\n' "$JAVA_VERSION"
+  printf 'java.bin=%s\n' "$JAVA_BIN"
+  printf 'package.layout=%s\n' "$package_layout"
+  printf 'package.layout.version=%s\n' "$layout_version"
+  printf 'app.home=%s\n' "$APP_HOME"
+  printf 'standalone.jar=%s\n' "$JAR"
+}
+
+normalize_algorithm() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g'
+}
+
+digest_file() {
+  algorithm=$1
+  artifact=$2
+  case "$algorithm" in
+    sha256)
+      if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$artifact" | awk '{print $1}'
+      elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 "$artifact" | awk '{print $1}'
+      elif command -v openssl >/dev/null 2>&1; then
+        openssl dgst -sha256 "$artifact" | sed 's/^.*= //'
+      else
+        fail "no SHA-256 tool found; install sha256sum, shasum, or openssl"
+      fi
+      ;;
+    sha512)
+      if command -v sha512sum >/dev/null 2>&1; then
+        sha512sum "$artifact" | awk '{print $1}'
+      elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 512 "$artifact" | awk '{print $1}'
+      elif command -v openssl >/dev/null 2>&1; then
+        openssl dgst -sha512 "$artifact" | sed 's/^.*= //'
+      else
+        fail "no SHA-512 tool found; install sha512sum, shasum, or openssl"
+      fi
+      ;;
+    *)
+      fail "unsupported checksum algorithm: $algorithm"
+      ;;
+  esac
+}
+
+read_checksum_value() {
+  checksum_file=$1
+  line=$(sed -n '1{s/\r$//;p;q;}' "$checksum_file")
+  case "$line" in
+    *=*) value=$(printf '%s' "$line" | sed 's/^.*= *//;s/[[:space:]].*$//') ;;
+    *) value=$(printf '%s' "$line" | awk '{print $1}') ;;
+  esac
+  printf '%s' "$value" | tr '[:upper:]' '[:lower:]'
+}
+
+algorithm_from_checksum() {
+  checksum_value=$1
+  checksum_length=${#checksum_value}
+  case "$checksum_length" in
+    64) printf 'sha256' ;;
+    128) printf 'sha512' ;;
+    *) fail "unable to infer checksum algorithm from $checksum_length hex characters" ;;
+  esac
+}
+
+verify_external_checksum() {
+  verify_artifact=""
+  verify_checksum=""
+  verify_algorithm=""
+
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --artifact)
+        [ "$#" -ge 2 ] || fail "--artifact requires a file path"
+        verify_artifact=$2
+        shift 2
+        ;;
+      --artifact=*)
+        verify_artifact=${1#--artifact=}
+        shift
+        ;;
+      --checksum)
+        [ "$#" -ge 2 ] || fail "--checksum requires a file path"
+        verify_checksum=$2
+        shift 2
+        ;;
+      --checksum=*)
+        verify_checksum=${1#--checksum=}
+        shift
+        ;;
+      --algorithm)
+        [ "$#" -ge 2 ] || fail "--algorithm requires sha256 or sha512"
+        verify_algorithm=$(normalize_algorithm "$2")
+        shift 2
+        ;;
+      --algorithm=*)
+        verify_algorithm=$(normalize_algorithm "${1#--algorithm=}")
+        shift
+        ;;
+      *)
+        if [ -z "$verify_artifact" ]; then
+          verify_artifact=$1
+        elif [ -z "$verify_checksum" ]; then
+          verify_checksum=$1
+        else
+          fail "unexpected verify-package argument: $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  if [ -z "$verify_artifact" ] && [ -z "$verify_checksum" ]; then
+    verify_package_layout
+    return
+  fi
+  [ -n "$verify_artifact" ] || fail "verify-package requires --artifact when --checksum is used"
+  [ -n "$verify_checksum" ] || fail "verify-package requires --checksum for artifact verification"
+  [ -f "$verify_artifact" ] || fail "artifact does not exist: $verify_artifact"
+  [ -f "$verify_checksum" ] || fail "checksum file does not exist: $verify_checksum"
+
+  expected=$(read_checksum_value "$verify_checksum")
+  case "$expected" in
+    ''|*[!0-9a-f]*) fail "checksum file does not contain a hex digest: $verify_checksum" ;;
+  esac
+  if [ -z "$verify_algorithm" ]; then
+    verify_algorithm=$(algorithm_from_checksum "$expected")
+  fi
+  case "$verify_algorithm" in
+    sha256|sha512) ;;
+    *) fail "unsupported checksum algorithm: $verify_algorithm" ;;
+  esac
+  actual=$(digest_file "$verify_algorithm" "$verify_artifact" | tr '[:upper:]' '[:lower:]')
+  if [ "$actual" != "$expected" ]; then
+    fail "checksum mismatch for $verify_artifact using $verify_algorithm"
+  fi
+  echo "protocol-runtime: checksum verified: $verify_algorithm $verify_artifact"
+}
+
+verify_package_layout() {
+  [ -f "$PACKAGE_METADATA" ] || fail "package metadata not found: $PACKAGE_METADATA"
+  for path in bin conf lib logs data run tmp docs examples; do
+    [ -e "$APP_HOME/$path" ] || fail "package layout is missing $path under $APP_HOME"
+  done
+  resolve_jar
+  runtime_version=$(metadata_value runtime.version)
+  [ -n "$runtime_version" ] || fail "package metadata is missing runtime.version"
+  package_layout=$(metadata_value package.layout)
+  [ -n "$package_layout" ] || fail "package metadata is missing package.layout"
+  echo "protocol-runtime: package layout verified: $package_layout"
 }
 
 command=${1:-}
@@ -163,7 +345,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$command" in
-  start|validate|dry-run|stop|java-check)
+  start|validate|dry-run|stop|java-check|version)
     check_java
     resolve_jar
     ;;
@@ -212,6 +394,12 @@ case "$command" in
     ;;
   java-check)
     echo "protocol-runtime: Java runtime is compatible: $JAVA_BIN"
+    ;;
+  version)
+    print_version
+    ;;
+  verify-package)
+    verify_external_checksum "$@"
     ;;
   *)
     usage >&2

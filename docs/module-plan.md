@@ -53,28 +53,28 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.15.0` Planning Posture
+## `0.15.0` Productionization Posture
 
 The `0.15.0-SNAPSHOT` runtime line starts from the published `0.14.0` package
 distribution governance release. The goal is distribution package
-productionization planning without moving package integrity, signing,
-installer, service-manager, filesystem-layout, deployment-wrapper, or external
+productionization without moving package integrity, signing, installer,
+service-manager, filesystem-layout, deployment-wrapper, or external
 observability concerns into core contracts:
 
-| Module | 0.15.0 planning goal |
+| Module | 0.15.0 baseline goal |
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP, database, Redis, distribution-packaging, checksum/signing, installer, deployment wrapper, shell-wrapper, service-manager, filesystem-layout, access-control, request-logging, or observability exporter dependencies. |
-| `runtime-app` | Continue to own package-facing runtime behavior and define where package integrity evidence, embedded version metadata, release artifact smoke, and operator diagnostics should surface. |
-| Build configuration | May own checksum/signature attachment policy, package metadata generation, and release artifact smoke wiring after the boundary is explicit. |
-| `examples` and `docs` | Own configuration migration notes, offline deployment guidance, upgrade rollback strategy, cross-platform script notes, and operator troubleshooting updates. |
+| `runtime-app` | Own package-facing runtime behavior, package layout verification, archive checksum verification, embedded version metadata, and operator diagnostics. |
+| Build configuration | Own package metadata generation and local `.sha256`/`.sha512` sidecar generation for standalone jar, distribution zip, and distribution tar.gz outputs. |
+| `examples` and `docs` | Own release artifact smoke, configuration migration notes, offline deployment guidance, upgrade rollback strategy, cross-platform script notes, and operator troubleshooting updates. |
 | `runtime-ingress-*` | Preserve ingress behavior; do not own package integrity, package upgrade, install, rollback, or deployment API behavior. |
 | `runtime-protocol-*` | Continue to parse payloads without transport, app, packaging, checksum/signing, service-manager, filesystem-layout, status-export, or sink dependencies. |
-| `runtime-smoke-tests` | Keep repository-only cross-module smoke coverage; future release artifact smoke remains verification, not a supported dependency surface. |
+| `runtime-smoke-tests` | Keep repository-only cross-module smoke coverage; release artifact smoke remains verification, not a supported dependency surface. |
 
-The first `0.15.0` planning baseline is documentation and boundary design only.
-It must not introduce Spring, database, Redis, external observability
-exporters, checksum/signing dependencies in `runtime-core`, or reverse
-dependencies into `protocol-sdk`.
+The first `0.15.0` baseline keeps implementation in `runtime-app`, build
+configuration, examples, and docs. It must not introduce Spring, database,
+Redis, external observability exporters, checksum/signing dependencies in
+`runtime-core`, or reverse dependencies into `protocol-sdk`.
 
 ## `0.14.0` Published Posture
 

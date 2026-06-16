@@ -48,11 +48,11 @@ baseline for the standalone collector: zip/tar packages, `bin`/`conf`/`logs`/
 upgrade notes, package smoke, JDK 21 checks, default Java troubleshooting, and
 an operator install guide.
 
-The `0.15.0-SNAPSHOT` development line is open for distribution package
-productionization planning: package integrity checks, checksum/signature
-policy, cross-platform script compatibility, configuration migration notes,
-upgrade rollback strategy, offline deployment guidance, package-embedded
-version information, release artifact smoke, and operator troubleshooting
+The `0.15.0-SNAPSHOT` development line adds the first distribution package
+productionization baseline: package metadata, version diagnostics, archive
+checksum verification, checksum/signature policy, cross-platform script
+guidance, configuration migration notes, upgrade rollback strategy, offline
+deployment guidance, release artifact smoke, and operator troubleshooting
 improvements.
 
 The `0.15.0` scope is tracked in
@@ -232,21 +232,29 @@ java -jar runtime-app/target/runtime-app-0.13.0-standalone.jar \
   --stop --pid-file target/protocol-runtime/run/protocol-runtime.pid
 ```
 
-## `0.15.0` Distribution Package Productionization Planning
+## `0.15.0` Distribution Package Productionization Baseline
 
-`0.15.0-SNAPSHOT` is open for the next distribution package hardening line. The
-planning scope is intentionally documentation and boundary design only:
+`0.15.0-SNAPSHOT` is the next distribution package hardening line. The first
+baseline includes:
 
-- package integrity checks and checksum/signature policy for release artifacts
-- cross-platform script compatibility for POSIX shells and operator-owned
-  Windows guidance
+- package metadata through distribution-root `package.properties`
+- `bin/protocol-runtime version` for runtime, artifact, Java, layout, app home,
+  and standalone jar diagnostics
+- `bin/protocol-runtime verify-package` for unpacked layout checks and
+  SHA-256/SHA-512 archive checksum verification
+- local `.sha256` and `.sha512` build outputs for standalone jar, distribution
+  zip, and distribution tar.gz artifacts
+- checksum/signature policy that reuses Maven Central sidecars without adding
+  checksum/signing dependencies to `runtime-core`
+- cross-platform script compatibility guidance for POSIX shells and
+  operator-owned Windows usage
 - configuration migration notes for package upgrades
 - upgrade rollback strategy for failed package replacement
 - offline deployment guidance for servers without direct Maven Central access
-- package-embedded version information for support and smoke diagnostics
-- release artifact smoke coverage that can validate published package outputs
+- release artifact smoke coverage for local or downloaded package outputs
 - operator troubleshooting improvements for package install, upgrade, rollback,
-  Java discovery, PID files, and status checks
+  Java discovery, PID files, status checks, script permissions, integrity
+  checks, offline artifacts, and version mismatch
 
 The `0.15.0` line must keep package productionization in `runtime-app`, build
 configuration, examples, docs, or a future dedicated app/distribution boundary.
@@ -671,10 +679,19 @@ sh examples/smoke-standalone.sh
 ```
 
 The distribution package smoke exercises the packaged `bin/`, `conf/`, `lib`,
-and runtime directory layout:
+runtime directory layout, version diagnostics, and archive checksum
+verification:
 
 ```bash
 sh examples/smoke-distribution-package.sh
+```
+
+The release artifact smoke verifies local or downloaded package artifacts and
+runs `java-check`, `version`, `verify-package`, `validate`, `dry-run`, `start`,
+`status`, and `stop`:
+
+```bash
+sh examples/smoke-release-artifact.sh
 ```
 
 The HTTP collector smoke starts an HTTP-only app, posts a raw IEC104 APDU with

@@ -4,10 +4,11 @@
 governance release. The release target is distribution package
 productionization for the standalone collector.
 
-The first `0.15.0-SNAPSHOT` baseline is planning only. Implementation work
-should happen after the package integrity, script compatibility, migration,
-rollback, offline deployment, version metadata, release artifact smoke, and
-operator troubleshooting boundaries are explicit.
+The first `0.15.0-SNAPSHOT` implementation baseline adds package metadata,
+checksum verification, release artifact smoke, upgrade migration notes,
+rollback guidance, offline deployment guidance, script diagnostics, and
+operator troubleshooting while keeping the work in `runtime-app`, build
+configuration, examples, and docs.
 
 ## Goals
 
@@ -20,20 +21,20 @@ operator troubleshooting boundaries are explicit.
 - Treat package productionization as an app/build/docs concern owned by
   `runtime-app`, build configuration, examples, docs, or a future dedicated
   app/distribution module.
-- Define release artifact integrity checks for standalone jar, zip, and tar.gz
+- Provide release artifact integrity checks for standalone jar, zip, and tar.gz
   outputs.
-- Define checksum and signature policy for package artifacts without adding
+- Provide checksum and signature policy for package artifacts without adding
   signing or checksum dependencies to `runtime-core`.
 - Improve cross-platform script compatibility expectations for POSIX shells and
   document operator-owned Windows usage paths.
 - Provide configuration migration notes for package upgrades.
-- Define an upgrade rollback strategy for failed package replacement.
+- Provide an upgrade rollback strategy for failed package replacement.
 - Add offline deployment guidance for servers without direct Maven Central
   access.
-- Define package-embedded version information for support diagnostics and smoke
+- Add package-embedded version information for support diagnostics and smoke
   checks.
-- Plan release artifact smoke coverage that validates published artifacts, not
-  only local build outputs.
+- Add release artifact smoke coverage that validates local build outputs and
+  can validate downloaded package outputs.
 - Expand operator troubleshooting around install, upgrade, rollback, Java
   discovery, PID files, status checks, package integrity, and offline installs.
 
@@ -42,19 +43,23 @@ operator troubleshooting boundaries are explicit.
 | Module | `0.15.0` target |
 | --- | --- |
 | `runtime-core` | Preserve the dependency-light contract surface; add no packaging, checksum/signing, installer, filesystem-layout, service-manager, framework, database, Redis, or exporter dependencies. |
-| `runtime-app` | Continue to own package-facing runtime behavior, package metadata exposure, local validation entry points, and operator-visible diagnostics. |
-| Build configuration | May own checksum/signature attachment policy, version metadata generation, published artifact verification, and package artifact smoke wiring after the boundary is explicit. |
-| `examples` and `docs` | Own migration notes, rollback guidance, offline deployment examples, cross-platform script notes, package integrity procedures, and troubleshooting. |
+| `runtime-app` | Own package-facing runtime behavior, package metadata exposure, local validation entry points, package layout verification, archive checksum verification, and operator-visible diagnostics. |
+| Build configuration | Own package metadata generation and local `.sha256`/`.sha512` sidecar generation for standalone jar, zip, and tar.gz outputs; Central remains responsible for published sidecar hosting. |
+| `examples` and `docs` | Own migration notes, rollback guidance, offline deployment examples, cross-platform script notes, package integrity procedures, release artifact smoke, and troubleshooting. |
 | `runtime-ingress-*` | Preserve published ingress behavior; do not own package integrity, install, upgrade, rollback, or deployment API behavior. |
 | `runtime-protocol-*` | Continue to parse payloads without transport, app, packaging, checksum/signing, service-manager, filesystem-layout, status-export, or sink dependencies. |
 | `runtime-smoke-tests` | Keep repository-only cross-module checks; release artifact smoke remains verification and does not become a supported dependency surface. |
 
-## Baseline Planning Work
+## Baseline Implementation Work
 
-- Package integrity policy covers standalone jar, distribution zip, distribution
-  tar.gz, checksums, signatures, and expected verification commands.
-- Cross-platform script guidance identifies what is guaranteed for POSIX shells
-  and what is operator-owned for Windows deployments.
+- Package integrity verification covers distribution zip/tar.gz checksum
+  sidecars and unpacked package layout checks.
+- Build output includes `.sha256` and `.sha512` sidecars for standalone jar,
+  distribution zip, and distribution tar.gz artifacts.
+- Signature policy reuses Maven Central `.asc` sidecars and operator trust
+  policy without adding signing dependencies to runtime modules.
+- Cross-platform script guidance identifies POSIX `sh` as the supported script
+  target and Windows usage as operator-owned.
 - Configuration migration notes explain how to compare old and new
   `collector.properties` templates and preserve operator-owned overrides.
 - Upgrade rollback guidance covers symlink rollback, package directory
@@ -62,13 +67,13 @@ operator troubleshooting boundaries are explicit.
   validation after rollback.
 - Offline deployment guidance explains how to move published artifacts,
   checksums, signatures, configs, and docs onto restricted servers.
-- Package version metadata is planned so operators can inspect the package and
-  running process version without unpacking implementation internals.
-- Release artifact smoke is planned to verify Maven Central-published package
-  artifacts from an isolated local repository or downloaded package location.
-- Troubleshooting expands to cover checksum mismatch, missing signatures,
-  partial package extraction, incompatible shell behavior, stale symlink,
-  failed rollback, offline artifact gaps, and version mismatch.
+- Package version metadata lets operators inspect runtime version, artifact,
+  Java version, package layout, app home, and standalone jar path.
+- Release artifact smoke can validate local build outputs or downloaded
+  distribution artifacts through checksum verification and app commands.
+- Troubleshooting covers checksum mismatch, missing signatures, partial package
+  extraction, script permissions, stale PID, config migration errors, offline
+  artifact gaps, and version mismatch.
 
 ## Non-Goals
 
@@ -82,8 +87,8 @@ operator troubleshooting boundaries are explicit.
 - Reusing `runtime-ingress-http` as a management API, package distribution API,
   deployment API, upgrade API, or status export API.
 - Changing parser behavior inside `protocol-sdk`.
-- Implementing the full package productionization surface before the boundary
-  design is reviewed.
+- Implementing an installer, package manager integration, or automatic upgrade
+  service.
 
 ## Readiness Checklist
 
@@ -94,15 +99,16 @@ operator troubleshooting boundaries are explicit.
   productionization planning line.
 - [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
   `0.15.0` planning boundary.
-- [ ] package integrity policy is designed.
-- [ ] checksum/signature policy is designed.
-- [ ] cross-platform script compatibility guidance is designed.
-- [ ] configuration migration notes are designed.
-- [ ] upgrade rollback strategy is designed.
-- [ ] offline deployment guidance is designed.
-- [ ] package version metadata boundary is designed.
-- [ ] release artifact smoke design is complete.
-- [ ] operator troubleshooting additions are designed.
+- [x] package integrity policy is designed and implemented at the package
+  script/build/docs boundary.
+- [x] checksum/signature policy is designed.
+- [x] cross-platform script compatibility guidance is documented.
+- [x] configuration migration notes are documented.
+- [x] upgrade rollback strategy is documented.
+- [x] offline deployment guidance is documented.
+- [x] package version metadata boundary is implemented.
+- [x] release artifact smoke design is implemented.
+- [x] operator troubleshooting additions are documented.
 - [ ] implementation PRs keep `runtime-core`, `runtime-protocol-*`, and
   `protocol-sdk` free of packaging, checksum/signing, installer, service
   manager, database, Redis, and exporter dependencies.

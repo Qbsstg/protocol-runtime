@@ -4,27 +4,31 @@ Release notes draft for the future `0.15.0` runtime release.
 
 `0.15.0` follows the published `0.14.0` runtime package distribution
 governance release. The development line is opened at `0.15.0-SNAPSHOT` for
-distribution package productionization planning. No `v0.15.0` tag is created
-and no real Maven Central upload is part of this planning baseline.
+distribution package productionization. No `v0.15.0` tag is created and no real
+Maven Central upload is part of this implementation baseline.
 
-## Planned Highlights
+## Baseline Highlights
 
-- Define package integrity checks for the standalone jar, distribution zip, and
-  distribution tar.gz artifacts.
-- Define checksum and signature policy for release artifacts without moving
+- Adds package metadata through `package.properties` in the distribution root.
+- Adds `bin/protocol-runtime version` for support diagnostics covering runtime
+  version, artifact, Java version, package layout, app home, and standalone jar.
+- Adds `bin/protocol-runtime verify-package` for unpacked package layout checks
+  and SHA-256/SHA-512 verification of distribution archive checksum sidecars.
+- Generates local `.sha256` and `.sha512` sidecars for standalone jar,
+  distribution zip, and distribution tar.gz build outputs.
+- Documents checksum/signature policy for release artifacts without moving
   signing or checksum dependencies into `runtime-core`.
-- Improve cross-platform script compatibility guidance for POSIX shells and
+- Improves cross-platform script compatibility guidance for POSIX shells and
   operator-owned Windows usage.
-- Add configuration migration notes for package upgrades.
-- Define an upgrade rollback strategy for failed package replacement.
-- Add offline deployment guidance for servers without direct Maven Central
+- Adds configuration migration notes for package upgrades.
+- Defines an upgrade rollback strategy for failed package replacement.
+- Adds offline deployment guidance for servers without direct Maven Central
   access.
-- Define package-embedded version information for support diagnostics and smoke
-  checks.
-- Plan release artifact smoke coverage against published package artifacts.
-- Expand operator troubleshooting for install, upgrade, rollback, Java
-  discovery, PID files, status checks, package integrity, and offline
-  deployments.
+- Adds release artifact smoke coverage for local build outputs or downloaded
+  distribution artifacts.
+- Expands operator troubleshooting for install, upgrade, rollback, Java
+  discovery, PID files, status checks, package integrity, script permissions,
+  config migration, version mismatch, and offline deployments.
 - Preserve `runtime-core` as a dependency-light contract module with no Spring,
   Netty, Kafka, MQTT, HTTP, database, Redis, packaging, checksum/signing,
   installer, service-manager, filesystem-layout, access-control,
@@ -54,7 +58,7 @@ API, upgrade API, or status export API.
 
 ## Verification Targets
 
-Future implementation PRs must pass before release:
+Implementation and future release PRs must pass:
 
 - `git diff --check`
 - `mvn -q verify`
@@ -63,7 +67,7 @@ Future implementation PRs must pass before release:
 - standalone HTTP collector smoke
 - management HTTP smoke
 - package distribution smoke
-- future release artifact smoke for published package outputs
+- release artifact smoke for local build or downloaded package outputs
 - dependency boundary checks proving package productionization work does not
   enter `runtime-core`, `runtime-protocol-*`, or `protocol-sdk`
 - GitHub CI on release PRs
