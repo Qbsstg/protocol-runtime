@@ -172,3 +172,9 @@ Downstream sink smoke should eventually cover:
 - [x] Operator sink troubleshooting and smoke expectations are drafted.
 - [x] `docs/release-readiness-0.17.0.md` records the release branch gates,
   validation checklist, publication policy, and final publication follow-up.
+- [x] `v0.17.0` is tagged on release commit
+  `3e2dfca236e1883610353f8704f5ce28d0b0e4ea`.
+- [x] Central deployment `cb3c502d-59e6-4829-9d02-941374042d84` is published.
+- [x] Maven Central resolves runtime modules, `runtime-app:jar:standalone`,
+  distribution zip/tar.gz artifacts, signatures, and checksum sidecars.
+- [x] GitHub Release `v0.17.0` is published.

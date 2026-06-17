@@ -55,14 +55,21 @@ improvements. `0.16.0` published the first production runtime operations
 baseline: runtime self-checks, configuration hot-check without hot-reload,
 stronger runtime status evidence, failure recovery and operator runbooks,
 long-running smoke, release artifact regression smoke, and production issue
-diagnostics. `0.17.0` publishes the first downstream sink productionization
+diagnostics. `0.17.0` published the first downstream sink productionization
 baseline: stable file sink schema v1, delivery failure classification,
 failed-record isolation, bounded failed sample export, sink backpressure
 evidence, retry/dead-letter boundaries, Kafka/HTTP/MQTT downstream adapter
 boundaries, record envelope output rules, operator sink troubleshooting, and
-smoke coverage.
+smoke coverage. The active `0.18.0-SNAPSHOT` line plans the downstream sink
+adapter SPI, record envelope contract, delivery result contract,
+retry/dead-letter boundaries, Kafka/HTTP/MQTT sink adapter module boundaries,
+adapter configuration model, adapter smoke, operator troubleshooting, and
+dependency boundary policy.
 
-The `0.17.0` baseline scope is tracked in
+The `0.18.0` downstream sink adapter planning scope is tracked in
+[`docs/roadmap-0.18.0.md`](docs/roadmap-0.18.0.md), and release notes are
+tracked in [`docs/release-notes-0.18.0.md`](docs/release-notes-0.18.0.md).
+The published `0.17.0` scope is tracked in
 [`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md), and release notes are
 tracked in [`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md).
 The `0.17.0` release-readiness audit is tracked in
@@ -135,7 +142,7 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest release candidate runtime version is `0.17.0`. Runtime modules are JDK 21
+The latest published runtime version is `0.17.0`. Runtime modules are JDK 21
 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
@@ -208,6 +215,34 @@ application dependency even if a historical release is visible in Maven Central.
 Future modules may include pipelines, additional sinks, richer deployable
 runtime applications, and dedicated app/adapter deployment helpers. Those
 dependencies belong here, not in `protocol-sdk`.
+
+## `0.18.0` Downstream Sink Adapter Planning
+
+`0.18.0-SNAPSHOT` starts after the published `0.17.0` downstream sink
+productionization release. This line plans the downstream delivery adapter
+boundary before adding Kafka producer, HTTP client, MQTT publisher, database,
+Redis, or external queue dependencies.
+
+The planning scope includes:
+
+- downstream sink SPI boundary
+- adapter-facing record envelope contract
+- delivery result contract for success, retryable failure, permanent failure,
+  backpressure rejection, dead-letter routing, and diagnostics
+- retry and dead-letter boundaries without durable stores in the planning line
+- future `runtime-sink-kafka`, `runtime-sink-http`, and `runtime-sink-mqtt`
+  module boundaries
+- adapter configuration model for endpoints, topics, authentication
+  references, timeouts, batching, retry posture, dead-letter output, and secret
+  redaction
+- fake/no-network adapter smoke expectations
+- operator troubleshooting for downstream delivery failures and failed-record
+  correlation
+
+The planning line keeps adapter dependencies out of `runtime-core`,
+`runtime-protocol-*`, `runtime-ingress-*`, and `protocol-sdk`. In particular,
+`runtime-ingress-http` remains the HTTP protocol payload ingestion adapter and
+must not become a downstream HTTP sink.
 
 ## `0.17.0` Downstream Sink Productionization Baseline
 

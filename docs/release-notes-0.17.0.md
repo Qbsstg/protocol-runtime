@@ -1,6 +1,6 @@
 # Protocol Runtime 0.17.0 Release Notes
 
-Release notes for the `0.17.0` runtime release candidate.
+Release notes for the published `0.17.0` runtime release.
 
 `0.17.0` follows the published `0.16.0` production runtime operations
 baseline. The development line adds the first downstream sink productionization
@@ -78,10 +78,16 @@ Implementation and release PRs must pass:
 ## Publication
 
 - Release branch: `codex/release-0.17.0`
-- Tag: pending until the release branch is merged
-- Central deployment: pending until final publication
-- Central state: not published
-- GitHub Release: pending until final publication
+- Release PR: <https://github.com/Qbsstg/protocol-runtime/pull/88>
+- Tag: `v0.17.0`
+- Release commit: `3e2dfca236e1883610353f8704f5ce28d0b0e4ea`
+- Central deployment: `cb3c502d-59e6-4829-9d02-941374042d84`
+- Central state: `PUBLISHED`
+- Public Maven Central verification: passed for runtime modules,
+  `runtime-app:jar:standalone`, `runtime-app:zip:distribution`,
+  `runtime-app:tar.gz:distribution`, signatures, and checksum sidecars.
+- GitHub Release:
+  <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.17.0>
 
 The release-readiness audit is tracked in
 [`release-readiness-0.17.0.md`](release-readiness-0.17.0.md).
