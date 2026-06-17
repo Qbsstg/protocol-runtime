@@ -114,6 +114,14 @@ public record CollectorHealthSnapshot(
                     + snapshot.failedRecordIsolationStatus().isolationFailureCount());
             ready = false;
         }
+        if (!snapshot.downstreamSinkStatus().ready()) {
+            reasons.add("sinkAdapterNotReady=" + snapshot.downstreamSinkStatus().identity().qualifiedName());
+            ready = false;
+        }
+        if (!snapshot.downstreamSinkStatus().backpressureDecision().isAccepted()) {
+            reasons.add("sinkAdapterBackpressure=" + snapshot.downstreamSinkStatus().backpressureDecision());
+            ready = false;
+        }
         return ready;
     }
 
@@ -124,6 +132,9 @@ public record CollectorHealthSnapshot(
         }
         if (metrics.sinkFailureCount() > 0) {
             reasons.add("sinkFailures=" + metrics.sinkFailureCount());
+        }
+        if (!snapshot.downstreamSinkStatus().healthy()) {
+            reasons.add("sinkAdapterUnhealthy=" + snapshot.downstreamSinkStatus().identity().qualifiedName());
         }
         if (metrics.backpressureRetryLaterCount() > 0) {
             reasons.add("backpressureRetryLater=" + metrics.backpressureRetryLaterCount());

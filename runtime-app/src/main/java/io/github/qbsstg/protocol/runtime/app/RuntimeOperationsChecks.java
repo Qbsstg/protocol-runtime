@@ -84,8 +84,14 @@ final class RuntimeOperationsChecks {
         json.endObject();
         if (config == null) {
             json.name("deployment").nullValue();
+            json.name("sink").nullValue();
+            json.name("backpressure").nullValue();
+            json.name("management").nullValue();
         } else {
             deployment(json, config.deployment());
+            sink(json, config);
+            backpressure(json, config);
+            management(json, config.management());
         }
         json.endObject();
         return new HotCheckResult(json.toString(), validation.isValid(), context.hotCheckBaselineFile(), current);
@@ -245,6 +251,7 @@ final class RuntimeOperationsChecks {
         json.name("type").value(config.sinkType().configValue());
         json.name("schemaVersion").value(RuntimeRecordFormat.RECORD_SCHEMA_VERSION);
         json.name("format").value("jsonl");
+        sinkAdapter(json, config.sinkAdapter());
         json.name("file").value(path(config.sinkFile()));
         if (config.sinkFile() == null) {
             json.name("filePath").nullValue();
@@ -258,6 +265,20 @@ final class RuntimeOperationsChecks {
         json.name("maxHistory").value(config.fileSinkRotation().maxHistory());
         json.endObject();
         failedRecords(json, config.failedRecords());
+        json.endObject();
+    }
+
+    private static void sinkAdapter(OperationsJsonWriter json, DownstreamSinkAdapterConfig adapter) {
+        json.name("adapter").beginObject();
+        json.name("type").value(adapter.type());
+        json.name("endpointConfigured").value(adapter.endpoint() != null);
+        json.name("topicConfigured").value(adapter.topic() != null);
+        json.name("authRefConfigured").value(adapter.authenticationReferenceConfigured());
+        json.name("timeoutMillis").value(adapter.timeoutMillis());
+        json.name("batchingPosture").value(adapter.batchingPosture());
+        json.name("retryPosture").value(adapter.retryPosture());
+        json.name("deadLetterOutput").value(adapter.deadLetterOutput());
+        json.name("secretSafeDiagnostics").value(true);
         json.endObject();
     }
 

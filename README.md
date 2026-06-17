@@ -216,30 +216,32 @@ Future modules may include pipelines, additional sinks, richer deployable
 runtime applications, and dedicated app/adapter deployment helpers. Those
 dependencies belong here, not in `protocol-sdk`.
 
-## `0.18.0` Downstream Sink Adapter Planning
+## `0.18.0` Downstream Sink Adapter SPI Baseline
 
 `0.18.0-SNAPSHOT` starts after the published `0.17.0` downstream sink
-productionization release. This line plans the downstream delivery adapter
-boundary before adding Kafka producer, HTTP client, MQTT publisher, database,
-Redis, or external queue dependencies.
+productionization release. This line adds the first downstream delivery adapter
+SPI baseline before adding Kafka producer, HTTP client, MQTT publisher,
+database, Redis, or external queue dependencies.
 
-The planning scope includes:
+The baseline scope includes:
 
-- downstream sink SPI boundary
-- adapter-facing record envelope contract
+- protocol-neutral downstream sink SPI types in `runtime-core`
+- app-owned bridge from current logging/file/in-memory sinks to the SPI
+- adapter-facing record envelope contract based on `protocol-runtime.record.v1`
 - delivery result contract for success, retryable failure, permanent failure,
-  backpressure rejection, dead-letter routing, and diagnostics
-- retry and dead-letter boundaries without durable stores in the planning line
+  backpressure rejection, configuration rejection, serialization failure,
+  transport failure, timeout, dead-letter routing, and diagnostics
+- retry and dead-letter boundaries without durable stores in this line
 - future `runtime-sink-kafka`, `runtime-sink-http`, and `runtime-sink-mqtt`
   module boundaries
 - adapter configuration model for endpoints, topics, authentication
   references, timeouts, batching, retry posture, dead-letter output, and secret
   redaction
-- fake/no-network adapter smoke expectations
+- fake/no-network adapter test coverage without live external systems
 - operator troubleshooting for downstream delivery failures and failed-record
   correlation
 
-The planning line keeps adapter dependencies out of `runtime-core`,
+The baseline keeps adapter dependencies out of `runtime-core`,
 `runtime-protocol-*`, `runtime-ingress-*`, and `protocol-sdk`. In particular,
 `runtime-ingress-http` remains the HTTP protocol payload ingestion adapter and
 must not become a downstream HTTP sink.
@@ -906,6 +908,14 @@ they can override checked-in defaults for local runs.
 | `collector.sink.file` | unset | Required when `collector.sink.type=file`. |
 | `collector.sink.file.maxBytes` | `10485760` | Rotate the file sink before the active file grows beyond this byte limit. |
 | `collector.sink.file.maxHistory` | `5` | Number of rotated file sink history files to keep. |
+| `collector.sink.adapter.type` | `app-local` | Adapter contract type. `0.18.0` accepts `app-local` and `fake-no-network` only; Kafka/HTTP/MQTT delivery remains future `runtime-sink-*` work. |
+| `collector.sink.adapter.endpoint` | unset | Optional future adapter endpoint identity. Status and self-check only report whether it is configured. |
+| `collector.sink.adapter.topic` | unset | Optional future adapter topic or route identity. Status and self-check only report whether it is configured. |
+| `collector.sink.adapter.authRef` | unset | Optional secret reference name; never emitted as a raw value in status JSON, self-check, hot-check, or logs. |
+| `collector.sink.adapter.timeoutMillis` | `5000` | Draft adapter timeout posture for future delivery adapters. |
+| `collector.sink.adapter.batching` | `none` | Draft batching posture for future delivery adapters. |
+| `collector.sink.adapter.retry` | `app-local` | Draft retry posture; `0.18.0` still uses app-local failure isolation, not durable retries. |
+| `collector.sink.adapter.deadLetter` | `failed-records` | Draft dead-letter output posture; `0.18.0` routes app-local samples to failed-record isolation. |
 | `collector.sink.failedRecords.enabled` | `true` | Enables app-local failed-record sample isolation when the configured record/failure sink throws. |
 | `collector.sink.failedRecords.dir` | `collector.runtime.dataDir/failed-records` | Directory for bounded failed-record JSON samples. Relative paths are resolved against `collector.runtime.dataDir`. |
 | `collector.sink.failedRecords.maxSamples` | `32` | Maximum retained failed-record samples; `0` disables sample writes while keeping status fields. |
@@ -1026,6 +1036,8 @@ The snapshot includes:
 - backpressure retry/drop counters and last backpressure decision details
 - sink failure counters and the latest sink failure target, source id,
   exception type, and message
+- downstream sink adapter identity, ready/healthy state, delivery outcome
+  counters, last result, backpressure contribution, and secret-safe diagnostics
 - sink type, file sink output path/open state/active byte count/history count,
   file rotation policy, backpressure mode, payload threshold policy, and strict
   ASDU setting
@@ -1078,7 +1090,9 @@ A successful record includes:
 - `raw.metadata`
 - `parser.diagnostics`
 - `sink.delivery`
+- `sink.adapterContract`
 - `attributes`
+- `extensions`
 
 Parse failures use `schemaVersion=protocol-runtime.parse-failure.v1` and
 `kind=failure`, then include `message`, `rawPayloadHex`, raw metadata, parser
@@ -1099,6 +1113,27 @@ Operators can optionally set `collector.backpressure.sinkFailureThreshold` and
 rejected with `RETRY_LATER` or `DROP` after downstream sink failures reach the
 configured threshold.
 
+### Downstream Sink Adapter SPI
+
+`0.18.0` introduces protocol-neutral SPI contracts in `runtime-core`:
+`DownstreamSink`, `DownstreamDeliveryRequest`, `DownstreamDeliveryResult`,
+`DownstreamDeliveryOutcome`, `DownstreamSinkIdentity`, and
+`DownstreamSinkStatus`. The standalone collector uses an app-owned bridge to
+adapt current logging, file, and in-memory sinks to the SPI.
+
+Status JSON, management `/status`, self-check, and hot-check now expose adapter
+identity, delivery outcome counters, last delivery result, readiness and
+backpressure contribution, failed-record correlation, and secret-safe
+diagnostics. Authentication references are treated as pointers to operator-owned
+secrets and are reported only as configured/not configured.
+
+`0.18.0` does not implement real Kafka, HTTP, or MQTT downstream delivery.
+Those dependencies remain reserved for future dedicated `runtime-sink-*`
+modules or explicit app/adapter boundaries.
+
+Operator guidance is documented in
+[`docs/downstream-sink-adapters.md`](docs/downstream-sink-adapters.md).
+
 ### Troubleshooting
 
 - `UnsupportedClassVersionError`: run the standalone jar with JDK 21 or newer.
@@ -1118,8 +1153,14 @@ configured threshold.
   `sink.failedRecords.isolationFailureCount` in status JSON.
 - Sink failure backpressure is active: inspect
   `metrics.delivery.sinkFailureTypeCounts`,
+  `metrics.delivery.outcomeCounts`,
   `metrics.lastSinkFailure.deliveryFailureType`, and
   `collector.backpressure.sinkFailureThreshold`.
+- Adapter status is not ready: inspect `sink.adapter.lastResult`,
+  `sink.adapter.backpressureDecision`, `metrics.delivery.outcomeCounts`, and
+  the latest failed-record sample. Do not expect Kafka/HTTP/MQTT delivery in
+  `0.18.0`; only `app-local` and `fake-no-network` adapter contract paths are
+  accepted.
 - No parsed record for the example frame: confirm `collector.backpressure` is
   `ACCEPT`; `RETRY_LATER` intentionally prevents parsing.
 - `collector.source.id must use namespace:value format`: use a value such as

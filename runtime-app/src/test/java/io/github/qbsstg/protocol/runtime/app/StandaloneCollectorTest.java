@@ -1649,6 +1649,14 @@ class StandaloneCollectorTest {
                         StandaloneCollectorConfig.SOURCE_ID + "=iec104:self-check",
                         StandaloneCollectorConfig.SINK_TYPE + "=file",
                         StandaloneCollectorConfig.SINK_FILE + "=data/records.ndjson",
+                        StandaloneCollectorConfig.SINK_ADAPTER_TYPE + "=app-local",
+                        StandaloneCollectorConfig.SINK_ADAPTER_ENDPOINT + "=memory://local-file",
+                        StandaloneCollectorConfig.SINK_ADAPTER_TOPIC + "=iec104-records",
+                        StandaloneCollectorConfig.SINK_ADAPTER_AUTH_REF + "=vault://runtime/sink-token",
+                        StandaloneCollectorConfig.SINK_ADAPTER_TIMEOUT_MILLIS + "=2500",
+                        StandaloneCollectorConfig.SINK_ADAPTER_BATCHING + "=single-record",
+                        StandaloneCollectorConfig.SINK_ADAPTER_RETRY + "=app-local-failure-isolation",
+                        StandaloneCollectorConfig.SINK_ADAPTER_DEAD_LETTER + "=failed-records",
                         StandaloneCollectorConfig.MANAGEMENT_ENABLED + "=true",
                         StandaloneCollectorConfig.MANAGEMENT_PORT + "=0",
                         StandaloneCollectorConfig.MANAGEMENT_ACCESS + "=token",
@@ -1680,6 +1688,12 @@ class StandaloneCollectorTest {
         assertTrue(report.contains("\"sourceId\":\"iec104:self-check\""));
         assertTrue(report.contains("\"bindAttempted\":false"));
         assertTrue(report.contains("\"tokenConfigured\":true"));
+        assertTrue(report.contains("\"adapter\":{\"type\":\"app-local\""));
+        assertTrue(report.contains("\"endpointConfigured\":true"));
+        assertTrue(report.contains("\"topicConfigured\":true"));
+        assertTrue(report.contains("\"authRefConfigured\":true"));
+        assertTrue(report.contains("\"timeoutMillis\":2500"));
+        assertFalse(report.contains("vault://runtime/sink-token"));
         assertTrue(report.contains("\"integrity\":\"verified\""));
         assertTrue(stderr.toString(StandardCharsets.UTF_8).isBlank());
     }
@@ -1910,6 +1924,41 @@ class StandaloneCollectorTest {
 
         assertEquals(output, appConfig.sinkFile());
         assertEquals(new FileSinkRotationConfig(4096, 3), appConfig.fileSinkRotation());
+    }
+
+    @Test
+    void parsesDownstreamSinkAdapterDraftConfig() {
+        Properties properties = baseProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_TYPE, "fake-no-network");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_ENDPOINT, "memory://fake");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_TOPIC, "iec104-records");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_AUTH_REF, "vault://runtime/sink-token");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_TIMEOUT_MILLIS, "3000");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_BATCHING, "single-record");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_RETRY, "no-network-test");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_DEAD_LETTER, "failed-records");
+
+        StandaloneCollectorAppConfig appConfig = StandaloneCollectorConfig.appConfigFromProperties(properties);
+
+        assertEquals("fake-no-network", appConfig.sinkAdapter().type());
+        assertEquals("memory://fake", appConfig.sinkAdapter().endpoint());
+        assertEquals("iec104-records", appConfig.sinkAdapter().topic());
+        assertEquals("vault://runtime/sink-token", appConfig.sinkAdapter().authenticationReference());
+        assertEquals(3000, appConfig.sinkAdapter().timeoutMillis());
+        assertEquals("single-record", appConfig.sinkAdapter().batchingPosture());
+        assertEquals("no-network-test", appConfig.sinkAdapter().retryPosture());
+        assertEquals("failed-records", appConfig.sinkAdapter().deadLetterOutput());
+    }
+
+    @Test
+    void rejectsUnsupportedDownstreamSinkAdapterTypesInBaseline() {
+        Properties properties = baseProperties(0, "in-memory");
+        properties.setProperty(StandaloneCollectorConfig.SINK_ADAPTER_TYPE, "kafka");
+
+        CollectorConfigValidation validation = StandaloneCollectorConfig.validateProperties(properties);
+
+        assertFalse(validation.isValid());
+        assertContainsError(validation, "collector.sink.adapter is invalid: type must be app-local or fake-no-network in 0.18.0");
     }
 
     @Test

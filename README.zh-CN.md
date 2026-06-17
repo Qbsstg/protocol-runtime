@@ -52,7 +52,7 @@ downstream sink adapter SPI、record envelope contract、delivery result contrac
 retry/dead-letter 边界、Kafka/HTTP/MQTT sink adapter 模块边界、adapter 配置模型、
 adapter smoke、operator troubleshooting 和依赖边界策略。
 
-当前 `0.18.0` downstream sink adapter 规划范围记录在
+当前 `0.18.0` downstream sink adapter SPI baseline 范围记录在
 [`docs/roadmap-0.18.0.md`](docs/roadmap-0.18.0.md)，release notes 记录在
 [`docs/release-notes-0.18.0.md`](docs/release-notes-0.18.0.md)。已发布的 `0.17.0`
 范围记录在
@@ -194,26 +194,27 @@ release notes 记录在
 未来可能补充 pipeline、更多 sink、更完整的可部署运行时应用，以及专门的 app/adapter
 部署辅助模块。这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
 
-## `0.18.0` Downstream Sink Adapter 规划
+## `0.18.0` Downstream Sink Adapter SPI Baseline
 
 `0.18.0-SNAPSHOT` 从已发布的 `0.17.0` downstream sink 生产化版本继续推进。这个
-阶段先规划下游投递 adapter 边界，不急着引入 Kafka producer、HTTP client、MQTT
-publisher、数据库、Redis 或外部队列依赖。
+阶段先固化第一轮下游投递 adapter SPI baseline，不急着引入 Kafka producer、HTTP
+client、MQTT publisher、数据库、Redis 或外部队列依赖。
 
-规划范围包括：
+baseline 范围包括：
 
-- downstream sink SPI 边界
-- 面向 adapter 的 record envelope contract
+- `runtime-core` 中协议无关的 downstream sink SPI 类型
+- runtime-app 将现有 logging/file/in-memory sink 桥接到 SPI 的 app-owned bridge
+- 基于 `protocol-runtime.record.v1` 的 adapter-facing record envelope contract
 - delivery result contract，覆盖成功、可重试失败、永久失败、背压拒绝、dead-letter
-  路由和诊断证据
+  路由、配置拒绝、序列化失败、传输失败、超时和诊断证据
 - 不依赖持久化存储的 retry/dead-letter 边界
 - 未来 `runtime-sink-kafka`、`runtime-sink-http`、`runtime-sink-mqtt` 模块边界
 - adapter 配置模型，覆盖 endpoint/topic、认证引用、超时、批量、重试姿态、dead-letter
   输出和敏感值脱敏
-- fake/no-network adapter smoke 预期
+- fake/no-network adapter 测试覆盖，不依赖真实外部系统
 - downstream delivery 失败和 failed-record 关联排障说明
 
-该规划线继续保证 adapter 依赖不进入 `runtime-core`、`runtime-protocol-*`、
+该 baseline 继续保证 adapter 依赖不进入 `runtime-core`、`runtime-protocol-*`、
 `runtime-ingress-*` 和 `protocol-sdk`。尤其是 `runtime-ingress-http` 仍只负责 HTTP
 协议 payload 采集接入，不作为 downstream HTTP sink。
 
@@ -806,6 +807,14 @@ java -jar runtime-app/target/runtime-app-0.17.0-standalone.jar \
 | `collector.sink.file` | 未设置 | 当 `collector.sink.type=file` 时必须配置。 |
 | `collector.sink.file.maxBytes` | `10485760` | 当前 file sink 输出文件超过该字节数前触发轮转。 |
 | `collector.sink.file.maxHistory` | `5` | 保留的轮转历史文件数量。 |
+| `collector.sink.adapter.type` | `app-local` | adapter 合同类型。`0.18.0` 只接受 `app-local` 和 `fake-no-network`；Kafka/HTTP/MQTT delivery 留给后续 `runtime-sink-*`。 |
+| `collector.sink.adapter.endpoint` | 未设置 | 未来 adapter endpoint 标识。status/self-check 只报告是否已配置。 |
+| `collector.sink.adapter.topic` | 未设置 | 未来 adapter topic 或 route 标识。status/self-check 只报告是否已配置。 |
+| `collector.sink.adapter.authRef` | 未设置 | secret 引用名；不会把原始值写入 status JSON、self-check、hot-check 或日志。 |
+| `collector.sink.adapter.timeoutMillis` | `5000` | 未来 adapter 的超时姿态草案。 |
+| `collector.sink.adapter.batching` | `none` | 未来 adapter 的批量姿态草案。 |
+| `collector.sink.adapter.retry` | `app-local` | 重试姿态草案；`0.18.0` 仍使用 app-local failure isolation，不做持久重试。 |
+| `collector.sink.adapter.deadLetter` | `failed-records` | dead-letter 输出姿态草案；`0.18.0` 使用 failed-record 隔离样本。 |
 | `collector.sink.failedRecords.enabled` | `true` | record/failure sink 抛异常时启用 app-local 失败记录样本隔离。 |
 | `collector.sink.failedRecords.dir` | `collector.runtime.dataDir/failed-records` | 有界失败记录 JSON 样本目录。相对路径基于 `collector.runtime.dataDir` 解析。 |
 | `collector.sink.failedRecords.maxSamples` | `32` | 最多保留的失败记录样本数；`0` 表示不写样本但保留 status 字段。 |
@@ -920,6 +929,8 @@ sink、backpressure 和 counter 摘要，方便直接从本地日志观察运行
   大小、payload hex 预览和 TCP/session 属性
 - backpressure retry/drop 计数和最后一次 backpressure 决策详情
 - sink failure 计数，以及最后一次 sink failure 的目标、source id、异常类型和消息
+- downstream sink adapter identity、ready/healthy 状态、delivery outcome 计数、
+  last result、backpressure contribution 和脱敏 diagnostics
 - sink 类型、file sink 输出路径/open 状态/当前活跃文件字节数/历史文件数、
   file 轮转策略、backpressure 模式、payload 阈值策略和 strict ASDU 配置
 - sink failure backpressure 阈值和决策
@@ -967,7 +978,9 @@ file sink 每行输出一条稳定 JSONL envelope。`0.17.0` 使用
 - `raw.metadata`
 - `parser.diagnostics`
 - `sink.delivery`
+- `sink.adapterContract`
 - `attributes`
+- `extensions`
 
 解析失败使用 `schemaVersion=protocol-runtime.parse-failure.v1` 和 `kind=failure`，
 并包含 `message`、`rawPayloadHex`、raw metadata、parser diagnostics、TCP/session
@@ -985,6 +998,25 @@ sink 在处理解析结果时抛出异常，该异常会记录到 collector metr
 `collector.backpressure.sinkFailureDecision`，让后续 ingress payload 在解析前返回
 `RETRY_LATER` 或 `DROP`。
 
+### Downstream Sink Adapter SPI
+
+`0.18.0` 在 `runtime-core` 中新增协议无关 SPI 合同：`DownstreamSink`、
+`DownstreamDeliveryRequest`、`DownstreamDeliveryResult`、
+`DownstreamDeliveryOutcome`、`DownstreamSinkIdentity` 和
+`DownstreamSinkStatus`。standalone collector 通过 runtime-app 自有 bridge，把当前
+logging、file、in-memory sink 适配到该 SPI。
+
+status JSON、management `/status`、self-check 和 hot-check 现在会输出 adapter
+identity、delivery outcome 计数、最后一次 delivery result、readiness/backpressure
+contribution、failed-record 关联和脱敏 diagnostics。认证引用被视为运维侧 secret
+指针，只报告是否已配置，不输出原文。
+
+`0.18.0` 不实现真实 Kafka、HTTP 或 MQTT downstream delivery。这些依赖仍留给未来
+dedicated `runtime-sink-*` 模块或明确 app/adapter 边界。
+
+运维排障说明见
+[`docs/downstream-sink-adapters.md`](docs/downstream-sink-adapters.md)。
+
 ### 常见问题
 
 - `UnsupportedClassVersionError`：请使用 JDK 21 或更高版本运行 standalone
@@ -1001,8 +1033,13 @@ sink 在处理解析结果时抛出异常，该异常会记录到 collector metr
   `sink.failedRecords.isolationFailureCount`。
 - sink failure backpressure 生效：检查
   `metrics.delivery.sinkFailureTypeCounts`、
+  `metrics.delivery.outcomeCounts`、
   `metrics.lastSinkFailure.deliveryFailureType` 和
   `collector.backpressure.sinkFailureThreshold`。
+- adapter status 非 ready：检查 `sink.adapter.lastResult`、
+  `sink.adapter.backpressureDecision`、`metrics.delivery.outcomeCounts` 和最新
+  failed-record 样本。`0.18.0` 不提供 Kafka/HTTP/MQTT 真实投递，只接受
+  `app-local` 和 `fake-no-network` adapter contract 路径。
 - 示例帧没有解析记录：确认 `collector.backpressure=ACCEPT`；`RETRY_LATER` 会按
   设计阻止解析。
 - `collector.source.id must use namespace:value format`：使用类似

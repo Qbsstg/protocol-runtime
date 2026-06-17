@@ -182,6 +182,8 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 appConfig.sinkType(),
                 sinks.fileSinkStatus(),
                 appConfig.fileSinkRotation(),
+                appConfig.sinkAdapter(),
+                sinks.downstreamSinkStatus(),
                 sinks.failedRecordIsolationStatus(),
                 appConfig.backpressureDecision(),
                 appConfig.backpressureMaxPayloadBytes(),
@@ -269,7 +271,15 @@ public final class StandaloneCollector implements RuntimeLifecycle {
         lastException = null;
         Exception failure = null;
         RuntimeListener failedListener = null;
+        try {
+            sinks.start();
+        } catch (Exception ex) {
+            failure = ex;
+        }
         for (RuntimeListener listener : listeners) {
+            if (failure != null) {
+                break;
+            }
             try {
                 listener.lifecycle().start();
             } catch (Exception ex) {

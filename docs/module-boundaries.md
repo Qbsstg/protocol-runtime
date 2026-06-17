@@ -314,17 +314,19 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
-## `0.18.0` Downstream Sink Adapter Planning Boundary
+## `0.18.0` Downstream Sink Adapter SPI Boundary
 
 The `0.18.0` line starts after the published `0.17.0` downstream sink
-productionization release. The boundary is downstream sink adapter planning for
+productionization release. The boundary is downstream sink adapter SPI baseline for
 Kafka, HTTP, and MQTT delivery without widening `runtime-core`, ingress
 adapters, protocol bindings, or `protocol-sdk`.
 
 Allowed:
 
+- `runtime-core` may own protocol-neutral downstream sink SPI contracts with no
+  concrete adapter dependency.
 - `runtime-app`, examples, docs, CI/smoke, or future dedicated
-  `runtime-sink-*` modules may own downstream sink SPI design, record envelope
+  `runtime-sink-*` modules may own app adapter configuration, record envelope
   examples, delivery result taxonomy, retry/dead-letter policy, adapter
   configuration examples, adapter smoke expectations, and operator
   troubleshooting.

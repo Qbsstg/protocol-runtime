@@ -6,6 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
+import io.github.qbsstg.protocol.runtime.core.DownstreamDeliveryOutcome;
+import io.github.qbsstg.protocol.runtime.core.DownstreamDeliveryRequest;
+import io.github.qbsstg.protocol.runtime.core.DownstreamDeliveryResult;
+import io.github.qbsstg.protocol.runtime.core.DownstreamSink;
+import io.github.qbsstg.protocol.runtime.core.DownstreamSinkIdentity;
+import io.github.qbsstg.protocol.runtime.core.DownstreamSinkStatus;
 import io.github.qbsstg.protocol.runtime.core.FailureSink;
 import io.github.qbsstg.protocol.runtime.core.IngressEnvelope;
 import io.github.qbsstg.protocol.runtime.core.ParseFailure;
@@ -70,6 +76,7 @@ class RuntimeSinksTest {
         assertTrue(status.contains("health=DEGRADED"));
         assertTrue(status.contains("readiness=NOT_READY"));
         assertTrue(status.contains("sinkFailures=1"));
+        assertTrue(status.contains("sinkAdapter=app-local:file/"));
         assertTrue(status.contains("lastSinkFailure=record@iec104:station-1/"));
         assertTrue(status.contains(IllegalStateException.class.getName() + ":disk full"));
     }
@@ -130,6 +137,58 @@ class RuntimeSinksTest {
         assertTrue(sample.contains("<unavailable:java.lang.IllegalStateException>"));
     }
 
+    @Test
+    void recordsSuccessfulFakeAdapterDeliveryEvidence() {
+        FakeNoNetworkSink adapter = new FakeNoNetworkSink(DownstreamDeliveryResult.success());
+        RuntimeSinks sinks = fakeAdapterSinks(adapter);
+        sinks.start();
+
+        assertDoesNotThrow(() -> sinks.runnerRecordSink().accept(parsedRecord()));
+
+        CollectorRuntimeMetrics metrics = sinks.metricsSnapshot();
+        assertEquals(1, metrics.parsedRecordCount());
+        assertEquals(1, metrics.sinkDeliveredCount());
+        assertEquals("DELIVERED", metrics.lastSinkDeliveryOutcome());
+        assertEquals(1, metrics.sinkDeliveryOutcomeCounts().get("DELIVERED"));
+        assertEquals("iec104:station-1", adapter.lastRequest().sourceId().qualifiedValue());
+        DownstreamSinkStatus status = sinks.downstreamSinkStatus();
+        assertEquals("fake-no-network:unit", status.identity().qualifiedName());
+        assertTrue(status.ready());
+        assertEquals(1, status.deliveredCount());
+        assertTrue(status.diagnostics().containsKey("deliveryOutcomeCounts"));
+    }
+
+    @Test
+    void routesFakeAdapterBackpressureToFailedRecordIsolationAndStatus() throws Exception {
+        FakeNoNetworkSink adapter = new FakeNoNetworkSink(DownstreamDeliveryResult.failure(
+                DownstreamDeliveryOutcome.BACKPRESSURE_REJECTED,
+                "fake adapter queue full",
+                "FakeBackpressure",
+                Map.of("endpoint", "redacted")));
+        RuntimeSinks sinks = fakeAdapterSinks(adapter);
+        sinks.start();
+
+        assertDoesNotThrow(() -> sinks.runnerRecordSink().accept(parsedRecord()));
+
+        CollectorRuntimeMetrics metrics = sinks.metricsSnapshot();
+        assertEquals(0, metrics.parsedRecordCount());
+        assertEquals(0, metrics.sinkDeliveredCount());
+        assertEquals(1, metrics.sinkFailureCount());
+        assertEquals("BACKPRESSURE_REJECTED", metrics.lastSinkDeliveryOutcome());
+        assertEquals("BACKPRESSURE_REJECTED", metrics.lastSinkDeliveryFailureType());
+        assertTrue(metrics.lastSinkFailureRetryable());
+        assertEquals(1, metrics.sinkDeliveryOutcomeCounts().get("BACKPRESSURE_REJECTED"));
+        assertEquals(1, sinks.failedRecordIsolationStatus().sampleCount());
+        String sample = Files.readString(sinks.failedRecordIsolationStatus().lastSampleFile());
+        assertTrue(sample.contains("\"failureType\":\"BACKPRESSURE_REJECTED\""));
+        assertTrue(sample.contains("\"adapterContract\":\"downstream-sink-spi.v1\""));
+        DownstreamSinkStatus status = sinks.downstreamSinkStatus();
+        assertFalse(status.ready());
+        assertEquals(BackpressureDecision.RETRY_LATER, status.backpressureDecision());
+        assertEquals("true", status.diagnostics().get("authRefConfigured"));
+        assertFalse(status.diagnostics().containsValue("vault://runtime/sink-token"));
+    }
+
     private static final class BadValue {
         @Override
         public String toString() {
@@ -169,6 +228,26 @@ class RuntimeSinksTest {
         return ignored -> {
             throw new IllegalStateException(message);
         };
+    }
+
+    private RuntimeSinks fakeAdapterSinks(FakeNoNetworkSink adapter) {
+        return new RuntimeSinks(
+                ignored -> {
+                },
+                FailureSink.noop(),
+                adapter,
+                null,
+                new RuntimeSinkCounters(),
+                failedRecords(),
+                new DownstreamSinkAdapterConfig(
+                        "fake-no-network",
+                        "memory://fake",
+                        "unit-topic",
+                        "vault://runtime/sink-token",
+                        1000,
+                        "single",
+                        "no-retry",
+                        "failed-records"));
     }
 
     private static FailureSink throwingFailureSink(String message) {
@@ -226,6 +305,8 @@ class RuntimeSinksTest {
                 SinkType.FILE,
                 null,
                 FileSinkRotationConfig.defaults(),
+                DownstreamSinkAdapterConfig.defaults(),
+                DownstreamSinkStatus.unknown(DownstreamSinkAdapterConfig.defaults().identity(SinkType.FILE)),
                 failedRecords().status(),
                 BackpressureDecision.ACCEPT,
                 0,
@@ -259,5 +340,50 @@ class RuntimeSinksTest {
                 ManagementServerConfig.DEFAULT_HEALTH_HISTORY_MAX_ENTRIES,
                 ManagementMetricsSnapshot.empty(),
                 List.of());
+    }
+
+    private static final class FakeNoNetworkSink implements DownstreamSink<Object> {
+        private final DownstreamSinkIdentity identity = new DownstreamSinkIdentity("fake-no-network", "unit");
+        private final DownstreamDeliveryResult result;
+        private boolean running;
+        private DownstreamDeliveryRequest<Object> lastRequest;
+
+        private FakeNoNetworkSink(DownstreamDeliveryResult result) {
+            this.result = result;
+        }
+
+        @Override
+        public DownstreamSinkIdentity identity() {
+            return identity;
+        }
+
+        @Override
+        public void start() {
+            running = true;
+        }
+
+        @Override
+        public DownstreamDeliveryResult deliver(DownstreamDeliveryRequest<Object> request) {
+            lastRequest = request;
+            return result;
+        }
+
+        @Override
+        public DownstreamSinkStatus status() {
+            return new DownstreamSinkStatus(
+                    identity,
+                    running,
+                    result == null || result.delivered() || result.retryable(),
+                    result == null || result.delivered(),
+                    result == null ? BackpressureDecision.ACCEPT : result.backpressureDecision(),
+                    0,
+                    0,
+                    result,
+                    Map.of("adapter", "fake-no-network"));
+        }
+
+        private DownstreamDeliveryRequest<Object> lastRequest() {
+            return lastRequest;
+        }
     }
 }
