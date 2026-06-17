@@ -1,6 +1,6 @@
 # Protocol Runtime 0.17.0 Release Notes
 
-Release notes draft for the `0.17.0` runtime release.
+Release notes for the `0.17.0` runtime release candidate.
 
 `0.17.0` follows the published `0.16.0` production runtime operations
 baseline. The development line adds the first downstream sink productionization
@@ -77,7 +77,11 @@ Implementation and release PRs must pass:
 
 ## Publication
 
-- Tag: not created
-- Central deployment: not started
+- Release branch: `codex/release-0.17.0`
+- Tag: pending until the release branch is merged
+- Central deployment: pending until final publication
 - Central state: not published
-- GitHub Release: not created
+- GitHub Release: pending until final publication
+
+The release-readiness audit is tracked in
+[`release-readiness-0.17.0.md`](release-readiness-0.17.0.md).

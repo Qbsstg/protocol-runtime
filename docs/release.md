@@ -5,17 +5,19 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.16.0`.
+The latest release candidate is `0.17.0`. The latest published runtime release
+remains `0.16.0` until the `0.17.0` Central deployment is published and
+verified.
 
-The Maven reactor is open at `0.17.0-SNAPSHOT` after the published `0.16.0`
-production runtime operations baseline. The `0.17.0` line plans downstream
-sink productionization for standalone collectors: file sink schema
-stabilization, delivery failure classification, failed-record isolation,
-failed sample export, sink backpressure policy review, retry/dead-letter
-boundaries, Kafka/HTTP/MQTT downstream sink adapter boundaries, record envelope
-output rules, operator sink troubleshooting, and smoke coverage.
+The Maven reactor is fixed at `0.17.0` on the release branch after the
+`0.17.0-SNAPSHOT` downstream sink productionization development line. The
+`0.17.0` line publishes file sink schema stabilization, delivery failure
+classification, failed-record isolation, failed sample export, sink
+backpressure policy review, retry/dead-letter boundaries, Kafka/HTTP/MQTT
+downstream sink adapter boundaries, record envelope output rules, operator sink
+troubleshooting, and smoke coverage.
 
-The published `0.16.0` release includes:
+The `0.17.0` release includes:
 
 - `io.github.qbsstg:protocol-runtime`
 - `io.github.qbsstg:runtime-core`
@@ -38,7 +40,9 @@ onward.
 
 The `0.17.0` roadmap is maintained in
 [`roadmap-0.17.0.md`](roadmap-0.17.0.md), and release notes are maintained in
-[`release-notes-0.17.0.md`](release-notes-0.17.0.md). The published `0.16.0`
+[`release-notes-0.17.0.md`](release-notes-0.17.0.md). The `0.17.0`
+release-readiness audit is tracked in
+[`release-readiness-0.17.0.md`](release-readiness-0.17.0.md). The published `0.16.0`
 roadmap is maintained in
 [`roadmap-0.16.0.md`](roadmap-0.16.0.md), and release notes are maintained in
 [`release-notes-0.16.0.md`](release-notes-0.16.0.md). The operations runbook is
