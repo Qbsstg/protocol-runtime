@@ -49,6 +49,8 @@ where future dependencies may live once adapter implementation starts.
 | Module | Allowed dependencies | Not allowed |
 | --- | --- | --- |
 | `runtime-sink-kafka` | `runtime-core`, Kafka client libraries, tests. | Ingress ownership, protocol SDK modules, HTTP/MQTT adapter dependencies, changes to parser bindings. |
+| `runtime-sink-http` | `runtime-core`, HTTP client libraries, tests. | Ingress ownership, management API ownership, protocol SDK modules, Kafka/MQTT adapter dependencies, changes to parser bindings. |
+| `runtime-sink-mqtt` | `runtime-core`, MQTT client libraries, tests. | Ingress ownership, protocol SDK modules, Kafka/HTTP adapter dependencies, changes to parser bindings. |
 | `runtime-adapter-testkit` | Test fixtures, fake sinks, fake runner wiring, and adapter boundary assertions. | Production runtime dependencies or application dependency use. |
 
 The first HTTP ingress design contract and JDK `HttpServer` baseline are tracked in
@@ -311,6 +313,52 @@ Not allowed:
 - changing `protocol-sdk` to depend on `protocol-runtime`
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
+
+## `0.18.0` Downstream Sink Adapter Planning Boundary
+
+The `0.18.0` line starts after the published `0.17.0` downstream sink
+productionization release. The boundary is downstream sink adapter planning for
+Kafka, HTTP, and MQTT delivery without widening `runtime-core`, ingress
+adapters, protocol bindings, or `protocol-sdk`.
+
+Allowed:
+
+- `runtime-app`, examples, docs, CI/smoke, or future dedicated
+  `runtime-sink-*` modules may own downstream sink SPI design, record envelope
+  examples, delivery result taxonomy, retry/dead-letter policy, adapter
+  configuration examples, adapter smoke expectations, and operator
+  troubleshooting.
+- future dedicated `runtime-sink-kafka`, `runtime-sink-http`, and
+  `runtime-sink-mqtt` modules may own Kafka producer, HTTP client, and MQTT
+  publisher dependencies after their contracts are explicit.
+- fake/no-network adapter smoke tests may verify sink SPI behavior, delivery
+  result mapping, retry/dead-letter classification, status evidence, and
+  dependency boundary rules as repository verification only.
+- app-level examples may describe endpoints, topics, authentication
+  references, timeout policy, batching posture, retry posture, dead-letter
+  output, and secret redaction without adding live external clients.
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP client/server, database, Redis,
+  object storage, external queue, durable retry store, dead-letter store,
+  sink-adapter, service-manager, shell-wrapper, deployment-wrapper,
+  filesystem-layout, distribution-packaging, checksum/signing, installer,
+  package-manager, runtime-supervisor, operations-agent, or observability
+  exporter dependencies to `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as a downstream HTTP sink, management API,
+  deployment API, package API, operations API, diagnostics API, or adapter
+  delivery surface
+- putting Kafka producer behavior into `runtime-ingress-kafka`; the ingress
+  adapter remains inbound consumer mapping only
+- putting MQTT publisher behavior into `runtime-ingress-mqtt`; the ingress
+  adapter remains inbound subscriber/message mapping only
+- moving delivery retry, dead-letter, storage, or sink-specific policy into
+  `runtime-protocol-*`
+- implementing Kafka producers, HTTP clients, MQTT publishers, database
+  writers, Redis queues, object storage sinks, durable retry stores, or
+  external queues as part of the planning baseline
 
 ## `0.17.0` Downstream Sink Productionization Boundary
 

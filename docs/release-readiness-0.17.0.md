@@ -238,12 +238,12 @@ Final `0.17.0` publication is completed after the release branch merge:
 
 | Step | Result | Evidence |
 | --- | --- | --- |
-| Tag | Pending | `v0.17.0` will point at the merged release commit. |
-| Real Central upload | Pending | `mvn -Pcentral-release clean deploy` will create a Central deployment. |
-| Manual Central publish | Pending | The Central deployment must reach `PUBLISHED`. |
-| Public Maven Central verification | Pending | Runtime module artifacts, including `io.github.qbsstg:runtime-app:0.17.0:jar:standalone`, must resolve from `repo.maven.apache.org`. |
-| Distribution package verification | Pending | `io.github.qbsstg:runtime-app:0.17.0:zip:distribution`, `io.github.qbsstg:runtime-app:0.17.0:tar.gz:distribution`, `.asc`, and Maven Central checksum sidecars must resolve from `repo.maven.apache.org`. |
-| GitHub Release | Pending | GitHub release notes must be published at <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.17.0>. |
+| Tag | Passed | `v0.17.0` points at release commit `3e2dfca236e1883610353f8704f5ce28d0b0e4ea`. |
+| Real Central upload | Passed | `mvn -Pcentral-release clean deploy` created Central deployment `cb3c502d-59e6-4829-9d02-941374042d84`. |
+| Manual Central publish | Passed | The Central deployment reached `PUBLISHED` after manual confirmation. |
+| Public Maven Central verification | Passed | Runtime module artifacts, including `io.github.qbsstg:runtime-core:0.17.0` and `io.github.qbsstg:runtime-app:0.17.0:jar:standalone`, resolved from `repo.maven.apache.org` and from an isolated temporary Maven local repository. |
+| Distribution package verification | Passed | `io.github.qbsstg:runtime-app:0.17.0:zip:distribution`, `io.github.qbsstg:runtime-app:0.17.0:tar.gz:distribution`, `.asc`, `.sha1`, `.md5`, `.sha256`, and `.sha512` sidecars resolved from `repo.maven.apache.org`. |
+| GitHub Release | Passed | GitHub release notes are published at <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.17.0>. |
 
-`0.17.0` is the release candidate for the next published runtime release. The
-next development line will be `0.18.0-SNAPSHOT`.
+`0.17.0` is the latest published runtime release. The next development line is
+`0.18.0-SNAPSHOT`.
