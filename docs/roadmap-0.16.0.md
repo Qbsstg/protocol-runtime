@@ -119,3 +119,10 @@ observability exporter, database, Redis, Spring, or reverse dependency into
 - [x] operator runbook and production issue diagnostics flow are drafted.
 - [x] `docs/release-readiness-0.16.0.md` records the release branch audit,
   verification checklist, and final publication gates.
+- [x] `v0.16.0` is tagged on the merged release commit.
+- [x] Central deployment `82c4c0e3-211c-4993-877d-061ab50349bb` reached
+  `PUBLISHED`.
+- [x] Runtime modules, standalone classifier, distribution zip/tar.gz
+  artifacts, signatures, and checksum sidecars were verified from Maven
+  Central.
+- [x] GitHub Release `v0.16.0` is published.

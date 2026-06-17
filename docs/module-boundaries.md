@@ -312,6 +312,52 @@ Not allowed:
 - moving sink delivery, broker publishing, or storage retry policy into
   `runtime-protocol-*`
 
+## `0.17.0` Downstream Sink Productionization Boundary
+
+The `0.17.0` line starts after the published `0.16.0` production runtime
+operations release. The boundary is downstream sink productionization planning
+for standalone collectors without widening `runtime-core`, ingress adapters,
+protocol bindings, or `protocol-sdk`.
+
+Allowed:
+
+- `runtime-app`, examples, docs, CI/smoke, or a future dedicated
+  `runtime-sink-file` module may own file sink schema stability, record
+  envelope output examples, failed-record isolation, failed sample export, sink
+  backpressure policy, and operator sink troubleshooting.
+- future dedicated `runtime-sink-kafka`, `runtime-sink-http`, and
+  `runtime-sink-mqtt` modules may own Kafka producer, HTTP client, and MQTT
+  publisher dependencies after their contracts are explicit.
+- retry and dead-letter policy may be documented as a future sink-owned or
+  app/adapter-owned concern.
+- smoke tests may verify file sink schema stability, failed-record isolation,
+  sink backpressure, sample export, and future adapter behavior as repository
+  verification only.
+- record envelope examples may describe source identity, listener metadata,
+  protocol metadata, decoded payload, raw payload policy, timestamps, quality
+  evidence, delivery metadata, and error evidence.
+
+Not allowed:
+
+- adding Spring, Netty, Kafka, MQTT, HTTP client/server, database, Redis,
+  object storage, external queue, durable retry store, dead-letter store,
+  sink-adapter, service-manager, shell-wrapper, deployment-wrapper,
+  filesystem-layout, distribution-packaging, checksum/signing, installer,
+  package-manager, runtime-supervisor, operations-agent, or observability
+  exporter dependencies to `runtime-core`
+- changing `protocol-sdk` to depend on `protocol-runtime`
+- using `runtime-ingress-http` as a downstream HTTP sink, management API,
+  deployment API, package API, operations API, or diagnostics API
+- putting Kafka producer behavior into `runtime-ingress-kafka`; the ingress
+  adapter remains inbound consumer mapping only
+- putting MQTT publisher behavior into `runtime-ingress-mqtt`; the ingress
+  adapter remains inbound subscriber/message mapping only
+- moving delivery retry, dead-letter, storage, or sink-specific policy into
+  `runtime-protocol-*`
+- implementing durable retry queues, database writers, Redis queues, object
+  storage sinks, Kafka producers, HTTP clients, or MQTT publishers as part of
+  the first planning-only step
+
 ## `0.16.0` Production Runtime Operations Boundary
 
 The `0.16.0` line starts after the published `0.15.0` distribution package
