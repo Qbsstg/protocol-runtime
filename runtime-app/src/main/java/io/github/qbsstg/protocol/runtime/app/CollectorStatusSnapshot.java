@@ -1,6 +1,7 @@
 package io.github.qbsstg.protocol.runtime.app;
 
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
+import io.github.qbsstg.protocol.runtime.core.DownstreamSinkStatus;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +23,8 @@ public record CollectorStatusSnapshot(
         SinkType sinkType,
         FileSinkStatus fileSinkStatus,
         FileSinkRotationConfig fileSinkRotation,
+        DownstreamSinkAdapterConfig sinkAdapter,
+        DownstreamSinkStatus downstreamSinkStatus,
         FailedRecordIsolationStatus failedRecordIsolationStatus,
         BackpressureDecision backpressureDecision,
         long backpressureMaxPayloadBytes,
@@ -42,6 +45,12 @@ public record CollectorStatusSnapshot(
         }
         if (fileSinkRotation == null) {
             throw new IllegalArgumentException("fileSinkRotation must not be null");
+        }
+        if (sinkAdapter == null) {
+            throw new IllegalArgumentException("sinkAdapter must not be null");
+        }
+        if (downstreamSinkStatus == null) {
+            throw new IllegalArgumentException("downstreamSinkStatus must not be null");
         }
         if (failedRecordIsolationStatus == null) {
             throw new IllegalArgumentException("failedRecordIsolationStatus must not be null");
@@ -85,6 +94,8 @@ public record CollectorStatusSnapshot(
                 sinkType,
                 fileSinkStatus,
                 fileSinkRotation,
+                sinkAdapter,
+                downstreamSinkStatus,
                 failedRecordIsolationStatus,
                 backpressureDecision,
                 backpressureMaxPayloadBytes,

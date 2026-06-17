@@ -26,6 +26,7 @@ final class CollectorStatusFormatter {
                 + " sinkFailures=" + metrics.sinkFailureCount()
                 + " lastSinkFailure=" + lastSinkFailure(metrics)
                 + " sink=" + snapshot.sinkType().configValue()
+                + " sinkAdapter=" + sinkAdapter(snapshot)
                 + " fileSink=" + fileSink(snapshot.fileSinkStatus())
                 + " failedRecords=" + failedRecords(snapshot.failedRecordIsolationStatus())
                 + " backpressure=" + snapshot.backpressureDecision()
@@ -104,6 +105,18 @@ final class CollectorStatusFormatter {
                 + "/rotations=" + status.rotationCount()
                 + "/maxBytes=" + status.rotation().maxBytes()
                 + "/maxHistory=" + status.rotation().maxHistory();
+    }
+
+    private static String sinkAdapter(CollectorStatusSnapshot snapshot) {
+        io.github.qbsstg.protocol.runtime.core.DownstreamSinkStatus status = snapshot.downstreamSinkStatus();
+        return status.identity().qualifiedName()
+                + "/running=" + status.running()
+                + "/ready=" + status.ready()
+                + "/healthy=" + status.healthy()
+                + "/delivered=" + status.deliveredCount()
+                + "/failures=" + status.failureCount()
+                + "/lastOutcome=" + (status.lastResult() == null ? "none" : status.lastResult().outcome())
+                + "/authRefConfigured=" + snapshot.sinkAdapter().authenticationReferenceConfigured();
     }
 
     private static String failedRecords(FailedRecordIsolationStatus status) {

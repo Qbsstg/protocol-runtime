@@ -131,6 +131,14 @@ public record StandaloneCollectorConfig(
     public static final String SINK_FILE = "collector.sink.file";
     public static final String SINK_FILE_MAX_BYTES = "collector.sink.file.maxBytes";
     public static final String SINK_FILE_MAX_HISTORY = "collector.sink.file.maxHistory";
+    public static final String SINK_ADAPTER_TYPE = "collector.sink.adapter.type";
+    public static final String SINK_ADAPTER_ENDPOINT = "collector.sink.adapter.endpoint";
+    public static final String SINK_ADAPTER_TOPIC = "collector.sink.adapter.topic";
+    public static final String SINK_ADAPTER_AUTH_REF = "collector.sink.adapter.authRef";
+    public static final String SINK_ADAPTER_TIMEOUT_MILLIS = "collector.sink.adapter.timeoutMillis";
+    public static final String SINK_ADAPTER_BATCHING = "collector.sink.adapter.batching";
+    public static final String SINK_ADAPTER_RETRY = "collector.sink.adapter.retry";
+    public static final String SINK_ADAPTER_DEAD_LETTER = "collector.sink.adapter.deadLetter";
     public static final String SINK_FAILED_RECORDS_ENABLED = "collector.sink.failedRecords.enabled";
     public static final String SINK_FAILED_RECORDS_DIR = "collector.sink.failedRecords.dir";
     public static final String SINK_FAILED_RECORDS_MAX_SAMPLES = "collector.sink.failedRecords.maxSamples";
@@ -304,6 +312,7 @@ public record StandaloneCollectorConfig(
         SinkType sinkType = parseSinkType(property(properties, SINK_TYPE, defaults.sinkType().configValue()), errors);
         Path sinkFile = parseSinkFile(properties, sinkType, errors);
         FileSinkRotationConfig fileSinkRotation = parseFileSinkRotation(properties, defaults.fileSinkRotation(), errors);
+        DownstreamSinkAdapterConfig sinkAdapter = parseSinkAdapterConfig(properties, errors);
         RuntimeProtocol protocol = parseProtocol(
                 PROTOCOL,
                 property(properties, PROTOCOL, defaults.protocol().configValue()),
@@ -354,6 +363,7 @@ public record StandaloneCollectorConfig(
                         sinkType,
                         sinkFile,
                         fileSinkRotation,
+                        sinkAdapter,
                         failedRecords,
                         strictAsduParsing,
                         management,
@@ -1116,6 +1126,38 @@ public record StandaloneCollectorConfig(
             return new SinkFailureIsolationConfig(enabled, directory, maxSamples);
         } catch (IllegalArgumentException ex) {
             errors.add("collector.sink.failedRecords is invalid: " + ex.getMessage());
+            return defaults;
+        }
+    }
+
+    private static DownstreamSinkAdapterConfig parseSinkAdapterConfig(Properties properties, List<String> errors) {
+        DownstreamSinkAdapterConfig defaults = DownstreamSinkAdapterConfig.defaults();
+        String type = property(properties, SINK_ADAPTER_TYPE, defaults.type());
+        String endpoint = property(properties, SINK_ADAPTER_ENDPOINT, defaults.endpoint());
+        String topic = property(properties, SINK_ADAPTER_TOPIC, defaults.topic());
+        String authRef = property(properties, SINK_ADAPTER_AUTH_REF, defaults.authenticationReference());
+        long timeoutMillis = longProperty(
+                properties,
+                SINK_ADAPTER_TIMEOUT_MILLIS,
+                defaults.timeoutMillis(),
+                0L,
+                Long.MAX_VALUE,
+                errors);
+        String batching = property(properties, SINK_ADAPTER_BATCHING, defaults.batchingPosture());
+        String retry = property(properties, SINK_ADAPTER_RETRY, defaults.retryPosture());
+        String deadLetter = property(properties, SINK_ADAPTER_DEAD_LETTER, defaults.deadLetterOutput());
+        try {
+            return new DownstreamSinkAdapterConfig(
+                    type,
+                    endpoint,
+                    topic,
+                    authRef,
+                    timeoutMillis,
+                    batching,
+                    retry,
+                    deadLetter);
+        } catch (IllegalArgumentException ex) {
+            errors.add("collector.sink.adapter is invalid: " + ex.getMessage());
             return defaults;
         }
     }

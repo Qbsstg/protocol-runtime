@@ -1,36 +1,39 @@
 # Protocol Runtime 0.18.0 Release Notes
 
-Release notes draft for the `0.18.0` downstream sink adapter planning line.
+Release notes draft for the `0.18.0` downstream sink adapter SPI baseline.
 
 `0.18.0` follows the published `0.17.0` downstream sink productionization
-baseline. The development line plans the SPI, contracts, module boundaries,
-and productionization route for future Kafka, HTTP, and MQTT downstream sink
-adapters.
+baseline. The development line adds the first protocol-neutral SPI contracts,
+app bridge, configuration model, status evidence, and productionization route
+for future Kafka, HTTP, and MQTT downstream sink adapters.
 
-## Planned Baseline
+## Baseline
 
-- Define a downstream sink SPI boundary without adding Kafka, HTTP, MQTT,
+- Add downstream sink SPI contracts without adding Kafka, HTTP, MQTT,
   database, Redis, or external queue dependencies to `runtime-core`.
 - Stabilize the adapter-facing record envelope contract derived from
-  `protocol-runtime.record.v1`.
+  `protocol-runtime.record.v1`, including sink adapter contract metadata and
+  forward-compatible extension fields.
 - Define delivery result outcomes for success, retryable failure, permanent
-  failure, backpressure rejection, dead-letter routing, and operator
+  failure, backpressure rejection, configuration rejection, serialization
+  failure, transport failure, timeout, dead-letter routing, and operator
   diagnostics.
+- Bridge current logging, file, and in-memory sinks through the SPI while
+  keeping failed-record isolation and backpressure behavior in `runtime-app`.
 - Document retry and dead-letter boundaries before implementing durable retry
   behavior or broker-specific dead-letter delivery.
 - Plan dedicated `runtime-sink-kafka`, `runtime-sink-http`, and
   `runtime-sink-mqtt` module boundaries.
-- Define adapter configuration model expectations for endpoints, topics,
+- Add adapter configuration model expectations for endpoints, topics,
   authentication references, timeouts, batching, retry posture, dead-letter
   output, and secret redaction.
-- Define fake/no-network adapter smoke expectations before adding live
-  dependency integration.
+- Add fake/no-network adapter test coverage before live dependency integration.
 - Extend operator troubleshooting guidance for downstream adapter failures,
   failed-record correlation, status evidence, and dependency-specific checks.
 
 ## Scope
 
-`0.18.0` is a planning and boundary-design line for downstream sink adapters.
+`0.18.0` is an SPI baseline and boundary-design line for downstream sink adapters.
 It should not introduce Kafka producer, HTTP client, MQTT publisher, database,
 Redis, object storage, or external queue dependencies during the planning
 stage. Future implementation work must place those dependencies only in
@@ -85,3 +88,5 @@ Planning and follow-up PRs must pass:
 - GitHub Release: pending
 
 The roadmap is tracked in [`roadmap-0.18.0.md`](roadmap-0.18.0.md).
+Downstream sink adapter troubleshooting is tracked in
+[`downstream-sink-adapters.md`](downstream-sink-adapters.md).

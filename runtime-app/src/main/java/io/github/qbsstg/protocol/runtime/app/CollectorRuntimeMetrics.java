@@ -1,6 +1,7 @@
 package io.github.qbsstg.protocol.runtime.app;
 
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
+import io.github.qbsstg.protocol.runtime.core.DownstreamDeliveryResult;
 
 import java.time.Instant;
 import java.util.Map;
@@ -29,7 +30,11 @@ public record CollectorRuntimeMetrics(
         String lastSinkFailureMessage,
         String lastSinkDeliveryFailureType,
         boolean lastSinkFailureRetryable,
-        Map<String, Long> sinkFailureTypeCounts) {
+        Map<String, Long> sinkFailureTypeCounts,
+        long sinkDeliveredCount,
+        String lastSinkDeliveryOutcome,
+        DownstreamDeliveryResult lastSinkDeliveryResult,
+        Map<String, Long> sinkDeliveryOutcomeCounts) {
 
     public CollectorRuntimeMetrics {
         lastParseFailureAttributes = lastParseFailureAttributes == null
@@ -38,6 +43,9 @@ public record CollectorRuntimeMetrics(
         sinkFailureTypeCounts = sinkFailureTypeCounts == null
                 ? Map.of()
                 : Map.copyOf(sinkFailureTypeCounts);
+        sinkDeliveryOutcomeCounts = sinkDeliveryOutcomeCounts == null
+                ? Map.of()
+                : Map.copyOf(sinkDeliveryOutcomeCounts);
     }
 
     public static CollectorRuntimeMetrics empty() {
@@ -65,13 +73,26 @@ public record CollectorRuntimeMetrics(
                 null,
                 null,
                 false,
-                emptySinkFailureTypeCounts());
+                emptySinkFailureTypeCounts(),
+                0,
+                null,
+                null,
+                emptySinkDeliveryOutcomeCounts());
     }
 
     private static Map<String, Long> emptySinkFailureTypeCounts() {
         java.util.LinkedHashMap<String, Long> counts = new java.util.LinkedHashMap<>();
         for (SinkDeliveryFailureType type : SinkDeliveryFailureType.values()) {
             counts.put(type.name(), 0L);
+        }
+        return counts;
+    }
+
+    private static Map<String, Long> emptySinkDeliveryOutcomeCounts() {
+        java.util.LinkedHashMap<String, Long> counts = new java.util.LinkedHashMap<>();
+        for (io.github.qbsstg.protocol.runtime.core.DownstreamDeliveryOutcome outcome
+                : io.github.qbsstg.protocol.runtime.core.DownstreamDeliveryOutcome.values()) {
+            counts.put(outcome.name(), 0L);
         }
         return counts;
     }

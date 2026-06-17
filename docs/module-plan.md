@@ -55,23 +55,23 @@ Cross-module combinations proven there should not be moved into `runtime-core`.
 because it is the deployable assembly boundary. It still must not move those
 dependencies into `runtime-core` or `protocol-sdk`.
 
-## `0.18.0` Downstream Sink Adapter Planning Posture
+## `0.18.0` Downstream Sink Adapter SPI Posture
 
 The `0.18.0` runtime line starts from the published `0.17.0` downstream sink
-productionization baseline. The goal is planning for dedicated downstream sink
-adapters without moving producer/client dependencies into core contracts:
+productionization baseline. The goal is a first downstream sink adapter SPI
+baseline without moving producer/client dependencies into core contracts:
 
 | Module | 0.18.0 planning boundary |
 | --- | --- |
-| `runtime-core` | Stay dependency-light; only minimal protocol-neutral sink SPI contracts may be considered after their app-neutral shape is proven. Add no Spring, Netty, Kafka, MQTT, HTTP client/server, database, Redis, object storage, external queue, retry-store, dead-letter store, sink-adapter, runtime-supervisor, service-manager, filesystem-layout, deployment wrapper, package manager, access-control, request-logging, or observability exporter dependencies. |
-| `runtime-app` | Continue to own current logging/file/in-memory sink assembly, app-level configuration, status, management evidence, self-check, hot-check, failed-record isolation, and operator examples. |
+| `runtime-core` | Own only minimal protocol-neutral sink SPI contracts. Add no Spring, Netty, Kafka, MQTT, HTTP client/server, database, Redis, object storage, external queue, retry-store, dead-letter store, concrete sink adapter, runtime-supervisor, service-manager, filesystem-layout, deployment wrapper, package manager, access-control, request-logging, or observability exporter dependencies. |
+| `runtime-app` | Continue to own current logging/file/in-memory sink assembly, app-level adapter configuration, SPI bridge, status, management evidence, self-check, hot-check, failed-record isolation, and operator examples. |
 | `examples` and `docs` | Own sink SPI design notes, adapter-facing record envelope examples, delivery result taxonomy, retry/dead-letter design, Kafka/HTTP/MQTT adapter configuration examples, dependency boundary rules, and operator troubleshooting. |
 | CI/smoke | Own fake/no-network adapter smoke expectations as verification only; do not turn smoke fixtures into supported application dependencies. |
 | Future `runtime-sink-kafka` | Planned downstream delivery adapter; Kafka producer dependencies belong here or in an explicit app/adapter module, not in `runtime-core` or `runtime-ingress-kafka`. |
 | Future `runtime-sink-http` | Planned downstream delivery adapter; HTTP client dependencies belong here or in an explicit app/adapter module, and `runtime-ingress-http` remains ingestion-only. |
 | Future `runtime-sink-mqtt` | Planned downstream delivery adapter; MQTT publisher dependencies belong here or in an explicit app/adapter module, not in `runtime-core` or `runtime-ingress-mqtt`. |
 
-The `0.18.0` planning line defines the downstream sink SPI, record envelope
+The `0.18.0` baseline defines the downstream sink SPI, record envelope
 contract, delivery result contract, retry/dead-letter boundaries, adapter
 configuration model, adapter smoke expectations, and operator troubleshooting
 route. It does not introduce Kafka producers, HTTP clients, MQTT publishers,

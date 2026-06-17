@@ -20,6 +20,7 @@ public record StandaloneCollectorAppConfig(
         SinkType sinkType,
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
+        DownstreamSinkAdapterConfig sinkAdapter,
         SinkFailureIsolationConfig failedRecords,
         boolean strictAsduParsing,
         ManagementServerConfig management,
@@ -36,6 +37,7 @@ public record StandaloneCollectorAppConfig(
         Objects.requireNonNull(sinkFailureBackpressureDecision, "sinkFailureBackpressureDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
+        Objects.requireNonNull(sinkAdapter, "sinkAdapter must not be null");
         Objects.requireNonNull(failedRecords, "failedRecords must not be null");
         Objects.requireNonNull(management, "management must not be null");
         Objects.requireNonNull(deployment, "deployment must not be null");
@@ -89,6 +91,7 @@ public record StandaloneCollectorAppConfig(
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
+                DownstreamSinkAdapterConfig.defaults(),
                 SinkFailureIsolationConfig.defaults(CollectorDeploymentConfig.defaults().dataDir()),
                 strictAsduParsing,
                 ManagementServerConfig.disabled(),
@@ -123,6 +126,7 @@ public record StandaloneCollectorAppConfig(
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
+                DownstreamSinkAdapterConfig.defaults(),
                 SinkFailureIsolationConfig.defaults(CollectorDeploymentConfig.defaults().dataDir()),
                 strictAsduParsing,
                 ManagementServerConfig.disabled(),
@@ -152,6 +156,7 @@ public record StandaloneCollectorAppConfig(
                 config.sinkType(),
                 config.sinkFile(),
                 config.fileSinkRotation(),
+                DownstreamSinkAdapterConfig.defaults(),
                 SinkFailureIsolationConfig.defaults(CollectorDeploymentConfig.defaults().dataDir()),
                 config.strictAsduParsing(),
                 ManagementServerConfig.disabled(),

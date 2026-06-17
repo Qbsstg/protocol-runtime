@@ -1,14 +1,15 @@
 # Protocol Runtime 0.18.0 Roadmap
 
 `0.18.0` starts after the published `0.17.0` downstream sink
-productionization baseline. The line plans the first dedicated downstream sink
-adapter boundary for Kafka, HTTP, and MQTT delivery without implementing
-producer/client adapters in the planning step.
+productionization baseline. The line delivers the first downstream sink adapter
+SPI baseline for Kafka, HTTP, and MQTT delivery without implementing
+producer/client adapters in this step.
 
 The goal is to define a stable SPI and operator model before adding external
 delivery dependencies. Adapter implementation can follow only after the module
 boundaries, record envelope contract, delivery result contract, retry and
-dead-letter posture, smoke expectations, and dependency policy are explicit.
+dead-letter posture, smoke expectations, and dependency policy are explicit and
+verified in app-local/fake-adapter tests.
 
 ## Goals
 
@@ -38,7 +39,7 @@ dead-letter posture, smoke expectations, and dependency policy are explicit.
 | Module or area | `0.18.0` planning responsibility |
 | --- | --- |
 | `runtime-core` | Stay dependency-light. Consider only minimal protocol-neutral sink SPI contracts after proving they are not app-specific. Add no Spring, Netty, Kafka, MQTT, HTTP client, database, Redis, external queue, retry-store, dead-letter store, sink-adapter, or exporter dependencies. |
-| `runtime-app` | Continue to own current logging/file/in-memory sink assembly, app-local sink configuration, status, self-check, hot-check, failed-record isolation, and operator examples. |
+| `runtime-app` | Continue to own current logging/file/in-memory sink assembly, app-local sink configuration, adapter bridge, status, self-check, hot-check, failed-record isolation, and operator examples. |
 | Future `runtime-sink-kafka` | Planned Kafka producer delivery adapter. Kafka producer dependencies belong only here or in an explicit app/adapter module, never in `runtime-core` or `runtime-ingress-kafka`. |
 | Future `runtime-sink-http` | Planned downstream HTTP delivery adapter. HTTP client dependencies belong only here or in an explicit app/adapter module; `runtime-ingress-http` remains ingestion-only. |
 | Future `runtime-sink-mqtt` | Planned MQTT publisher delivery adapter. MQTT publisher dependencies belong only here or in an explicit app/adapter module, never in `runtime-core` or `runtime-ingress-mqtt`. |
@@ -49,9 +50,9 @@ dead-letter posture, smoke expectations, and dependency policy are explicit.
 
 ### Sink SPI Shape
 
-The planning line should decide whether the first SPI belongs in
-`runtime-core`, `runtime-app`, or a dedicated sink API module. The SPI should
-describe:
+The first SPI belongs in `runtime-core` because the types are protocol-neutral
+and carry no app, transport, or external-client dependencies. App-owned
+configuration and diagnostics remain in `runtime-app`. The SPI describes:
 
 - sink identity and lifecycle
 - delivery request input
@@ -62,8 +63,8 @@ describe:
 - shutdown and flush behavior
 - secret-safe diagnostic output
 
-No SPI decision should require Kafka, HTTP, MQTT, database, Redis, or external
-queue classes in `runtime-core`.
+No SPI type requires Kafka, HTTP, MQTT, database, Redis, or external queue
+classes in `runtime-core`.
 
 ### Record Envelope Contract
 
@@ -88,8 +89,7 @@ parser output or hide source/listener evidence needed by operators.
 
 ### Delivery Result Contract
 
-The planning line should define delivery outcomes before adapter
-implementation:
+The baseline defines delivery outcomes before adapter implementation:
 
 - accepted or delivered
 - retryable failure
@@ -146,7 +146,8 @@ publish timeout, retry posture, and dead-letter fallback. It must not reuse
 
 ## Smoke Expectations
 
-The planning line should define smoke coverage before adapter implementation:
+The baseline defines and covers smoke/test expectations before real adapter
+implementation:
 
 - fake sink adapter contract tests for delivery result mapping
 - record envelope compatibility checks
@@ -157,18 +158,21 @@ The planning line should define smoke coverage before adapter implementation:
 - dependency boundary checks proving adapter dependencies do not leak into
   `runtime-core`, protocol bindings, ingress modules, or `protocol-sdk`
 
+Operator troubleshooting is maintained in
+[`downstream-sink-adapters.md`](downstream-sink-adapters.md).
+
 ## Readiness Checklist
 
 - [x] `0.17.0` release artifacts are published and verified from Maven Central.
 - [x] GitHub Release `v0.17.0` is published.
 - [x] Maven reactor is opened at `0.18.0-SNAPSHOT`.
-- [ ] Downstream sink SPI boundary is designed.
-- [ ] Record envelope contract is reviewed for adapter-facing use.
-- [ ] Delivery result contract is designed.
-- [ ] Retry and dead-letter boundaries are documented.
-- [ ] Kafka sink adapter module boundary is documented.
-- [ ] HTTP sink adapter module boundary is documented.
-- [ ] MQTT sink adapter module boundary is documented.
-- [ ] Adapter configuration model is documented.
-- [ ] Adapter smoke expectations are documented.
-- [ ] Operator sink adapter troubleshooting guidance is drafted.
+- [x] Downstream sink SPI boundary is designed and implemented in `runtime-core`.
+- [x] Record envelope contract is reviewed for adapter-facing use.
+- [x] Delivery result contract is designed and covered by tests.
+- [x] Retry and dead-letter boundaries are documented.
+- [x] Kafka sink adapter module boundary is documented.
+- [x] HTTP sink adapter module boundary is documented.
+- [x] MQTT sink adapter module boundary is documented.
+- [x] Adapter configuration model is documented.
+- [x] Adapter smoke expectations are documented and covered by fake/no-network tests.
+- [x] Operator sink adapter troubleshooting guidance is drafted.

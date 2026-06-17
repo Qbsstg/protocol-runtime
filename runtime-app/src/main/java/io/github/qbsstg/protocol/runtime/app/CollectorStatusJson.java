@@ -173,6 +173,7 @@ final class CollectorStatusJson {
         json.name("type").value(snapshot.sinkType().configValue());
         json.name("schemaVersion").value(RuntimeRecordFormat.RECORD_SCHEMA_VERSION);
         json.name("format").value("jsonl");
+        sinkAdapter(json, snapshot);
         FileSinkStatus fileSink = snapshot.fileSinkStatus();
         if (fileSink == null) {
             json.name("file").nullValue();
@@ -188,6 +189,50 @@ final class CollectorStatusJson {
             json.endObject();
         }
         failedRecords(json, snapshot.failedRecordIsolationStatus());
+        json.endObject();
+    }
+
+    private static void sinkAdapter(JsonWriter json, CollectorStatusSnapshot snapshot) {
+        io.github.qbsstg.protocol.runtime.core.DownstreamSinkStatus status = snapshot.downstreamSinkStatus();
+        DownstreamSinkAdapterConfig config = snapshot.sinkAdapter();
+        json.name("adapter").beginObject();
+        json.name("type").value(config.type());
+        json.name("endpointConfigured").value(config.endpoint() != null);
+        json.name("topicConfigured").value(config.topic() != null);
+        json.name("authRefConfigured").value(config.authenticationReferenceConfigured());
+        json.name("timeoutMillis").value(config.timeoutMillis());
+        json.name("batchingPosture").value(config.batchingPosture());
+        json.name("retryPosture").value(config.retryPosture());
+        json.name("deadLetterOutput").value(config.deadLetterOutput());
+        json.name("identity").beginObject();
+        json.name("type").value(status.identity().type());
+        json.name("name").value(status.identity().name());
+        json.name("qualifiedName").value(status.identity().qualifiedName());
+        json.endObject();
+        json.name("running").value(status.running());
+        json.name("healthy").value(status.healthy());
+        json.name("ready").value(status.ready());
+        json.name("backpressureDecision").value(status.backpressureDecision().name());
+        json.name("deliveredCount").value(status.deliveredCount());
+        json.name("failureCount").value(status.failureCount());
+        json.name("lastResult").beginObject();
+        if (status.lastResult() == null) {
+            json.name("outcome").nullValue();
+            json.name("message").nullValue();
+            json.name("exceptionType").nullValue();
+            json.name("retryable").value(false);
+            json.name("backpressureDecision").nullValue();
+            json.name("diagnostics").beginObject().endObject();
+        } else {
+            json.name("outcome").value(status.lastResult().outcome().name());
+            json.name("message").value(status.lastResult().message());
+            json.name("exceptionType").value(status.lastResult().exceptionType());
+            json.name("retryable").value(status.lastResult().retryable());
+            json.name("backpressureDecision").value(status.lastResult().backpressureDecision().name());
+            json.name("diagnostics").stringMap(status.lastResult().diagnostics());
+        }
+        json.endObject();
+        json.name("diagnostics").stringMap(status.diagnostics());
         json.endObject();
     }
 
@@ -228,6 +273,9 @@ final class CollectorStatusJson {
         json.name("sinkFailureCount").value(metrics.sinkFailureCount());
         json.name("delivery").beginObject();
         json.name("schemaVersion").value(RuntimeRecordFormat.RECORD_SCHEMA_VERSION);
+        json.name("deliveredCount").value(metrics.sinkDeliveredCount());
+        json.name("lastOutcome").value(metrics.lastSinkDeliveryOutcome());
+        json.name("outcomeCounts").stringLongMap(metrics.sinkDeliveryOutcomeCounts());
         json.name("sinkFailureTypeCounts").stringLongMap(metrics.sinkFailureTypeCounts());
         json.name("lastSinkDeliveryFailureType").value(metrics.lastSinkDeliveryFailureType());
         json.name("lastSinkFailureRetryable").value(metrics.lastSinkFailureRetryable());

@@ -7,6 +7,9 @@ enum SinkDeliveryFailureType {
     WRITE_ERROR(true),
     FLUSH_ERROR(true),
     BACKPRESSURE_REJECTED(true),
+    TRANSPORT_FAILURE(true),
+    TIMEOUT(true),
+    DEAD_LETTER_ROUTED(false),
     RETRYABLE_FAILURE(true),
     PERMANENT_FAILURE(false),
     UNKNOWN_FAILURE(true);

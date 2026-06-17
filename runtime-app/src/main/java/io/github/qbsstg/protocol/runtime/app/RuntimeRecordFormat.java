@@ -35,6 +35,7 @@ final class RuntimeRecordFormat {
         appendParser(line, null, null);
         appendSink(line, "PENDING", RECORD_SCHEMA_VERSION);
         appendAttributes(line, record.attributes());
+        appendExtensions(line);
         line.append('}');
         return line.toString();
     }
@@ -61,6 +62,7 @@ final class RuntimeRecordFormat {
         appendParser(line, failure.message(), failure.cause() == null ? null : failure.cause().getClass().getName());
         appendSink(line, "PENDING", PARSE_FAILURE_SCHEMA_VERSION);
         appendAttributes(line, failure.attributes());
+        appendExtensions(line);
         line.append('}');
         return line.toString();
     }
@@ -75,6 +77,7 @@ final class RuntimeRecordFormat {
         appendField(line, "value", safeValuePreview(record.value()));
         appendRaw(line, record.rawPayload(), record.attributes());
         appendSinkDeliveryFailure(line, failure);
+        appendExtensions(line);
         line.append('}');
         return line.toString();
     }
@@ -93,6 +96,7 @@ final class RuntimeRecordFormat {
                 parseFailure.message(),
                 parseFailure.cause() == null ? null : parseFailure.cause().getClass().getName());
         appendSinkDeliveryFailure(line, failure);
+        appendExtensions(line);
         line.append('}');
         return line.toString();
     }
@@ -198,6 +202,17 @@ final class RuntimeRecordFormat {
         appendQuoted(line, "delivery");
         line.append(':');
         appendQuoted(line, delivery);
+        line.append(',');
+        appendQuoted(line, "adapterContract");
+        line.append(':');
+        appendQuoted(line, "downstream-sink-spi.v1");
+        line.append(',');
+        appendQuoted(line, "metadata");
+        line.append(":{");
+        appendQuoted(line, "result");
+        line.append(':');
+        appendNullableQuoted(line, null);
+        line.append('}');
         line.append('}');
     }
 
@@ -226,7 +241,15 @@ final class RuntimeRecordFormat {
         appendQuoted(line, "retryable");
         line.append(':');
         line.append(failure.retryable());
+        line.append(',');
+        appendQuoted(line, "adapterContract");
+        line.append(':');
+        appendQuoted(line, "downstream-sink-spi.v1");
         line.append('}');
+    }
+
+    private static void appendExtensions(StringBuilder line) {
+        line.append(",\"extensions\":{}");
     }
 
     private static void appendStringMap(StringBuilder line, Map<String, String> values) {
