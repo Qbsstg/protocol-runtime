@@ -54,6 +54,9 @@ collector.source.id=iec104:smoke
 collector.backpressure=ACCEPT
 collector.sink.type=file
 collector.sink.file=$SINK
+collector.sink.failedRecords.enabled=true
+collector.sink.failedRecords.dir=$OUT_DIR/runtime/data/failed-records
+collector.sink.failedRecords.maxSamples=8
 collector.iec104.strictAsduParsing=false
 collector.management.enabled=true
 collector.management.host=127.0.0.1
@@ -72,6 +75,12 @@ EOF
 if ! grep -q '"lifecycle":"CONFIGURED"' "$DRY_STATUS"; then
   cat "$DRY_STATUS"
   echo "dry-run did not export configured status JSON" >&2
+  exit 1
+fi
+if ! grep -q '"failedRecords"' "$DRY_STATUS" \
+  || ! grep -q '"schemaVersion":"protocol-runtime.record.v1"' "$DRY_STATUS"; then
+  cat "$DRY_STATUS"
+  echo "dry-run did not expose sink schema and failed-record isolation status" >&2
   exit 1
 fi
 
@@ -161,8 +170,12 @@ while [ "$i" -lt 150 ]; do
     && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/readiness" >/dev/null 2>&1 \
     && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/status" > "$STATUS" \
     && grep -q '"kind":"record"' "$SINK" \
+    && grep -q '"schemaVersion":"protocol-runtime.record.v1"' "$SINK" \
+    && grep -q '"quality":{"status":"PARSED"}' "$SINK" \
     && grep -q "Protocol Runtime collector status state=RUNNING" "$LOG" \
     && grep -q '"readiness":"READY"' "$STATUS" \
+    && grep -q '"failedRecords"' "$STATUS" \
+    && grep -q '"sinkFailureTypeCounts"' "$STATUS" \
     && grep -q '"mode":"token"' "$STATUS" \
     && grep -q '"rejectedRequestCount":1' "$STATUS" \
     && grep -q '"healthHistory"' "$STATUS" \

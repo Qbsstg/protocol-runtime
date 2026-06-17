@@ -26,12 +26,18 @@ public record CollectorRuntimeMetrics(
         String lastSinkFailureSourceId,
         Instant lastSinkFailureAt,
         String lastSinkFailureType,
-        String lastSinkFailureMessage) {
+        String lastSinkFailureMessage,
+        String lastSinkDeliveryFailureType,
+        boolean lastSinkFailureRetryable,
+        Map<String, Long> sinkFailureTypeCounts) {
 
     public CollectorRuntimeMetrics {
         lastParseFailureAttributes = lastParseFailureAttributes == null
                 ? Map.of()
                 : Map.copyOf(lastParseFailureAttributes);
+        sinkFailureTypeCounts = sinkFailureTypeCounts == null
+                ? Map.of()
+                : Map.copyOf(sinkFailureTypeCounts);
     }
 
     public static CollectorRuntimeMetrics empty() {
@@ -56,6 +62,17 @@ public record CollectorRuntimeMetrics(
                 null,
                 null,
                 null,
-                null);
+                null,
+                null,
+                false,
+                emptySinkFailureTypeCounts());
+    }
+
+    private static Map<String, Long> emptySinkFailureTypeCounts() {
+        java.util.LinkedHashMap<String, Long> counts = new java.util.LinkedHashMap<>();
+        for (SinkDeliveryFailureType type : SinkDeliveryFailureType.values()) {
+            counts.put(type.name(), 0L);
+        }
+        return counts;
     }
 }

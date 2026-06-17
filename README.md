@@ -57,14 +57,14 @@ stronger runtime status evidence, failure recovery and operator runbooks,
 long-running smoke, release artifact regression smoke, and production issue
 diagnostics.
 
-The current `0.17.0-SNAPSHOT` development line plans downstream sink
-productionization: file sink schema stability, delivery failure
-classification, failed-record isolation, failed sample export, sink
-backpressure review, retry/dead-letter boundaries, Kafka/HTTP/MQTT downstream
+The current `0.17.0-SNAPSHOT` development line implements the first downstream
+sink productionization baseline: stable file sink schema v1, delivery failure
+classification, failed-record isolation, bounded failed sample export, sink
+backpressure evidence, retry/dead-letter boundaries, Kafka/HTTP/MQTT downstream
 adapter boundaries, record envelope output rules, operator sink
 troubleshooting, and smoke coverage.
 
-The `0.17.0` planning scope is tracked in
+The `0.17.0` baseline scope is tracked in
 [`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md), and release notes are
 tracked in [`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md).
 The published `0.16.0` scope is tracked in
@@ -209,24 +209,23 @@ Future modules may include pipelines, additional sinks, richer deployable
 runtime applications, and dedicated app/adapter deployment helpers. Those
 dependencies belong here, not in `protocol-sdk`.
 
-## `0.17.0` Downstream Sink Productionization Planning
+## `0.17.0` Downstream Sink Productionization Baseline
 
 `0.17.0-SNAPSHOT` starts after the published `0.16.0` production runtime
-operations release. The planning line prepares the standalone collector for
-more reliable downstream delivery before adding broker or HTTP producer
+operations release. The baseline prepares the standalone collector for more
+reliable downstream delivery before adding broker or HTTP producer
 dependencies.
 
-The first planning scope includes:
+The first baseline scope includes:
 
-- file sink schema stabilization and record envelope output rules
-- delivery failure classification for configuration, serialization,
-  filesystem, backpressure, retryable transient, permanent rejection, and
-  unknown failures
-- failed-record isolation and bounded failed sample export
-- sink backpressure policy review for file sink saturation and future broker
-  sinks
-- retry and dead-letter boundary design without durable stores in the planning
-  step
+- file sink schema v1 and record envelope output rules
+- delivery failure classification for configuration, filesystem,
+  serialization, write, flush, backpressure, retryable transient, permanent
+  rejection, and unknown failures
+- app-local failed-record isolation and bounded failed sample export
+- sink backpressure status/readiness evidence for file sink failures,
+  failed-record isolation failures, and future broker sinks
+- retry and dead-letter boundary design without durable stores in this line
 - Kafka, HTTP, and MQTT downstream sink adapter boundaries for future
   `runtime-sink-*` modules
 - operator sink troubleshooting and smoke expectations
@@ -775,6 +774,13 @@ runs `java-check`, `version`, `verify-package`, `validate`, `dry-run`, `start`,
 sh examples/smoke-release-artifact.sh
 ```
 
+The sink failure smoke verifies file sink failure classification,
+failed-record isolation, and sink-failure-triggered readiness evidence:
+
+```bash
+sh examples/smoke-sink-failure.sh
+```
+
 The HTTP collector smoke starts an HTTP-only app, posts a raw IEC104 APDU with
 `curl`, and verifies file-sink output:
 
@@ -814,6 +820,9 @@ collector.sink.type=file
 collector.sink.file=target/runtime-records.ndjson
 collector.sink.file.maxBytes=10485760
 collector.sink.file.maxHistory=5
+collector.sink.failedRecords.enabled=true
+collector.sink.failedRecords.dir=target/failed-records
+collector.sink.failedRecords.maxSamples=32
 collector.iec104.strictAsduParsing=false
 ```
 
@@ -863,6 +872,9 @@ they can override checked-in defaults for local runs.
 | `collector.sink.file` | unset | Required when `collector.sink.type=file`. |
 | `collector.sink.file.maxBytes` | `10485760` | Rotate the file sink before the active file grows beyond this byte limit. |
 | `collector.sink.file.maxHistory` | `5` | Number of rotated file sink history files to keep. |
+| `collector.sink.failedRecords.enabled` | `true` | Enables app-local failed-record sample isolation when the configured record/failure sink throws. |
+| `collector.sink.failedRecords.dir` | `collector.runtime.dataDir/failed-records` | Directory for bounded failed-record JSON samples. Relative paths are resolved against `collector.runtime.dataDir`. |
+| `collector.sink.failedRecords.maxSamples` | `32` | Maximum retained failed-record samples; `0` disables sample writes while keeping status fields. |
 | `collector.iec104.strictAsduParsing` | `false` | Enables strict IEC104 ASDU parsing in the SDK binding. |
 | `collector.management.enabled` | `false` | Enables the app-owned JDK `HttpServer` management endpoint. |
 | `collector.management.host` | `127.0.0.1` | Management listen host. Keep loopback unless an explicit access-control boundary is configured. |
@@ -1003,35 +1015,51 @@ documented in
 
 ### File Sink Format
 
-The file sink writes one JSON-like line per parsed record or parse failure. It
-rotates before the active file grows beyond `collector.sink.file.maxBytes` and
-keeps `collector.sink.file.maxHistory` history files. For an output path such
-as `target/runtime-records.ndjson`, rotated files are named
-`runtime-records.ndjson.1`, `runtime-records.ndjson.2`, and so on.
-Collector status output reports the active file path, whether the file sink is
-currently open, active file bytes, retained history file count, cumulative
-in-process rotation count, and configured rotation limits.
+The file sink writes one stable JSONL envelope per parsed record or parse
+failure. `0.17.0` uses schema versions `protocol-runtime.record.v1`,
+`protocol-runtime.parse-failure.v1`, and `protocol-runtime.failed-record.v1`.
+It rotates before the active file grows beyond `collector.sink.file.maxBytes`
+and keeps `collector.sink.file.maxHistory` history files. For an output path
+such as `target/runtime-records.ndjson`, rotated files are named
+`runtime-records.ndjson.1`, `runtime-records.ndjson.2`, and so on. Collector
+status output reports the active file path, whether the file sink is currently
+open, active file bytes, retained history file count, cumulative in-process
+rotation count, configured rotation limits, active schema version,
+failed-record isolation path, retained sample count, and last sink failure
+classification.
 
 A successful record includes:
 
+- `schemaVersion`: `protocol-runtime.record.v1`
 - `kind`: `record`
 - `sourceId`
 - `protocol`
+- `receivedAt` when the ingress adapter provides receive metadata
+- `parsedAt`
 - `recordType`
 - `observedAt`
 - `rawPayloadHex`
-- `value`
+- `quality.status`
+- `payload.value`, `payload.rawHex`, and `payload.rawSize`
+- `raw.metadata`
+- `parser.diagnostics`
+- `sink.delivery`
 - `attributes`
 
-Parse failures use `kind=failure` and include `message`, `rawPayloadHex`,
-TCP/session `attributes`, and optional `cause`. The app's current parse failure
-policy is continue: malformed frames are routed to the configured failure sink
-and do not stop the collector or prevent later healthy frames from parsing.
+Parse failures use `schemaVersion=protocol-runtime.parse-failure.v1` and
+`kind=failure`, then include `message`, `rawPayloadHex`, raw metadata, parser
+diagnostics, TCP/session attributes, and optional `cause`. The app's current
+parse failure policy is continue: malformed frames are routed to the configured
+failure sink and do not stop the collector or prevent later healthy frames from
+parsing.
 
 The app also isolates runtime sink failures at the app assembly boundary. If a
 record or failure sink throws while handling a parsed result, the exception is
 captured in the collector metrics and status output instead of being propagated
-back into `runtime-core` or the ingress adapter.
+back into `runtime-core` or the ingress adapter. Failed samples are written as
+`protocol-runtime.failed-record.v1` JSON under
+`collector.sink.failedRecords.dir`, with `failureType`, exception type, message,
+retryability, source id, protocol, raw payload hex, and safe record metadata.
 Operators can optionally set `collector.backpressure.sinkFailureThreshold` and
 `collector.backpressure.sinkFailureDecision` so subsequent ingress payloads are
 rejected with `RETRY_LATER` or `DROP` after downstream sink failures reach the
@@ -1051,6 +1079,13 @@ configured threshold.
   currently using that port.
 - No file output: confirm `collector.sink.type=file`, `collector.sink.file` is
   set, and the client actually sent bytes to the collector port.
+- Failed records not exported: check `collector.sink.failedRecords.enabled`,
+  `collector.sink.failedRecords.dir`, directory permissions, and
+  `sink.failedRecords.isolationFailureCount` in status JSON.
+- Sink failure backpressure is active: inspect
+  `metrics.delivery.sinkFailureTypeCounts`,
+  `metrics.lastSinkFailure.deliveryFailureType`, and
+  `collector.backpressure.sinkFailureThreshold`.
 - No parsed record for the example frame: confirm `collector.backpressure` is
   `ACCEPT`; `RETRY_LATER` intentionally prevents parsing.
 - `collector.source.id must use namespace:value format`: use a value such as

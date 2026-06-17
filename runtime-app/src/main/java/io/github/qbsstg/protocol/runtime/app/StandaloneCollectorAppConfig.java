@@ -20,6 +20,7 @@ public record StandaloneCollectorAppConfig(
         SinkType sinkType,
         Path sinkFile,
         FileSinkRotationConfig fileSinkRotation,
+        SinkFailureIsolationConfig failedRecords,
         boolean strictAsduParsing,
         ManagementServerConfig management,
         CollectorDeploymentConfig deployment) {
@@ -35,6 +36,7 @@ public record StandaloneCollectorAppConfig(
         Objects.requireNonNull(sinkFailureBackpressureDecision, "sinkFailureBackpressureDecision must not be null");
         Objects.requireNonNull(sinkType, "sinkType must not be null");
         Objects.requireNonNull(fileSinkRotation, "fileSinkRotation must not be null");
+        Objects.requireNonNull(failedRecords, "failedRecords must not be null");
         Objects.requireNonNull(management, "management must not be null");
         Objects.requireNonNull(deployment, "deployment must not be null");
         if (backpressureMaxPayloadBytes < 0) {
@@ -87,6 +89,7 @@ public record StandaloneCollectorAppConfig(
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
+                SinkFailureIsolationConfig.defaults(CollectorDeploymentConfig.defaults().dataDir()),
                 strictAsduParsing,
                 ManagementServerConfig.disabled(),
                 CollectorDeploymentConfig.defaults());
@@ -120,6 +123,7 @@ public record StandaloneCollectorAppConfig(
                 sinkType,
                 sinkFile,
                 fileSinkRotation,
+                SinkFailureIsolationConfig.defaults(CollectorDeploymentConfig.defaults().dataDir()),
                 strictAsduParsing,
                 ManagementServerConfig.disabled(),
                 CollectorDeploymentConfig.defaults());
@@ -148,6 +152,7 @@ public record StandaloneCollectorAppConfig(
                 config.sinkType(),
                 config.sinkFile(),
                 config.fileSinkRotation(),
+                SinkFailureIsolationConfig.defaults(CollectorDeploymentConfig.defaults().dataDir()),
                 config.strictAsduParsing(),
                 ManagementServerConfig.disabled(),
                 CollectorDeploymentConfig.defaults());

@@ -171,6 +171,8 @@ final class CollectorStatusJson {
     private static void sink(JsonWriter json, CollectorStatusSnapshot snapshot) {
         json.name("sink").beginObject();
         json.name("type").value(snapshot.sinkType().configValue());
+        json.name("schemaVersion").value(RuntimeRecordFormat.RECORD_SCHEMA_VERSION);
+        json.name("format").value("jsonl");
         FileSinkStatus fileSink = snapshot.fileSinkStatus();
         if (fileSink == null) {
             json.name("file").nullValue();
@@ -185,6 +187,25 @@ final class CollectorStatusJson {
             json.name("maxHistory").value(fileSink.rotation().maxHistory());
             json.endObject();
         }
+        failedRecords(json, snapshot.failedRecordIsolationStatus());
+        json.endObject();
+    }
+
+    private static void failedRecords(JsonWriter json, FailedRecordIsolationStatus status) {
+        json.name("failedRecords").beginObject();
+        json.name("enabled").value(status.enabled());
+        json.name("directory").value(status.directory().toString());
+        json.name("maxSamples").value(status.maxSamples());
+        json.name("sampleCount").value(status.sampleCount());
+        json.name("retainedSampleCount").value(status.retainedSampleCount());
+        json.name("lastSampleFile").value(status.lastSampleFile() == null ? null : status.lastSampleFile().toString());
+        json.name("lastSampleAt").value(status.lastSampleAt());
+        json.name("lastFailureTarget").value(status.lastFailureTarget());
+        json.name("lastFailureSourceId").value(status.lastFailureSourceId());
+        json.name("lastFailureType").value(status.lastFailureType());
+        json.name("lastFailureMessage").value(status.lastFailureMessage());
+        json.name("isolationFailureCount").value(status.isolationFailureCount());
+        json.name("lastIsolationFailureMessage").value(status.lastIsolationFailureMessage());
         json.endObject();
     }
 
@@ -205,6 +226,12 @@ final class CollectorStatusJson {
         json.name("backpressureRetryLaterCount").value(metrics.backpressureRetryLaterCount());
         json.name("backpressureDropCount").value(metrics.backpressureDropCount());
         json.name("sinkFailureCount").value(metrics.sinkFailureCount());
+        json.name("delivery").beginObject();
+        json.name("schemaVersion").value(RuntimeRecordFormat.RECORD_SCHEMA_VERSION);
+        json.name("sinkFailureTypeCounts").stringLongMap(metrics.sinkFailureTypeCounts());
+        json.name("lastSinkDeliveryFailureType").value(metrics.lastSinkDeliveryFailureType());
+        json.name("lastSinkFailureRetryable").value(metrics.lastSinkFailureRetryable());
+        json.endObject();
         json.name("failureCounters").beginObject();
         json.name("parse").value(metrics.parseFailureCount());
         json.name("sink").value(metrics.sinkFailureCount());
@@ -234,6 +261,8 @@ final class CollectorStatusJson {
         json.name("at").value(metrics.lastSinkFailureAt());
         json.name("type").value(metrics.lastSinkFailureType());
         json.name("message").value(metrics.lastSinkFailureMessage());
+        json.name("deliveryFailureType").value(metrics.lastSinkDeliveryFailureType());
+        json.name("retryable").value(metrics.lastSinkFailureRetryable());
         json.endObject();
         json.endObject();
     }
@@ -402,6 +431,15 @@ final class CollectorStatusJson {
             beginObject();
             for (Map.Entry<Integer, Long> entry : values.entrySet()) {
                 name(Integer.toString(entry.getKey())).value(entry.getValue());
+            }
+            endObject();
+            return this;
+        }
+
+        JsonWriter stringLongMap(Map<String, Long> values) {
+            beginObject();
+            for (Map.Entry<String, Long> entry : values.entrySet()) {
+                name(entry.getKey()).value(entry.getValue());
             }
             endObject();
             return this;

@@ -315,9 +315,9 @@ Not allowed:
 ## `0.17.0` Downstream Sink Productionization Boundary
 
 The `0.17.0` line starts after the published `0.16.0` production runtime
-operations release. The boundary is downstream sink productionization planning
-for standalone collectors without widening `runtime-core`, ingress adapters,
-protocol bindings, or `protocol-sdk`.
+operations release. The boundary is downstream sink productionization baseline
+work for standalone collectors without widening `runtime-core`, ingress
+adapters, protocol bindings, or `protocol-sdk`.
 
 Allowed:
 
@@ -325,6 +325,9 @@ Allowed:
   `runtime-sink-file` module may own file sink schema stability, record
   envelope output examples, failed-record isolation, failed sample export, sink
   backpressure policy, and operator sink troubleshooting.
+- `runtime-app` may implement the first app-local JSONL schema, delivery
+  failure taxonomy, failed-record isolation, failed sample export, status
+  evidence, and smoke verification for existing logging/file/in-memory sinks.
 - future dedicated `runtime-sink-kafka`, `runtime-sink-http`, and
   `runtime-sink-mqtt` modules may own Kafka producer, HTTP client, and MQTT
   publisher dependencies after their contracts are explicit.
@@ -356,7 +359,7 @@ Not allowed:
   `runtime-protocol-*`
 - implementing durable retry queues, database writers, Redis queues, object
   storage sinks, Kafka producers, HTTP clients, or MQTT publishers as part of
-  the first planning-only step
+  the first baseline
 
 ## `0.16.0` Production Runtime Operations Boundary
 

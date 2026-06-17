@@ -3,22 +3,27 @@
 Release notes draft for the `0.17.0` runtime release.
 
 `0.17.0` follows the published `0.16.0` production runtime operations
-baseline. The development line opens with downstream sink productionization
-planning for standalone collectors.
+baseline. The development line adds the first downstream sink productionization
+baseline for standalone collectors.
 
-## Planned Baseline
+## Baseline
 
-- Stabilize the file sink output schema before downstream tools depend on it.
+- Stabilize the file sink output schema before downstream tools depend on it
+  through `protocol-runtime.record.v1`.
 - Define a record envelope output contract for parsed records, source metadata,
   protocol metadata, timestamps, quality/status evidence, delivery metadata,
   and failures.
-- Classify delivery failures into operator-actionable categories.
-- Isolate failed records from normal output and define bounded sample export
-  behavior for troubleshooting.
-- Revisit sink backpressure policy around sink saturation, parse success,
-  sink failure, and future broker delivery.
+- Classify delivery failures into operator-actionable categories including
+  configuration, filesystem, serialization, write, flush, backpressure,
+  retryable, permanent, and unknown failures.
+- Isolate failed records from normal output as bounded
+  `protocol-runtime.failed-record.v1` samples for troubleshooting.
+- Expose sink schema, failed-record isolation, delivery counters, failure type
+  counters, and last sink failure evidence in status/self-check output.
+- Revisit sink backpressure policy around sink saturation, parse success, sink
+  failure, failed-record isolation failures, and future broker delivery.
 - Design retry and dead-letter boundaries without adding a durable retry store
-  in the planning step.
+  in this baseline.
 - Define Kafka, HTTP, and MQTT downstream sink adapter boundaries so future
   producer/client dependencies land only in dedicated `runtime-sink-*` or
   app/adapter modules.
@@ -27,10 +32,10 @@ planning for standalone collectors.
 
 ## Scope
 
-`0.17.0` is a downstream sink productionization planning line. The first step
-is documentation and boundary design. Implementation should remain focused on
-existing file/logging/in-memory sinks unless a later goal explicitly opens a
-dedicated sink adapter module.
+`0.17.0` is a downstream sink productionization baseline. Implementation
+remains focused on existing file/logging/in-memory sinks. Dedicated Kafka,
+HTTP, MQTT, database, Redis, or external queue delivery is still deferred until
+a future goal explicitly opens a dedicated sink adapter module.
 
 ## Dependency Policy
 
@@ -48,7 +53,8 @@ Kafka, HTTP, and MQTT downstream delivery dependencies belong only in future
 dedicated `runtime-sink-*` modules or explicit app/adapter boundaries.
 
 `protocol-sdk` remains parser-only. Parser behavior changes belong in
-`protocol-sdk` releases, not in `protocol-runtime` downstream sink planning.
+`protocol-sdk` releases, not in `protocol-runtime` downstream sink
+productionization.
 
 ## Verification Targets
 
@@ -64,7 +70,7 @@ Implementation and release PRs must pass:
 - release artifact smoke
 - long-running smoke
 - release artifact regression smoke
-- downstream sink smoke once implemented
+- downstream sink failure smoke
 - dependency boundary checks proving downstream sink work does not enter
   `runtime-core`, `runtime-protocol-*`, `runtime-ingress-*`, or `protocol-sdk`
 - GitHub CI on release PRs

@@ -5,6 +5,8 @@ import io.github.qbsstg.protocol.runtime.core.ParsedRecord;
 import io.github.qbsstg.protocol.runtime.core.BackpressureDecision;
 import io.github.qbsstg.protocol.runtime.core.IngressEnvelope;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 final class RuntimeSinkCounters {
@@ -16,9 +18,17 @@ final class RuntimeSinkCounters {
     private final AtomicLong backpressureRetryLaterCount = new AtomicLong();
     private final AtomicLong backpressureDropCount = new AtomicLong();
     private final AtomicLong sinkFailureCount = new AtomicLong();
+    private final EnumMap<SinkDeliveryFailureType, AtomicLong> sinkFailureTypeCounts =
+            new EnumMap<>(SinkDeliveryFailureType.class);
     private volatile ParseFailure lastParseFailure;
     private volatile BackpressureEvent lastBackpressure;
-    private volatile SinkFailureEvent lastSinkFailure;
+    private volatile SinkDeliveryFailure lastSinkFailure;
+
+    RuntimeSinkCounters() {
+        for (SinkDeliveryFailureType type : SinkDeliveryFailureType.values()) {
+            sinkFailureTypeCounts.put(type, new AtomicLong());
+        }
+    }
 
     void recordParsedRecord(ParsedRecord<?> record) {
         parsedRecordCount.incrementAndGet();
@@ -42,14 +52,24 @@ final class RuntimeSinkCounters {
                 envelope.payload().length);
     }
 
-    void recordSinkFailure(String target, String sourceId, java.time.Instant observedAt, RuntimeException failure) {
+    SinkDeliveryFailure recordSinkFailure(
+            String target,
+            String sourceId,
+            java.time.Instant observedAt,
+            RuntimeException failure) {
         sinkFailureCount.incrementAndGet();
-        lastSinkFailure = new SinkFailureEvent(
+        SinkDeliveryFailureType deliveryFailureType = SinkDeliveryFailures.typeOf(failure);
+        sinkFailureTypeCounts.get(deliveryFailureType).incrementAndGet();
+        SinkDeliveryFailure event = new SinkDeliveryFailure(
                 target,
                 sourceId,
                 observedAt == null ? java.time.Instant.now() : observedAt,
+                deliveryFailureType,
                 failure.getClass().getName(),
-                failure.getMessage());
+                failure.getMessage(),
+                SinkDeliveryFailures.retryable(failure));
+        lastSinkFailure = event;
+        return event;
     }
 
     long sinkFailureCount() {
@@ -59,7 +79,7 @@ final class RuntimeSinkCounters {
     CollectorRuntimeMetrics snapshot() {
         ParseFailure failure = lastParseFailure;
         BackpressureEvent backpressure = lastBackpressure;
-        SinkFailureEvent sinkFailure = lastSinkFailure;
+        SinkDeliveryFailure sinkFailure = lastSinkFailure;
         if (failure == null) {
             return snapshotWithoutParseFailure(backpressure, sinkFailure);
         }
@@ -83,13 +103,16 @@ final class RuntimeSinkCounters {
                 sinkFailure == null ? null : sinkFailure.target(),
                 sinkFailure == null ? null : sinkFailure.sourceId(),
                 sinkFailure == null ? null : sinkFailure.observedAt(),
-                sinkFailure == null ? null : sinkFailure.failureType(),
-                sinkFailure == null ? null : sinkFailure.message());
+                sinkFailure == null ? null : sinkFailure.exceptionType(),
+                sinkFailure == null ? null : sinkFailure.message(),
+                sinkFailure == null ? null : sinkFailure.failureType().name(),
+                sinkFailure != null && sinkFailure.retryable(),
+                sinkFailureTypeCountsSnapshot());
     }
 
     private CollectorRuntimeMetrics snapshotWithoutParseFailure(
             BackpressureEvent backpressure,
-            SinkFailureEvent sinkFailure) {
+            SinkDeliveryFailure sinkFailure) {
         return new CollectorRuntimeMetrics(
                 parsedRecordCount.get(),
                 parseFailureCount.get(),
@@ -110,8 +133,19 @@ final class RuntimeSinkCounters {
                 sinkFailure == null ? null : sinkFailure.target(),
                 sinkFailure == null ? null : sinkFailure.sourceId(),
                 sinkFailure == null ? null : sinkFailure.observedAt(),
-                sinkFailure == null ? null : sinkFailure.failureType(),
-                sinkFailure == null ? null : sinkFailure.message());
+                sinkFailure == null ? null : sinkFailure.exceptionType(),
+                sinkFailure == null ? null : sinkFailure.message(),
+                sinkFailure == null ? null : sinkFailure.failureType().name(),
+                sinkFailure != null && sinkFailure.retryable(),
+                sinkFailureTypeCountsSnapshot());
+    }
+
+    private Map<String, Long> sinkFailureTypeCountsSnapshot() {
+        java.util.LinkedHashMap<String, Long> snapshot = new java.util.LinkedHashMap<>();
+        for (SinkDeliveryFailureType type : SinkDeliveryFailureType.values()) {
+            snapshot.put(type.name(), sinkFailureTypeCounts.get(type).get());
+        }
+        return snapshot;
     }
 
     private static String hexPreview(byte[] payload, int maxBytes) {
@@ -134,11 +168,4 @@ final class RuntimeSinkCounters {
             int payloadSize) {
     }
 
-    private record SinkFailureEvent(
-            String target,
-            String sourceId,
-            java.time.Instant observedAt,
-            String failureType,
-            String message) {
-    }
 }

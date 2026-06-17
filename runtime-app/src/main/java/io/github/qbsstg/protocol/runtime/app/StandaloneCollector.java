@@ -182,6 +182,7 @@ public final class StandaloneCollector implements RuntimeLifecycle {
                 appConfig.sinkType(),
                 sinks.fileSinkStatus(),
                 appConfig.fileSinkRotation(),
+                sinks.failedRecordIsolationStatus(),
                 appConfig.backpressureDecision(),
                 appConfig.backpressureMaxPayloadBytes(),
                 appConfig.oversizedPayloadDecision(),

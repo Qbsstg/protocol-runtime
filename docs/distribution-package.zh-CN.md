@@ -158,7 +158,8 @@ bin/protocol-runtime hot-check
 ## 配置
 
 默认配置是 `conf/collector.properties`。它默认把 management 绑定到 `127.0.0.1`，
-把采集记录写入 `data/records.ndjson`，并把状态快照导出到 `run/status.json`。
+把采集记录写入 `data/records.ndjson`，把有界失败记录样本写入
+`data/failed-records`，并把状态快照导出到 `run/status.json`。
 
 生产风格 profile 覆盖文件是 `conf/collector-production.properties`：
 
@@ -172,8 +173,15 @@ PROFILE=production bin/protocol-runtime validate
 - `collector.tcp.port`
 - `collector.source.id`
 - `collector.sink.file`
+- `collector.sink.failedRecords.dir`
+- `collector.sink.failedRecords.maxSamples`
 - `collector.management.access`
 - `collector.management.token`
+
+file sink 输出 `protocol-runtime.record.v1` JSONL envelope。如果配置的 record 或
+failure sink 抛异常，runtime-app 会把 `protocol-runtime.failed-record.v1` 样本写入
+`collector.sink.failedRecords.dir`，并通过 `status`、management `/status`、
+`self-check` 和 smoke 日志暴露投递失败分类。
 
 ## 命令
 

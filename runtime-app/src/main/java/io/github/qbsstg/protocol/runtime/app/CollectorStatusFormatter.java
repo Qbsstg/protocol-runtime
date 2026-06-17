@@ -27,6 +27,7 @@ final class CollectorStatusFormatter {
                 + " lastSinkFailure=" + lastSinkFailure(metrics)
                 + " sink=" + snapshot.sinkType().configValue()
                 + " fileSink=" + fileSink(snapshot.fileSinkStatus())
+                + " failedRecords=" + failedRecords(snapshot.failedRecordIsolationStatus())
                 + " backpressure=" + snapshot.backpressureDecision()
                 + " maxPayloadBytes=" + snapshot.backpressureMaxPayloadBytes()
                 + " oversizedPayloadDecision=" + snapshot.oversizedPayloadDecision()
@@ -85,6 +86,8 @@ final class CollectorStatusFormatter {
                 + '@'
                 + metrics.lastSinkFailureSourceId()
                 + '/'
+                + metrics.lastSinkDeliveryFailureType()
+                + '/'
                 + metrics.lastSinkFailureType()
                 + ':'
                 + metrics.lastSinkFailureMessage();
@@ -101,6 +104,15 @@ final class CollectorStatusFormatter {
                 + "/rotations=" + status.rotationCount()
                 + "/maxBytes=" + status.rotation().maxBytes()
                 + "/maxHistory=" + status.rotation().maxHistory();
+    }
+
+    private static String failedRecords(FailedRecordIsolationStatus status) {
+        return "enabled=" + status.enabled()
+                + "/directory=" + status.directory()
+                + "/samples=" + status.sampleCount()
+                + "/retained=" + status.retainedSampleCount()
+                + "/isolationFailures=" + status.isolationFailureCount()
+                + "/lastSample=" + (status.lastSampleFile() == null ? "none" : status.lastSampleFile());
     }
 
     private static String management(ManagementStatusSnapshot management) {

@@ -173,8 +173,9 @@ The operational recovery flow is documented in
 ## Configuration
 
 The default package config is `conf/collector.properties`. It keeps management
-bound to `127.0.0.1`, writes records to `data/records.ndjson`, and exports
-status to `run/status.json`.
+bound to `127.0.0.1`, writes records to `data/records.ndjson`, writes bounded
+failed-record samples to `data/failed-records`, and exports status to
+`run/status.json`.
 
 The production profile override is `conf/collector-production.properties`:
 
@@ -188,8 +189,16 @@ Review these values before production use:
 - `collector.tcp.port`
 - `collector.source.id`
 - `collector.sink.file`
+- `collector.sink.failedRecords.dir`
+- `collector.sink.failedRecords.maxSamples`
 - `collector.management.access`
 - `collector.management.token`
+
+The file sink emits `protocol-runtime.record.v1` JSONL envelopes. If the
+configured record or failure sink throws, runtime-app writes
+`protocol-runtime.failed-record.v1` samples under
+`collector.sink.failedRecords.dir` and exposes delivery failure classification
+through `status`, management `/status`, `self-check`, and smoke logs.
 
 ## Commands
 

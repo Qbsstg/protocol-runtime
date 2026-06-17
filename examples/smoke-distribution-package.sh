@@ -94,6 +94,9 @@ collector.management.port=0
 collector.management.access=token
 collector.management.token=smoke-management-token
 collector.sink.file=$SINK
+collector.sink.failedRecords.enabled=true
+collector.sink.failedRecords.dir=data/failed-records
+collector.sink.failedRecords.maxSamples=8
 EOF
 
 if JAVA_BIN="$OUT_DIR/missing-java" "$APP_HOME/bin/protocol-runtime" validate --config "$CONFIG" \
@@ -310,6 +313,8 @@ while [ "$i" -lt 150 ]; do
   if [ -s "$SINK" ] \
     && curl -fsS -H "$AUTH_HEADER" "http://127.0.0.1:$management_port/readiness" >/dev/null 2>&1 \
     && grep -q '"kind":"record"' "$SINK" \
+    && grep -q '"schemaVersion":"protocol-runtime.record.v1"' "$SINK" \
+    && grep -q '"failedRecords"' "$STATUS_COPY" \
     && grep -q '"lifecycle":"RUNNING"' "$STATUS_COPY"; then
     JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" stop --pid-file "$PID_FILE" >/dev/null
     wait "$collector_pid" >/dev/null 2>&1 || true

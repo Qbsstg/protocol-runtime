@@ -95,12 +95,16 @@ collector.runtime.statusFile=run/status.json
 collector.tcp.port=0
 collector.management.enabled=false
 collector.sink.file=$SINK
+collector.sink.failedRecords.enabled=true
+collector.sink.failedRecords.dir=data/failed-records
+collector.sink.failedRecords.maxSamples=8
 EOF
 
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" validate --config "$CONFIG" >/dev/null
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" self-check --config "$CONFIG" > "$SELF_CHECK_OUTPUT"
 if ! grep -q '"command":"self-check"' "$SELF_CHECK_OUTPUT" \
-    || ! grep -q '"status":"PASS"' "$SELF_CHECK_OUTPUT"; then
+    || ! grep -q '"status":"PASS"' "$SELF_CHECK_OUTPUT" \
+    || ! grep -q '"failedRecords"' "$SELF_CHECK_OUTPUT"; then
   cat "$SELF_CHECK_OUTPUT"
   echo "release artifact self-check did not report PASS" >&2
   exit 1
