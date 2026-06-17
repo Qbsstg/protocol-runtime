@@ -55,18 +55,18 @@ improvements. `0.16.0` published the first production runtime operations
 baseline: runtime self-checks, configuration hot-check without hot-reload,
 stronger runtime status evidence, failure recovery and operator runbooks,
 long-running smoke, release artifact regression smoke, and production issue
-diagnostics.
-
-The current `0.17.0-SNAPSHOT` development line implements the first downstream
-sink productionization baseline: stable file sink schema v1, delivery failure
-classification, failed-record isolation, bounded failed sample export, sink
-backpressure evidence, retry/dead-letter boundaries, Kafka/HTTP/MQTT downstream
-adapter boundaries, record envelope output rules, operator sink
-troubleshooting, and smoke coverage.
+diagnostics. `0.17.0` publishes the first downstream sink productionization
+baseline: stable file sink schema v1, delivery failure classification,
+failed-record isolation, bounded failed sample export, sink backpressure
+evidence, retry/dead-letter boundaries, Kafka/HTTP/MQTT downstream adapter
+boundaries, record envelope output rules, operator sink troubleshooting, and
+smoke coverage.
 
 The `0.17.0` baseline scope is tracked in
 [`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md), and release notes are
 tracked in [`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md).
+The `0.17.0` release-readiness audit is tracked in
+[`docs/release-readiness-0.17.0.md`](docs/release-readiness-0.17.0.md).
 The published `0.16.0` scope is tracked in
 [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md), and release notes are
 tracked in [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md).
@@ -135,14 +135,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime version is `0.16.0`. Runtime modules are JDK 21
+The latest release candidate runtime version is `0.17.0`. Runtime modules are JDK 21
 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.16.0</version>
+    <version>0.17.0</version>
 </dependency>
 ```
 
@@ -150,7 +150,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.16.0</version>
+    <version>0.17.0</version>
 </dependency>
 ```
 
@@ -158,7 +158,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.16.0</version>
+    <version>0.17.0</version>
 </dependency>
 ```
 
@@ -166,7 +166,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.16.0</version>
+    <version>0.17.0</version>
 </dependency>
 ```
 
@@ -174,7 +174,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.16.0</version>
+    <version>0.17.0</version>
 </dependency>
 ```
 
@@ -182,7 +182,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.16.0</version>
+    <version>0.17.0</version>
 </dependency>
 ```
 
@@ -202,7 +202,7 @@ application dependency even if a historical release is visible in Maven Central.
 | `runtime-ingress-http` | 0.6.0 baseline | JDK `HttpServer` based HTTP ingress that maps POST bodies to `IngressEnvelope`, supports configured/header/path `SourceId` mapping, applies request size limits, and turns backpressure decisions into HTTP responses. |
 | `runtime-ingress-kafka` | 0.7.0 baseline | Kafka client based ingress adapter that maps `ConsumerRecord<byte[], byte[]>` payloads and Kafka metadata into runtime envelopes while keeping Kafka dependencies out of `runtime-core`. |
 | `runtime-ingress-mqtt` | 0.8.0 baseline | Paho MQTT based ingress adapter that maps MQTT payloads and message metadata into runtime envelopes while keeping MQTT dependencies out of `runtime-core`. |
-| `runtime-app` | 0.16.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, sink failure isolation, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, app-owned deployment governance, zip/tar distribution package governance, package metadata, version diagnostics, package integrity verification, runtime self-check, config hot-check without hot-reload, checksum sidecars, long-running smoke, release artifact smoke/regression smoke, and operator troubleshooting/runbooks. |
+| `runtime-app` | 0.17.0 baseline | Standalone collector assembly with property-based configuration, app-level protocol selection, TCP/HTTP/Kafka/MQTT assembly, JDK logging/file/in-memory sinks, stable file sink JSONL schema, sink delivery failure classification, failed-record isolation, bounded failed sample export, file sink status, sink-failure-triggered backpressure, app-local health/readiness snapshots, explainable status output, JDK HTTP management endpoints, management access control, request logging, management metrics, bounded health history, stable management error JSON, executable shaded jar, app-owned deployment governance, zip/tar distribution package governance, package metadata, version diagnostics, package integrity verification, runtime self-check, config hot-check without hot-reload, checksum sidecars, long-running smoke, release artifact smoke/regression smoke, sink failure smoke, and operator troubleshooting/runbooks. |
 | `runtime-smoke-tests` | Test-only | Cross-module smoke tests that prove ingress, runtime-core, and protocol bindings work together without turning those combinations into production dependencies. |
 
 Future modules may include pipelines, additional sinks, richer deployable
@@ -211,10 +211,9 @@ dependencies belong here, not in `protocol-sdk`.
 
 ## `0.17.0` Downstream Sink Productionization Baseline
 
-`0.17.0-SNAPSHOT` starts after the published `0.16.0` production runtime
-operations release. The baseline prepares the standalone collector for more
-reliable downstream delivery before adding broker or HTTP producer
-dependencies.
+`0.17.0` starts after the published `0.16.0` production runtime operations
+release. The baseline prepares the standalone collector for more reliable
+downstream delivery before adding broker or HTTP producer dependencies.
 
 The first baseline scope includes:
 
@@ -729,14 +728,14 @@ Build the executable jar:
 mvn -q -pl runtime-app -am package
 ```
 
-The same command builds the current development-line distribution package under
-`runtime-app/target/`. Published `0.16.0` package artifacts are available from
-Maven Central.
+The same command builds the current release-line distribution package under
+`runtime-app/target/`. Published package artifacts are available from Maven
+Central after final publication.
 
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -792,7 +791,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -835,7 +834,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging

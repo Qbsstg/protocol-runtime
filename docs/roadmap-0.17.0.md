@@ -149,6 +149,8 @@ Downstream sink smoke should eventually cover:
 - [x] `0.16.0` release artifacts are published and verified from Maven Central.
 - [x] GitHub Release `v0.16.0` is published.
 - [x] Maven reactor is opened at `0.17.0-SNAPSHOT`.
+- [x] `codex/release-0.17.0` fixes the Maven reactor at `0.17.0` for the
+  release branch.
 - [x] README and Chinese README describe the `0.17.0` downstream sink baseline
   line.
 - [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
@@ -168,3 +170,5 @@ Downstream sink smoke should eventually cover:
 - [x] Standalone and distribution smoke cover sink schema/status evidence.
 - [x] Sink failure smoke covers failed-record isolation and readiness evidence.
 - [x] Operator sink troubleshooting and smoke expectations are drafted.
+- [x] `docs/release-readiness-0.17.0.md` records the release branch gates,
+  validation checklist, publication policy, and final publication follow-up.
