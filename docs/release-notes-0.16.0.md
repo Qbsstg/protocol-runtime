@@ -1,12 +1,11 @@
 # Protocol Runtime 0.16.0 Release Notes
 
-Release notes draft for the `0.16.0` runtime release.
+Release notes for the `0.16.0` runtime release.
 
 `0.16.0` follows the published `0.15.0` standalone collector distribution
-package productionization release. The release branch fixes the Maven reactor
-version at `0.16.0` for the first production runtime operations baseline. No
-`v0.16.0` tag is created and no real Maven Central upload is part of the
-release branch PR.
+package productionization release. `v0.16.0` points at the release commit, and
+Maven Central deployment `82c4c0e3-211c-4993-877d-061ab50349bb` reached
+`PUBLISHED`.
 
 ## Baseline Highlights
 
@@ -106,7 +105,8 @@ before the release branch is merged to `main`.
 
 ## Publication
 
-- Tag: not created
-- Central deployment: not started
-- Central state: not published
-- GitHub Release: not created
+- Tag: `v0.16.0`
+- Central deployment: `82c4c0e3-211c-4993-877d-061ab50349bb`
+- Central state: `PUBLISHED`
+- GitHub Release:
+  <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.16.0>

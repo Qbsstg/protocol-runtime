@@ -51,15 +51,23 @@ productionization baseline: package metadata, version diagnostics, archive
 checksum verification, checksum/signature policy, cross-platform script
 guidance, configuration migration notes, upgrade rollback strategy, offline
 deployment guidance, release artifact smoke, and operator troubleshooting
-improvements.
-
-The `0.16.0` release branch adds the first production runtime operations
+improvements. `0.16.0` published the first production runtime operations
 baseline: runtime self-checks, configuration hot-check without hot-reload,
 stronger runtime status evidence, failure recovery and operator runbooks,
 long-running smoke, release artifact regression smoke, and production issue
 diagnostics.
 
-The `0.16.0` scope is tracked in
+The current `0.17.0-SNAPSHOT` development line plans downstream sink
+productionization: file sink schema stability, delivery failure
+classification, failed-record isolation, failed sample export, sink
+backpressure review, retry/dead-letter boundaries, Kafka/HTTP/MQTT downstream
+adapter boundaries, record envelope output rules, operator sink
+troubleshooting, and smoke coverage.
+
+The `0.17.0` planning scope is tracked in
+[`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md), and release notes are
+tracked in [`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md).
+The published `0.16.0` scope is tracked in
 [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md), and release notes are
 tracked in [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md).
 The `0.16.0` release-readiness audit is tracked in
@@ -127,14 +135,14 @@ tracked in [`docs/release-notes-0.4.0.md`](docs/release-notes-0.4.0.md).
 
 ## Maven Coordinates
 
-The latest published runtime version is `0.15.0`. Runtime modules are JDK 21
+The latest published runtime version is `0.16.0`. Runtime modules are JDK 21
 artifacts. Applications should depend on the modules they use directly:
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -142,7 +150,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -150,7 +158,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -158,7 +166,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -166,7 +174,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -174,7 +182,7 @@ artifacts. Applications should depend on the modules they use directly:
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -200,6 +208,32 @@ application dependency even if a historical release is visible in Maven Central.
 Future modules may include pipelines, additional sinks, richer deployable
 runtime applications, and dedicated app/adapter deployment helpers. Those
 dependencies belong here, not in `protocol-sdk`.
+
+## `0.17.0` Downstream Sink Productionization Planning
+
+`0.17.0-SNAPSHOT` starts after the published `0.16.0` production runtime
+operations release. The planning line prepares the standalone collector for
+more reliable downstream delivery before adding broker or HTTP producer
+dependencies.
+
+The first planning scope includes:
+
+- file sink schema stabilization and record envelope output rules
+- delivery failure classification for configuration, serialization,
+  filesystem, backpressure, retryable transient, permanent rejection, and
+  unknown failures
+- failed-record isolation and bounded failed sample export
+- sink backpressure policy review for file sink saturation and future broker
+  sinks
+- retry and dead-letter boundary design without durable stores in the planning
+  step
+- Kafka, HTTP, and MQTT downstream sink adapter boundaries for future
+  `runtime-sink-*` modules
+- operator sink troubleshooting and smoke expectations
+
+The line does not introduce Kafka producers, HTTP clients, MQTT publishers,
+database writers, Redis queues, object storage sinks, external queues, or sink
+adapter dependencies into `runtime-core`.
 
 ## `0.16.0` Production Runtime Operations Baseline
 
@@ -697,13 +731,13 @@ mvn -q -pl runtime-app -am package
 ```
 
 The same command builds the current development-line distribution package under
-`runtime-app/target/`. Published `0.15.0` package artifacts are available from
+`runtime-app/target/`. Published `0.16.0` package artifacts are available from
 Maven Central.
 
 Run with the example property file:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -752,7 +786,7 @@ MQTT app assembly uses the same runtime pipeline. The example configuration
 expects a broker at `tcp://localhost:1883`:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -792,7 +826,7 @@ are still excluded from `runtime-core` and `protocol-sdk`.
 `StandaloneCollectorMain` accepts either a property file or inline overrides:
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -1106,6 +1140,7 @@ verified.
 - [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)
 - [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)
 - [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md)
+- [`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.16.0.md`](docs/release-readiness-0.16.0.md)
 - [`docs/release-readiness-0.15.0.md`](docs/release-readiness-0.15.0.md)
@@ -1139,3 +1174,4 @@ verified.
 - [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)
 - [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md)
 - [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md)
+- [`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md)

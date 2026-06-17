@@ -41,13 +41,20 @@ baseline，包括 zip/tar 分发包、`bin`/`conf`/`logs`/`data`/`run`/`tmp` 目
 版本排查和 operator install guide。`0.15.0` 已发布第一轮 standalone collector
 运行包生产化 baseline：包内元数据、版本诊断、archive checksum 校验、
 checksum/signature 策略、跨平台脚本兼容、配置迁移说明、升级回滚策略、离线部署说明、
-release artifact smoke 和运维排障增强。
+release artifact smoke 和运维排障增强。`0.16.0` 已发布第一轮生产运行增强
+baseline：运行时自检、配置 hot-check 但不 hot-reload、运行状态证据增强、失败恢复
+和 operator runbook、长期运行 smoke、release artifact 回归 smoke，以及生产问题
+诊断流程。
 
-当前 `0.16.0` release 分支加入第一轮生产运行增强 baseline：运行时自检、配置
-hot-check 但不 hot-reload、运行状态证据增强、失败恢复和 operator runbook、长期
-运行 smoke、release artifact 回归 smoke，以及生产问题诊断流程。
+当前 `0.17.0-SNAPSHOT` 开发线规划 downstream sink 生产化：file sink schema
+稳定化、投递失败分类、失败记录隔离、失败样本导出、sink backpressure 策略复核、
+重试/死信边界设计、Kafka/HTTP/MQTT downstream sink adapter 边界、record envelope
+输出规范、operator sink troubleshooting 和 smoke 覆盖。
 
-当前 `0.16.0` 范围记录在
+当前 `0.17.0` 规划范围记录在
+[`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md)，release notes 记录在
+[`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md)。已发布的 `0.16.0`
+范围记录在
 [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md)，release notes 记录在
 [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md)，release-readiness
 audit 记录在 [`docs/release-readiness-0.16.0.md`](docs/release-readiness-0.16.0.md)。已发布的 `0.15.0`
@@ -109,14 +116,14 @@ release notes 记录在
 
 ## Maven 坐标
 
-最新已发布运行时版本是 `0.15.0`。Runtime 模块是 JDK 21 artifact。应用侧应按需
+最新已发布运行时版本是 `0.16.0`。Runtime 模块是 JDK 21 artifact。应用侧应按需
 直接依赖具体模块：
 
 ```xml
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-core</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -124,7 +131,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-protocol-iec104</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -132,7 +139,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-tcp-netty</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -140,7 +147,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-http</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -148,7 +155,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-ingress-kafka</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -156,7 +163,7 @@ release notes 记录在
 <dependency>
     <groupId>io.github.qbsstg</groupId>
     <artifactId>runtime-app</artifactId>
-    <version>0.15.0</version>
+    <version>0.16.0</version>
 </dependency>
 ```
 
@@ -181,6 +188,25 @@ release notes 记录在
 
 未来可能补充 pipeline、更多 sink、更完整的可部署运行时应用，以及专门的 app/adapter
 部署辅助模块。这些依赖都属于 runtime 仓库，不应反向进入 `protocol-sdk`。
+
+## `0.17.0` Downstream Sink 生产化规划
+
+`0.17.0-SNAPSHOT` 从已发布的 `0.16.0` 生产运行增强版本继续推进。这个规划线先把
+standalone collector 的下游投递边界讲清楚，再考虑后续是否引入专门的 broker 或
+HTTP producer 依赖。
+
+第一轮规划范围包括：
+
+- file sink schema 稳定化和 record envelope 输出规范
+- 配置、序列化、文件系统、背压、可重试临时失败、永久拒绝、未知失败等投递失败分类
+- 失败记录隔离和有界失败样本导出
+- file sink 饱和和未来 broker sink 场景下的 sink backpressure 策略复核
+- 不引入持久化存储的重试和死信边界设计
+- Kafka、HTTP、MQTT downstream sink adapter 的未来 `runtime-sink-*` 模块边界
+- operator sink troubleshooting 和 smoke 覆盖预期
+
+该规划线不把 Kafka producer、HTTP client、MQTT publisher、数据库写入、Redis 队列、
+对象存储、外部队列或 sink adapter 依赖引入 `runtime-core`。
 
 ## `0.16.0` 生产运行增强 Baseline
 
@@ -614,13 +640,13 @@ TcpNettyServer, HttpIngressServer, KafkaRecordSource, or MqttMessageSource
 mvn -q -pl runtime-app -am package
 ```
 
-同一命令会在 `runtime-app/target/` 下生成当前开发线的运行包。已发布的 `0.15.0`
+同一命令会在 `runtime-app/target/` 下生成当前开发线的运行包。已发布的 `0.16.0`
 运行包 artifact 可从 Maven Central 获取。
 
 使用示例 properties 文件启动：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties
 ```
 
@@ -667,7 +693,7 @@ MQTT app 装配复用同一条 runtime pipeline。示例配置默认连接
 `tcp://localhost:1883` 的 broker：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
   --config examples/collector-mqtt.properties
 ```
 
@@ -706,7 +732,7 @@ collector.iec104.strictAsduParsing=false
 `StandaloneCollectorMain` 支持 properties 文件，也支持命令行覆盖：
 
 ```bash
-java -jar runtime-app/target/runtime-app-0.16.0-standalone.jar \
+java -jar runtime-app/target/runtime-app-0.17.0-SNAPSHOT-standalone.jar \
   --config examples/collector.properties \
   --collector.tcp.port=2405 \
   --collector.sink.type=logging
@@ -1002,6 +1028,7 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/roadmap-0.14.0.md`](docs/roadmap-0.14.0.md)
 - [`docs/roadmap-0.15.0.md`](docs/roadmap-0.15.0.md)
 - [`docs/roadmap-0.16.0.md`](docs/roadmap-0.16.0.md)
+- [`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md)
 - [`docs/release.md`](docs/release.md)
 - [`docs/release-readiness-0.16.0.md`](docs/release-readiness-0.16.0.md)
 - [`docs/release-readiness-0.15.0.md`](docs/release-readiness-0.15.0.md)
@@ -1035,3 +1062,4 @@ IEC103 和 Modbus runtime binding 已实现：
 - [`docs/release-notes-0.14.0.md`](docs/release-notes-0.14.0.md)
 - [`docs/release-notes-0.15.0.md`](docs/release-notes-0.15.0.md)
 - [`docs/release-notes-0.16.0.md`](docs/release-notes-0.16.0.md)
+- [`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md)

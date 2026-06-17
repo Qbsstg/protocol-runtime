@@ -231,12 +231,12 @@ Final `0.16.0` publication is completed after the release branch merge:
 
 | Step | Result | Evidence |
 | --- | --- | --- |
-| Tag | Pending | `v0.16.0` will point at the merged release commit. |
-| Real Central upload | Pending | The final `mvn -Pcentral-release clean deploy` run will create a Central deployment. |
-| Manual Central publish | Pending | The deployment must reach `PUBLISHED`. |
-| Public Maven Central verification | Pending | Runtime modules and `io.github.qbsstg:runtime-app:0.16.0:jar:standalone` must resolve from an isolated local Maven repository backed by Maven Central. |
-| Distribution package verification | Pending | `io.github.qbsstg:runtime-app:0.16.0:zip:distribution`, `io.github.qbsstg:runtime-app:0.16.0:tar.gz:distribution`, `.asc`, and Maven Central checksum sidecars must be verified from Maven Central. |
-| GitHub Release | Pending | GitHub release notes will be published after Central verification. |
+| Tag | Passed | `v0.16.0` points at merge commit `9a93f7a4ca9f21ba3d7dc55739df34b9448f491a`. |
+| Real Central upload | Passed | `mvn -Pcentral-release clean deploy` created Central deployment `82c4c0e3-211c-4993-877d-061ab50349bb`. |
+| Manual Central publish | Passed | Central deployment `82c4c0e3-211c-4993-877d-061ab50349bb` reached `PUBLISHED`. |
+| Public Maven Central verification | Passed | Runtime module artifacts, including `io.github.qbsstg:runtime-app:0.16.0:jar:standalone`, returned HTTP 200 from `repo.maven.apache.org`. |
+| Distribution package verification | Passed | `io.github.qbsstg:runtime-app:0.16.0:zip:distribution`, `io.github.qbsstg:runtime-app:0.16.0:tar.gz:distribution`, `.asc`, and Maven Central checksum sidecars returned HTTP 200 from `repo.maven.apache.org`. |
+| GitHub Release | Passed | GitHub release notes are published at <https://github.com/Qbsstg/protocol-runtime/releases/tag/v0.16.0>. |
 
-`0.16.0` remains the current release candidate until the final publication
-steps complete.
+`0.16.0` is the latest published runtime release. The next development line is
+`0.17.0-SNAPSHOT`.
