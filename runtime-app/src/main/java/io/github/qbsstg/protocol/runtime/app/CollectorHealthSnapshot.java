@@ -103,6 +103,17 @@ public record CollectorHealthSnapshot(
                 ready = false;
             }
         }
+        if (snapshot.sinkFailureBackpressureThreshold() > 0
+                && snapshot.metrics().sinkFailureCount() >= snapshot.sinkFailureBackpressureThreshold()) {
+            reasons.add("sinkFailureThresholdReached=" + snapshot.metrics().sinkFailureCount()
+                    + "/" + snapshot.sinkFailureBackpressureThreshold());
+            ready = false;
+        }
+        if (snapshot.failedRecordIsolationStatus().isolationFailureCount() > 0) {
+            reasons.add("failedRecordIsolationFailures="
+                    + snapshot.failedRecordIsolationStatus().isolationFailureCount());
+            ready = false;
+        }
         return ready;
     }
 

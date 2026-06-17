@@ -7,7 +7,6 @@ import io.github.qbsstg.protocol.runtime.core.RecordSink;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,18 +50,21 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
             currentBytes = Files.size(output);
             stopped = false;
         } catch (IOException ex) {
-            throw new UncheckedIOException("Unable to open sink file: " + output, ex);
+            throw new SinkDeliveryException(
+                    SinkDeliveryFailureType.FILESYSTEM_ERROR,
+                    "Unable to open sink file: " + output,
+                    ex);
         }
     }
 
     @Override
     public void accept(ParsedRecord<T> record) {
-        write(RuntimeRecordFormat.formatRecord(record));
+        writeRecord(RuntimeRecordFormat.formatRecord(record));
     }
 
     @Override
     public void accept(ParseFailure failure) {
-        write(RuntimeRecordFormat.formatFailure(failure));
+        writeRecord(RuntimeRecordFormat.formatFailure(failure));
     }
 
     @Override
@@ -78,7 +80,10 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
             writer.close();
             writer = null;
         } catch (IOException ex) {
-            throw new UncheckedIOException("Unable to close sink file: " + output, ex);
+            throw new SinkDeliveryException(
+                    SinkDeliveryFailureType.FILESYSTEM_ERROR,
+                    "Unable to close sink file: " + output,
+                    ex);
         }
     }
 
@@ -92,7 +97,7 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
                 rotation);
     }
 
-    private synchronized void write(String line) {
+    private synchronized void writeRecord(String line) {
         if (writer == null) {
             start();
         }
@@ -101,10 +106,20 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
         try {
             writer.write(line);
             writer.newLine();
+        } catch (IOException ex) {
+            throw new SinkDeliveryException(
+                    SinkDeliveryFailureType.WRITE_ERROR,
+                    "Unable to write sink file: " + output,
+                    ex);
+        }
+        try {
             writer.flush();
             currentBytes += bytes.length;
         } catch (IOException ex) {
-            throw new UncheckedIOException("Unable to write sink file: " + output, ex);
+            throw new SinkDeliveryException(
+                    SinkDeliveryFailureType.FLUSH_ERROR,
+                    "Unable to flush sink file: " + output,
+                    ex);
         }
     }
 
@@ -126,7 +141,10 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
             writer = null;
             currentBytes = 0;
         } catch (IOException ex) {
-            throw new UncheckedIOException("Unable to rotate sink file: " + output, ex);
+            throw new SinkDeliveryException(
+                    SinkDeliveryFailureType.FILESYSTEM_ERROR,
+                    "Unable to rotate sink file: " + output,
+                    ex);
         }
     }
 
@@ -149,7 +167,10 @@ public final class FileRuntimeSink<T> implements RecordSink<T>, FailureSink {
             }
             rotationCount++;
         } catch (IOException ex) {
-            throw new UncheckedIOException("Unable to rotate sink file: " + output, ex);
+            throw new SinkDeliveryException(
+                    SinkDeliveryFailureType.FILESYSTEM_ERROR,
+                    "Unable to rotate sink file: " + output,
+                    ex);
         }
     }
 

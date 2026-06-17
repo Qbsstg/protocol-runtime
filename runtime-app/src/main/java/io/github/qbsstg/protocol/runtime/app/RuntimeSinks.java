@@ -14,7 +14,8 @@ record RuntimeSinks(
         RecordSink<Object> recordSink,
         FailureSink failureSink,
         InMemoryRuntimeSink<Object> inMemorySink,
-        RuntimeSinkCounters counters) {
+        RuntimeSinkCounters counters,
+        FailedRecordIsolation failedRecords) {
 
     static RuntimeSinks from(StandaloneCollectorConfig config) {
         return from(StandaloneCollectorAppConfig.fromSingle(config));
@@ -25,17 +26,32 @@ record RuntimeSinks(
             case LOGGING -> {
                 LoggingRuntimeSink<Object> sink = new LoggingRuntimeSink<>(
                         Logger.getLogger("io.github.qbsstg.protocol.runtime.collector"));
-                yield new RuntimeSinks(sink, sink, null, new RuntimeSinkCounters());
+                yield new RuntimeSinks(
+                        sink,
+                        sink,
+                        null,
+                        new RuntimeSinkCounters(),
+                        new FailedRecordIsolation(config.failedRecords()));
             }
             case FILE -> {
                 FileRuntimeSink<Object> sink = new FileRuntimeSink<>(
                         config.sinkFile(),
                         config.fileSinkRotation());
-                yield new RuntimeSinks(sink, sink, null, new RuntimeSinkCounters());
+                yield new RuntimeSinks(
+                        sink,
+                        sink,
+                        null,
+                        new RuntimeSinkCounters(),
+                        new FailedRecordIsolation(config.failedRecords()));
             }
             case IN_MEMORY -> {
                 InMemoryRuntimeSink<Object> sink = new InMemoryRuntimeSink<>();
-                yield new RuntimeSinks(sink, sink, sink, new RuntimeSinkCounters());
+                yield new RuntimeSinks(
+                        sink,
+                        sink,
+                        sink,
+                        new RuntimeSinkCounters(),
+                        new FailedRecordIsolation(config.failedRecords()));
             }
         };
     }
@@ -52,11 +68,12 @@ record RuntimeSinks(
                     recordSink.accept(widen(record));
                     counters.recordParsedRecord(record);
                 } catch (RuntimeException ex) {
-                    counters.recordSinkFailure(
+                    SinkDeliveryFailure failure = counters.recordSinkFailure(
                             "record",
                             record.sourceId().qualifiedValue(),
                             record.observedAt(),
                             ex);
+                    failedRecords.isolate(record, failure);
                 }
             }
         };
@@ -70,11 +87,12 @@ record RuntimeSinks(
                     failureSink.accept(failure);
                     counters.recordParseFailure(failure);
                 } catch (RuntimeException ex) {
-                    counters.recordSinkFailure(
+                    SinkDeliveryFailure sinkFailure = counters.recordSinkFailure(
                             "failure",
                             failure.sourceId().qualifiedValue(),
                             failure.observedAt(),
                             ex);
+                    failedRecords.isolate(failure, sinkFailure);
                 }
             }
         };
@@ -89,6 +107,10 @@ record RuntimeSinks(
             return fileSink.status();
         }
         return null;
+    }
+
+    FailedRecordIsolationStatus failedRecordIsolationStatus() {
+        return failedRecords.status();
     }
 
     BackpressureStrategy backpressureStrategy(StandaloneCollectorAppConfig config) {

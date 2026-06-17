@@ -174,8 +174,14 @@ class StandaloneCollectorTest {
         }
 
         String line = Files.readString(output);
+        assertTrue(line.contains("\"schemaVersion\":\"protocol-runtime.record.v1\""));
         assertTrue(line.contains("\"kind\":\"record\""));
         assertTrue(line.contains("\"sourceId\":\"iec104:station-1\""));
+        assertTrue(line.contains("\"parsedAt\""));
+        assertTrue(line.contains("\"quality\":{\"status\":\"PARSED\"}"));
+        assertTrue(line.contains("\"payload\""));
+        assertTrue(line.contains("\"raw\""));
+        assertTrue(line.contains("\"sink\":{\"schemaVersion\":\"protocol-runtime.record.v1\""));
         assertTrue(line.contains("\"rawPayloadHex\":\"680E0000000001010300010001000001\""));
     }
 

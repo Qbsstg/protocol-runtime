@@ -50,10 +50,14 @@ collector.management.port=0
 collector.management.access=token
 collector.management.token=long-running-smoke-token
 collector.sink.file=$SINK
+collector.sink.failedRecords.enabled=true
+collector.sink.failedRecords.dir=data/failed-records
+collector.sink.failedRecords.maxSamples=8
 EOF
 
 JAVA_BIN="$JAVA_BIN" "$APP_HOME/bin/protocol-runtime" self-check --config "$CONFIG" > "$SELF_CHECK_OUTPUT"
-if ! grep -q '"status":"PASS"' "$SELF_CHECK_OUTPUT"; then
+if ! grep -q '"status":"PASS"' "$SELF_CHECK_OUTPUT" \
+    || ! grep -q '"failedRecords"' "$SELF_CHECK_OUTPUT"; then
   cat "$SELF_CHECK_OUTPUT"
   echo "long-running smoke self-check did not pass" >&2
   exit 1

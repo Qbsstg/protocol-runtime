@@ -131,6 +131,9 @@ public record StandaloneCollectorConfig(
     public static final String SINK_FILE = "collector.sink.file";
     public static final String SINK_FILE_MAX_BYTES = "collector.sink.file.maxBytes";
     public static final String SINK_FILE_MAX_HISTORY = "collector.sink.file.maxHistory";
+    public static final String SINK_FAILED_RECORDS_ENABLED = "collector.sink.failedRecords.enabled";
+    public static final String SINK_FAILED_RECORDS_DIR = "collector.sink.failedRecords.dir";
+    public static final String SINK_FAILED_RECORDS_MAX_SAMPLES = "collector.sink.failedRecords.maxSamples";
     public static final String IEC104_STRICT_ASDU = "collector.iec104.strictAsduParsing";
 
     private static final String DEFAULT_SOURCE_NAME = "default";
@@ -308,6 +311,7 @@ public record StandaloneCollectorConfig(
         boolean strictAsduParsing = parseBoolean(properties, IEC104_STRICT_ASDU, defaults.strictAsduParsing(), errors);
         ManagementServerConfig management = parseManagementConfig(properties, errors);
         CollectorDeploymentConfig deployment = parseDeploymentConfig(properties, errors);
+        SinkFailureIsolationConfig failedRecords = parseFailedRecordsConfig(properties, deployment, errors);
 
         SourceParseResult sourceResult = parseSources(properties, defaults, protocol, errors);
         boolean httpListenersDeclared = rawProperty(properties, HTTP_LISTENERS) != null;
@@ -350,6 +354,7 @@ public record StandaloneCollectorConfig(
                         sinkType,
                         sinkFile,
                         fileSinkRotation,
+                        failedRecords,
                         strictAsduParsing,
                         management,
                         deployment),
@@ -1083,6 +1088,36 @@ public record StandaloneCollectorConfig(
             }
         }
         return sinkFile;
+    }
+
+    private static SinkFailureIsolationConfig parseFailedRecordsConfig(
+            Properties properties,
+            CollectorDeploymentConfig deployment,
+            List<String> errors) {
+        SinkFailureIsolationConfig defaults = SinkFailureIsolationConfig.defaults(deployment.dataDir());
+        boolean enabled = parseBoolean(properties, SINK_FAILED_RECORDS_ENABLED, defaults.enabled(), errors);
+        Path directory = pathProperty(
+                properties,
+                SINK_FAILED_RECORDS_DIR,
+                deployment.dataDir(),
+                defaults.directory(),
+                errors);
+        int maxSamples = intProperty(
+                properties,
+                SINK_FAILED_RECORDS_MAX_SAMPLES,
+                defaults.maxSamples(),
+                0,
+                Integer.MAX_VALUE,
+                errors);
+        if (directory != null && Files.exists(directory) && !Files.isDirectory(directory)) {
+            errors.add(SINK_FAILED_RECORDS_DIR + " must point to a directory");
+        }
+        try {
+            return new SinkFailureIsolationConfig(enabled, directory, maxSamples);
+        } catch (IllegalArgumentException ex) {
+            errors.add("collector.sink.failedRecords is invalid: " + ex.getMessage());
+            return defaults;
+        }
     }
 
     private static Path pathProperty(Properties properties, String key, Path defaultValue, List<String> errors) {

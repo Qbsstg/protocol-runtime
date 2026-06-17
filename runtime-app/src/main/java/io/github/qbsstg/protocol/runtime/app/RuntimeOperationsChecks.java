@@ -243,6 +243,8 @@ final class RuntimeOperationsChecks {
     private static void sink(OperationsJsonWriter json, StandaloneCollectorAppConfig config) {
         json.name("sink").beginObject();
         json.name("type").value(config.sinkType().configValue());
+        json.name("schemaVersion").value(RuntimeRecordFormat.RECORD_SCHEMA_VERSION);
+        json.name("format").value("jsonl");
         json.name("file").value(path(config.sinkFile()));
         if (config.sinkFile() == null) {
             json.name("filePath").nullValue();
@@ -255,6 +257,16 @@ final class RuntimeOperationsChecks {
         json.name("maxBytes").value(config.fileSinkRotation().maxBytes());
         json.name("maxHistory").value(config.fileSinkRotation().maxHistory());
         json.endObject();
+        failedRecords(json, config.failedRecords());
+        json.endObject();
+    }
+
+    private static void failedRecords(OperationsJsonWriter json, SinkFailureIsolationConfig failedRecords) {
+        json.name("failedRecords").beginObject();
+        json.name("enabled").value(failedRecords.enabled());
+        json.name("directory").value(path(failedRecords.directory()));
+        json.name("maxSamples").value(failedRecords.maxSamples());
+        pathStatus(json, failedRecords.directory());
         json.endObject();
     }
 

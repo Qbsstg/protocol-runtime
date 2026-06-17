@@ -1,9 +1,9 @@
 # Protocol Runtime 0.17.0 Roadmap
 
 `0.17.0` starts after the published `0.16.0` production runtime operations
-baseline. The line plans the first downstream sink productionization boundary
-for standalone collectors without adding broker, HTTP client, database, Redis,
-or external queue dependencies to the current baseline.
+baseline. The line implements the first downstream sink productionization
+baseline for standalone collectors without adding broker, HTTP client,
+database, Redis, or external queue dependencies to the current baseline.
 
 The goal is to make parsed-record delivery safer and easier to operate before
 introducing dedicated Kafka, HTTP, MQTT, or other downstream sink adapters.
@@ -16,8 +16,9 @@ introducing dedicated Kafka, HTTP, MQTT, or other downstream sink adapters.
   protocol metadata, payload parse result, delivery metadata, timestamps,
   quality/status fields, and error evidence.
 - Classify downstream delivery failures into operator-actionable categories,
-  such as configuration, filesystem, serialization, backpressure, retryable
-  transient failure, permanent rejection, and unknown failure.
+  such as configuration, filesystem, serialization, write, flush,
+  backpressure, retryable transient failure, permanent rejection, and unknown
+  failure.
 - Isolate failed records from normal output so bad records or sink failures do
   not silently corrupt the main delivery stream.
 - Export bounded failed-record samples for troubleshooting without requiring a
@@ -34,13 +35,13 @@ introducing dedicated Kafka, HTTP, MQTT, or other downstream sink adapters.
 
 ## Module Boundary
 
-| Module or area | `0.17.0` planning responsibility |
+| Module or area | `0.17.0` baseline responsibility |
 | --- | --- |
 | `runtime-core` | Keep the existing runtime contracts dependency-light. Do not add Spring, Netty, Kafka, MQTT, HTTP client, database, Redis, queue, retry-store, sink-adapter, or exporter dependencies. |
-| `runtime-app` | Own current file/in-memory/logging sink assembly, operator-facing file sink behavior, failed-record evidence, and configuration examples. |
+| `runtime-app` | Own current file/in-memory/logging sink assembly, stable JSONL envelope schema, operator-facing file sink behavior, failed-record evidence, and configuration examples. |
 | `examples` and `docs` | Own file sink schema notes, record envelope examples, sink troubleshooting, retry/dead-letter boundary design, and adapter boundary documents. |
 | CI/smoke | Own future verification for file sink schema stability, failed-record isolation, sink backpressure behavior, and release artifact regression paths. |
-| Future `runtime-sink-file` | Candidate module for file delivery hardening if implementation outgrows `runtime-app`; no module is required in the planning step. |
+| Future `runtime-sink-file` | Candidate module for file delivery hardening if implementation outgrows `runtime-app`; no module is required in this baseline. |
 | Future `runtime-sink-kafka` | Candidate adapter boundary for Kafka producer delivery; Kafka producer dependencies must not enter `runtime-core`, `runtime-ingress-kafka`, or `protocol-sdk`. |
 | Future `runtime-sink-http` | Candidate adapter boundary for downstream HTTP delivery; it must not reuse `runtime-ingress-http`, which remains ingestion-only. |
 | Future `runtime-sink-mqtt` | Candidate adapter boundary for MQTT publishing; MQTT publisher dependencies must not enter `runtime-core`, `runtime-ingress-mqtt`, or `protocol-sdk`. |
@@ -57,17 +58,17 @@ introducing dedicated Kafka, HTTP, MQTT, or other downstream sink adapters.
 - Changing `protocol-sdk` parser behavior or making `protocol-sdk` depend on
   `protocol-runtime`.
 - Introducing durable retry stores, databases, Redis, or external brokers for
-  the first planning step.
+  this baseline.
 
 ## Design Topics
 
 ### File Sink Schema Stability
 
 The published runtime already provides file sink output for standalone
-collector deployments. `0.17.0` should make the schema explicit before users
-build downstream tooling around it:
+collector deployments. `0.17.0` makes the schema explicit before users build
+downstream tooling around it:
 
-- stable field names and types
+- stable field names and types through `protocol-runtime.record.v1`
 - source and listener identity
 - protocol and ASDU/frame metadata
 - parse success/failure metadata
@@ -78,12 +79,13 @@ build downstream tooling around it:
 
 ### Failure Classification
 
-Delivery failures should be explainable without reading stack traces first.
-The initial taxonomy should distinguish:
+Delivery failures are explainable without reading stack traces first. The
+initial taxonomy distinguishes:
 
 - configuration errors
 - filesystem/path/permission failures
 - serialization failures
+- write and flush failures
 - sink saturation and backpressure decisions
 - retryable transient failures
 - permanent downstream rejection
@@ -92,8 +94,8 @@ The initial taxonomy should distinguish:
 
 ### Failed-Record Isolation
 
-The baseline should define where failed record samples live, how many samples
-are retained, how sensitive payload bytes are represented, and how operators
+The baseline defines where failed record samples live, how many samples are
+retained, how sensitive payload bytes are represented, and how operators
 correlate a sample with status, logs, and source/listener metadata.
 
 ### Retry and Dead-Letter Boundaries
@@ -147,14 +149,22 @@ Downstream sink smoke should eventually cover:
 - [x] `0.16.0` release artifacts are published and verified from Maven Central.
 - [x] GitHub Release `v0.16.0` is published.
 - [x] Maven reactor is opened at `0.17.0-SNAPSHOT`.
-- [x] README and Chinese README describe the `0.17.0` downstream sink planning
+- [x] README and Chinese README describe the `0.17.0` downstream sink baseline
   line.
 - [x] `docs/module-plan.md` and `docs/module-boundaries.md` describe the
   downstream sink productionization boundary.
-- [x] `docs/release-notes-0.17.0.md` records the planning scope.
+- [x] `docs/release-notes-0.17.0.md` records the baseline scope.
 - [x] File sink schema stability is documented.
 - [x] Failure classification and failed-record isolation boundaries are
   documented.
 - [x] Retry/dead-letter and Kafka/HTTP/MQTT downstream adapter boundaries are
   documented.
+- [x] Runtime app emits `protocol-runtime.record.v1` and
+  `protocol-runtime.parse-failure.v1` JSONL envelopes for file/logging sinks.
+- [x] Runtime app classifies sink delivery failures and exposes classification
+  counters in status JSON.
+- [x] Runtime app writes bounded `protocol-runtime.failed-record.v1` samples to
+  app-local failed-record isolation storage.
+- [x] Standalone and distribution smoke cover sink schema/status evidence.
+- [x] Sink failure smoke covers failed-record isolation and readiness evidence.
 - [x] Operator sink troubleshooting and smoke expectations are drafted.

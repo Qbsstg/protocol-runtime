@@ -22,6 +22,7 @@ public record CollectorStatusSnapshot(
         SinkType sinkType,
         FileSinkStatus fileSinkStatus,
         FileSinkRotationConfig fileSinkRotation,
+        FailedRecordIsolationStatus failedRecordIsolationStatus,
         BackpressureDecision backpressureDecision,
         long backpressureMaxPayloadBytes,
         BackpressureDecision oversizedPayloadDecision,
@@ -41,6 +42,9 @@ public record CollectorStatusSnapshot(
         }
         if (fileSinkRotation == null) {
             throw new IllegalArgumentException("fileSinkRotation must not be null");
+        }
+        if (failedRecordIsolationStatus == null) {
+            throw new IllegalArgumentException("failedRecordIsolationStatus must not be null");
         }
         if (backpressureMaxPayloadBytes < 0) {
             throw new IllegalArgumentException("backpressureMaxPayloadBytes must not be negative");
@@ -81,6 +85,7 @@ public record CollectorStatusSnapshot(
                 sinkType,
                 fileSinkStatus,
                 fileSinkRotation,
+                failedRecordIsolationStatus,
                 backpressureDecision,
                 backpressureMaxPayloadBytes,
                 oversizedPayloadDecision,

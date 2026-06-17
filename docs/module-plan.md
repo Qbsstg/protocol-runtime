@@ -57,27 +57,28 @@ dependencies into `runtime-core` or `protocol-sdk`.
 
 The `0.17.0` runtime line starts from the published `0.16.0` production
 runtime operations baseline. The goal is downstream sink productionization
-planning without moving broker, HTTP client, MQTT publisher, durable retry,
+baseline work without moving broker, HTTP client, MQTT publisher, durable retry,
 dead-letter, storage, or external queue concerns into core contracts:
 
-| Module | 0.17.0 planning boundary |
+| Module | 0.17.0 baseline boundary |
 | --- | --- |
 | `runtime-core` | Stay dependency-light; add no Spring, Netty, Kafka, MQTT, HTTP client/server, database, Redis, object storage, external queue, retry-store, dead-letter store, sink-adapter, runtime-supervisor, service-manager, filesystem-layout, deployment wrapper, package manager, access-control, request-logging, or observability exporter dependencies. |
-| `runtime-app` | Own current app-level logging/file/in-memory sink assembly, file sink schema documentation, failed-record evidence, bounded failed sample export, sink backpressure configuration examples, and operator-facing troubleshooting guidance. |
+| `runtime-app` | Own current app-level logging/file/in-memory sink assembly, file sink JSONL schema v1, sink delivery failure taxonomy, failed-record evidence, bounded failed sample export, sink backpressure status evidence, and operator-facing troubleshooting guidance. |
 | `examples` and `docs` | Own record envelope examples, file sink schema notes, delivery failure taxonomy, retry/dead-letter design, Kafka/HTTP/MQTT downstream sink adapter boundaries, and smoke expectations. |
-| CI/smoke | Own future downstream sink smoke as verification only; do not turn smoke fixtures into supported application dependencies. |
+| CI/smoke | Own downstream sink smoke as verification only; do not turn smoke fixtures into supported application dependencies. |
 | Future `runtime-sink-file` | Candidate module for file sink productionization if file delivery logic outgrows `runtime-app`; it must not pull unrelated broker or database dependencies. |
 | Future `runtime-sink-kafka` | Candidate downstream delivery adapter; Kafka producer dependencies belong here or in an explicit app/adapter module, not in `runtime-core` or `runtime-ingress-kafka`. |
 | Future `runtime-sink-http` | Candidate downstream delivery adapter; HTTP client dependencies belong here or in an explicit app/adapter module, and `runtime-ingress-http` remains ingestion-only. |
 | Future `runtime-sink-mqtt` | Candidate downstream delivery adapter; MQTT publisher dependencies belong here or in an explicit app/adapter module, not in `runtime-core` or `runtime-ingress-mqtt`. |
 
-The first `0.17.0` planning baseline documents file sink schema stability,
-record envelope output rules, delivery failure classification, failed-record
-isolation, failed sample export, sink backpressure review, retry/dead-letter
+The first `0.17.0` baseline implements file sink schema stability, record
+envelope output rules, delivery failure classification, failed-record
+isolation, failed sample export, sink backpressure evidence, retry/dead-letter
 boundaries, future Kafka/HTTP/MQTT downstream adapter boundaries, operator sink
-troubleshooting, and smoke coverage. It must not introduce Kafka producers,
-HTTP clients, MQTT publishers, databases, Redis, durable retry stores, external
-queues, or reverse dependencies into `protocol-sdk`.
+troubleshooting, and smoke coverage in `runtime-app`, examples, and docs. It
+does not introduce Kafka producers, HTTP clients, MQTT publishers, databases,
+Redis, durable retry stores, external queues, or reverse dependencies into
+`protocol-sdk`.
 
 ## `0.16.0` Production Runtime Operations Posture
 
