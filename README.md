@@ -60,15 +60,17 @@ baseline: stable file sink schema v1, delivery failure classification,
 failed-record isolation, bounded failed sample export, sink backpressure
 evidence, retry/dead-letter boundaries, Kafka/HTTP/MQTT downstream adapter
 boundaries, record envelope output rules, operator sink troubleshooting, and
-smoke coverage. The active `0.18.0-SNAPSHOT` line plans the downstream sink
-adapter SPI, record envelope contract, delivery result contract,
-retry/dead-letter boundaries, Kafka/HTTP/MQTT sink adapter module boundaries,
-adapter configuration model, adapter smoke, operator troubleshooting, and
-dependency boundary policy.
+smoke coverage. The `0.18.0` release branch publishes the downstream
+sink adapter SPI, record envelope contract, delivery result contract,
+retry/dead-letter boundaries, Kafka/HTTP/MQTT sink adapter module boundaries, adapter
+configuration model, adapter smoke, operator troubleshooting, and dependency
+boundary policy.
 
-The `0.18.0` downstream sink adapter planning scope is tracked in
-[`docs/roadmap-0.18.0.md`](docs/roadmap-0.18.0.md), and release notes are
-tracked in [`docs/release-notes-0.18.0.md`](docs/release-notes-0.18.0.md).
+The `0.18.0` downstream sink adapter SPI scope is tracked in
+[`docs/roadmap-0.18.0.md`](docs/roadmap-0.18.0.md), release notes are
+tracked in [`docs/release-notes-0.18.0.md`](docs/release-notes-0.18.0.md),
+and the release-readiness audit is tracked in
+[`docs/release-readiness-0.18.0.md`](docs/release-readiness-0.18.0.md).
 The published `0.17.0` scope is tracked in
 [`docs/roadmap-0.17.0.md`](docs/roadmap-0.17.0.md), and release notes are
 tracked in [`docs/release-notes-0.17.0.md`](docs/release-notes-0.17.0.md).
@@ -218,7 +220,7 @@ dependencies belong here, not in `protocol-sdk`.
 
 ## `0.18.0` Downstream Sink Adapter SPI Baseline
 
-`0.18.0-SNAPSHOT` starts after the published `0.17.0` downstream sink
+`0.18.0` starts after the published `0.17.0` downstream sink
 productionization release. This line adds the first downstream delivery adapter
 SPI baseline before adding Kafka producer, HTTP client, MQTT publisher,
 database, Redis, or external queue dependencies.
