@@ -5,11 +5,12 @@ Central Portal.
 
 ## Current Release Scope
 
-The latest published runtime release is `0.17.0`. The active development line
-is `0.18.0-SNAPSHOT`.
+The latest published runtime release is `0.17.0`. The active release branch
+is `0.18.0`; the next development line will open as `0.19.0-SNAPSHOT` after
+publication.
 
-The Maven reactor is opened at `0.18.0-SNAPSHOT` after the published `0.17.0`
-downstream sink productionization release. The `0.17.0` line published file
+The Maven reactor is fixed at `0.18.0` on the release branch after the
+published `0.17.0` downstream sink productionization release. The `0.17.0` line published file
 sink schema stabilization, delivery failure
 classification, failed-record isolation, failed sample export, sink
 backpressure policy review, retry/dead-letter boundaries, Kafka/HTTP/MQTT
@@ -37,9 +38,10 @@ The `0.17.0` release includes:
 dependency. It is intentionally skipped for Central publishing from `0.4.0`
 onward.
 
-The `0.18.0` downstream sink adapter planning roadmap is maintained in
-[`roadmap-0.18.0.md`](roadmap-0.18.0.md), and release notes are maintained in
-[`release-notes-0.18.0.md`](release-notes-0.18.0.md). The published `0.17.0`
+The `0.18.0` downstream sink adapter SPI roadmap is maintained in
+[`roadmap-0.18.0.md`](roadmap-0.18.0.md), release notes are maintained in
+[`release-notes-0.18.0.md`](release-notes-0.18.0.md), and the release-readiness
+audit is tracked in [`release-readiness-0.18.0.md`](release-readiness-0.18.0.md). The published `0.17.0`
 roadmap is maintained in
 [`roadmap-0.17.0.md`](roadmap-0.17.0.md), and release notes are maintained in
 [`release-notes-0.17.0.md`](release-notes-0.17.0.md). The `0.17.0`

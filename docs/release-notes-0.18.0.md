@@ -80,11 +80,11 @@ Planning and follow-up PRs must pass:
 
 ## Publication
 
-- Development line: `0.18.0-SNAPSHOT`
-- Release branch: pending
+- Development line: `0.18.0-SNAPSHOT` closed by the `0.18.0` release branch
+- Release branch: `codex/release-0.18.0`
 - Tag: pending
 - Central deployment: pending
-- Central state: not published
+- Central state: not published; release branch validation passed
 - GitHub Release: pending
 
 The roadmap is tracked in [`roadmap-0.18.0.md`](roadmap-0.18.0.md).
